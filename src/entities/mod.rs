@@ -3,3 +3,7 @@
 pub mod prelude;
 
 pub mod users;
+
+pub mod dicts;
+
+pub mod words;

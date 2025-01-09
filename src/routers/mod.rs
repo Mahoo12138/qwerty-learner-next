@@ -1,4 +1,5 @@
 use crate::middleware::{cors::cors_middleware, jwt::jwt_middleware};
+use dicts::{delete_dict, get_dicts, post_add_dict, put_update_dict};
 use salvo::{
     prelude::{CatchPanic, Logger, OpenApi, Scalar},
     Router,
@@ -6,29 +7,35 @@ use salvo::{
 
 use self::{
     demo::hello,
-    user::{
-        delete_user, get_users, post_add_user, post_login, put_update_user,
-    },
+    user::{delete_user, get_users, post_add_user, post_login, put_update_user},
 };
 pub mod demo;
-pub mod user;
+pub mod dicts;
 mod static_routers;
+pub mod user;
 
 pub fn router() -> Router {
-    let mut no_auth_routers = vec![
-        Router::with_path("/api/login").post(post_login),
-    ];
+    let mut no_auth_routers = vec![Router::with_path("/api/login").post(post_login)];
 
     let _cors_handler = cors_middleware();
 
     let mut need_auth_routers = vec![
-        Router::with_path("/api/users").get(get_users)
-        .post(post_add_user)
-        .push(
-            Router::with_path("<id>")
-                .put(put_update_user)
-                .delete(delete_user),
-        ),
+        Router::with_path("/api/users")
+            .get(get_users)
+            .post(post_add_user)
+            .push(
+                Router::with_path("<id>")
+                    .put(put_update_user)
+                    .delete(delete_user),
+            ),
+        Router::with_path("/api/dicts")
+            .get(get_dicts)
+            .post(post_add_dict)
+            .push(
+                Router::with_path("<id>")
+                    .put(put_update_dict)
+                    .delete(delete_dict),
+            ),
     ];
 
     let router = Router::new()
