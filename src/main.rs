@@ -1,27 +1,29 @@
 use crate::db::init_db_conn;
-use tokio::signal;
-use tracing::info;
-use crate::middleware::{handle_404::handle_404,cors::cors_middleware};
+use crate::middleware::{cors::cors_middleware, handle_404::handle_404};
 use crate::routers::router;
 use config::{CERT_KEY, CFG};
-use salvo::server::ServerHandle;
 use salvo::catcher::Catcher;
 use salvo::conn::rustls::{Keycert, RustlsConfig};
 use salvo::prelude::*;
+use salvo::server::ServerHandle;
+use tokio::signal;
+use tracing::info;
+
 mod app_error;
 mod app_writer;
 mod config;
 mod db;
 mod dtos;
-mod services;
-mod utils;
 mod entities;
 mod middleware;
 mod routers;
+mod services;
+mod utils;
 
 #[tokio::main]
 async fn main() {
-    //同一时间，日志只输出到终端或文件
+    // 初始化日志库
+    // 同一时间，日志只输出到终端或文件
     let _guard = clia_tracing_config::build()
         .filter_level(&CFG.log.filter_level)
         .with_ansi(CFG.log.with_ansi)
@@ -35,7 +37,7 @@ async fn main() {
     init_db_conn().await;
     let router = router();
     let service: Service = router.into();
-    let service = service.catcher(Catcher::default().hoop(handle_404));//.hoop(_cors_handler).hoop(handle_404));
+    let service = service.catcher(Catcher::default().hoop(handle_404)); //.hoop(_cors_handler).hoop(handle_404));
     println!("🌪️ {} 正在启动 ", &CFG.server.name);
     println!("🔄 在以下位置监听 {}", &CFG.server.address);
     let _cors_handler = cors_middleware();
@@ -58,7 +60,7 @@ async fn main() {
             let handle = server.handle();
             tokio::spawn(shutdown_signal(handle));
             server.serve(service).await;
-         }
+        }
         false => {
             println!(
                 "📖 Open API 页面: http://{}/scalar",
@@ -69,7 +71,7 @@ async fn main() {
             let handle = server.handle();
             tokio::spawn(shutdown_signal(handle));
             server.serve(service).await;
-            }
+        }
     }
 }
 

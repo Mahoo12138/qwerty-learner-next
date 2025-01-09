@@ -21,6 +21,8 @@ pub struct Server {
 #[derive(Debug, Deserialize)]
 pub struct DataBase {
     pub database_url: String,
+    pub costom_dict_db_url: String,
+    pub internal_dict_db_url: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -49,28 +51,27 @@ pub struct Cert {
 
 const CONFIG_FILE: &str = "config/config.yml";
 
+// once_cell 利用了原子操作来保证线程安全和单次初始化
 pub static CFG: Lazy<Configs> = Lazy::new(self::Configs::init);
 
 impl Configs {
     pub fn init() -> Self {
         let mut file = match File::open(CONFIG_FILE) {
             Ok(f) => f,
-            Err(e) => panic!(
-                "配置文件不存在:{},错误信息:{}",
-                CONFIG_FILE, e
-            ),
+            Err(e) => panic!("配置文件不存在:{},错误信息:{}", CONFIG_FILE, e),
         };
         let mut cfg_contents = String::new();
         match file.read_to_string(&mut cfg_contents) {
             Ok(s) => s,
             Err(e) => panic!("读取配置文件失败，错误信息:{}", e),
         };
-        match serde_yaml::from_str(&cfg_contents){
+        match serde_yaml::from_str(&cfg_contents) {
             Ok(c) => c,
             Err(e) => panic!("解析配置文件失败，错误信息:{}", e),
         }
     }
 }
+
 pub static CERT_KEY: Lazy<CertKey> = Lazy::new(get_cert_key);
 
 pub struct CertKey {
@@ -83,6 +84,7 @@ impl CertKey {
         Self { cert, key }
     }
 }
+
 fn get_cert_key() -> CertKey {
     let cert = get_string(&CFG.cert.cert);
     let key = get_string(&CFG.cert.key);

@@ -2,18 +2,17 @@ use crate::{
     app_writer::AppResult,
     db::DB,
     dtos::user::{
-        UserAddRequest, UserLoginRequest, UserLoginResponse, UserResponse,
-        UserUpdateRequest,
+        UserAddRequest, UserLoginRequest, UserLoginResponse, UserResponse, UserUpdateRequest,
     },
+    entities::{prelude::Users, users},
     middleware::jwt::get_token,
-    entities::{prelude::Users,users},
     utils::rand_utils,
 };
-use sea_orm::{EntityTrait, Set, ActiveModelTrait, QueryFilter, ColumnTrait};
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 pub async fn add_user(req: UserAddRequest) -> AppResult<UserResponse> {
     let db = DB.get().ok_or(anyhow::anyhow!("数据库连接失败。"))?;
-    let model =users::ActiveModel {
+    let model = users::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
         username: Set(req.username.clone()),
         password: Set(rand_utils::hash_password(req.password).await?),
@@ -27,7 +26,10 @@ pub async fn add_user(req: UserAddRequest) -> AppResult<UserResponse> {
 
 pub async fn login(req: UserLoginRequest) -> AppResult<UserLoginResponse> {
     let db = DB.get().ok_or(anyhow::anyhow!("数据库连接失败。"))?;
-    let user = Users::find().filter(users::Column::Username.eq(req.username)).one(db).await?;
+    let user = Users::find()
+        .filter(users::Column::Username.eq(req.username))
+        .one(db)
+        .await?;
     if user.is_none() {
         return Err(anyhow::anyhow!("用户不存在。").into());
     }

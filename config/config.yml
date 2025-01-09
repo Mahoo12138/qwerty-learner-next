@@ -6,7 +6,9 @@ server:
     - "https://salvo.rs"
 
 database:
-  database_url: "sqlite:data/demo.db"
+  database_url: "sqlite:data/core.db"
+  costom_dict_db_url: "sqlite:data/costom_dict.db"
+  internal_dict_db_url: "sqlite:data/internal_dict.db"
 
 jwt:
   jwt_secret: "secret"

@@ -1,20 +1,20 @@
 use crate::{
     app_writer::ErrorResponseBuilder,
-    app_writer::{AppWriter, AppResult},
+    app_writer::{AppResult, AppWriter},
     dtos::user::{
         UserAddRequest, UserLoginRequest, UserLoginResponse, UserResponse, UserUpdateRequest,
     },
     services::user,
 };
+use salvo::Writer;
 use salvo::{
-    oapi::endpoint,
     http::cookie::Cookie,
+    oapi::endpoint,
     oapi::extract::{JsonBody, PathParam},
     Request, Response,
 };
-use salvo::Writer;
 
-#[endpoint( tags("comm"),)]
+#[endpoint(tags("comm"))]
 pub async fn post_login(req: JsonBody<UserLoginRequest>, res: &mut Response) {
     let result: AppResult<UserLoginResponse> = user::login(req.0).await;
     match result {
