@@ -8,8 +8,8 @@ use time::{Duration, OffsetDateTime};
 use crate::config::CFG;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct JwtClaims {
-    username: String,
-    user_id: String,
+    pub username: String,
+    pub user_id: String,
     exp: i64,
 }
 

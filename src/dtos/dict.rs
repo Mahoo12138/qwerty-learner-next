@@ -14,9 +14,9 @@ pub struct DictAddRequest {
 pub struct DictUpdateRequest {
     #[salvo(extract(source(from = "param")))]
     pub id: String,
-    pub name: String,
-    pub language: String,
-    pub word_count: u32,
+    pub name: Option<String>,
+    pub language: Option<String>,
+    pub word_count: Option<u32>,
 }
 
 #[derive(Debug, Serialize, ToSchema, Default)]

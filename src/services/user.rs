@@ -10,12 +10,14 @@ use crate::{
 };
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
+
 pub async fn add_user(req: UserAddRequest) -> AppResult<UserResponse> {
     let db = DB.get().ok_or(anyhow::anyhow!("数据库连接失败。"))?;
     let model = users::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
         username: Set(req.username.clone()),
         password: Set(rand_utils::hash_password(req.password).await?),
+        admin: Set(false),
     };
     let user = Users::insert(model).exec(db).await?;
     Ok(UserResponse {

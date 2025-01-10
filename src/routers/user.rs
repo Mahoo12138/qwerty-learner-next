@@ -14,7 +14,7 @@ use salvo::{
     Request, Response,
 };
 
-#[endpoint(tags("comm"))]
+#[endpoint(tags("auth"))]
 pub async fn post_login(req: JsonBody<UserLoginRequest>, res: &mut Response) {
     let result: AppResult<UserLoginResponse> = user::login(req.0).await;
     match result {
