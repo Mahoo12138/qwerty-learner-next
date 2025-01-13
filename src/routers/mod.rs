@@ -1,18 +1,20 @@
 use crate::middleware::{cors::cors_middleware, jwt::jwt_middleware};
-use dicts::{delete_dict, get_dicts, post_add_dict, put_update_dict};
+use dict::{delete_dict, get_dicts, post_add_dict, put_update_dict};
 use salvo::{
     prelude::{CatchPanic, Logger, OpenApi, Scalar},
     Router,
 };
+use word::{delete_word, get_words, post_add_word, put_update_word};
 
 use self::{
     demo::hello,
     user::{delete_user, get_users, post_add_user, post_login, put_update_user},
 };
 pub mod demo;
-pub mod dicts;
+pub mod dict;
 mod static_routers;
 pub mod user;
+pub mod word;
 
 pub fn router() -> Router {
     let mut no_auth_routers = vec![Router::with_path("/api/login").post(post_login)];
@@ -35,6 +37,14 @@ pub fn router() -> Router {
                 Router::with_path("<id>")
                     .put(put_update_dict)
                     .delete(delete_dict),
+            ),
+        Router::with_path("/api/words")
+            .get(get_words)
+            .post(post_add_word)
+            .push(
+                Router::with_path("<id>")
+                    .put(put_update_word)
+                    .delete(delete_word),
             ),
     ];
 

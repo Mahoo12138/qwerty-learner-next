@@ -78,7 +78,7 @@ pub async fn delete_dict(id: String, user_id: String) -> AppResult<()> {
         .ok_or(anyhow::anyhow!("字典未找到。"))?;
 
     // 校验 user_id
-    if dict.user_id != user_id {
+    if dict.user_id != *user_id {
         return Err(anyhow::anyhow!("无权限删除该字典。").into());
     }
     Dicts::delete_by_id(id).exec(db).await?;
@@ -103,4 +103,21 @@ pub async fn dicts(user_id: String) -> AppResult<Vec<DictResponse>> {
         })
         .collect::<Vec<_>>();
     Ok(res)
+}
+
+pub async fn check_dict_permission(dict_id: &String, user_id: &String) -> AppResult<()> {
+    let db = INTERNAL_DICT_DB
+        .get()
+        .ok_or(anyhow::anyhow!("数据库连接失败。"))?;
+
+    let dict = Dicts::find_by_id(dict_id.clone())
+        .one(db)
+        .await?
+        .ok_or(anyhow::anyhow!("字典未找到。"))?;
+
+    // 校验 user_id
+    if dict.user_id != *user_id {
+        return Err(anyhow::anyhow!("无权限操作该字典。").into());
+    }
+    Ok(())
 }

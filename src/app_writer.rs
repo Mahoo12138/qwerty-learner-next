@@ -1,6 +1,9 @@
 use salvo::{
-    async_trait, hyper::StatusCode, prelude::EndpointOutRegister, writing::Json, Depot, Request,
-    Response, Writer,
+    async_trait,
+    hyper::StatusCode,
+    prelude::EndpointOutRegister,
+    writing::{Json, Redirect},
+    Depot, Request, Response, Writer,
 };
 use serde::Serialize;
 
@@ -76,12 +79,12 @@ impl<T: Serialize + Send + Default> ResponseBuilder<T> {
 
 impl ErrorResponseBuilder {
     pub fn with_err(err: AppError) -> Self {
-    let (code, msg) = match &err {
-    AppError::AnyHow(e) => (500, e.to_string()),
-    AppError::ParseError(e) => (400, e.to_string()),
-    AppError::DbErr(e) => (500, e.to_string()),
-    AppError::ValidationError(e) => (400, e.to_string()),
-    };
+        let (code, msg) = match &err {
+            AppError::AnyHow(e) => (500, e.to_string()),
+            AppError::ParseError(e) => (400, e.to_string()),
+            AppError::DbErr(e) => (500, e.to_string()),
+            AppError::ValidationError(e) => (400, e.to_string()),
+        };
         Self {
             code,
             msg,
@@ -97,21 +100,21 @@ impl<T: Serialize + Send + Default> ResponseBuilder<T> {
 
 impl ErrorResponseBuilder {
     pub fn into_response(self, res: &mut Response) {
-    let status_code = match self.source_error {
-        AppError::AnyHow(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        AppError::ParseError(_) => StatusCode::BAD_REQUEST,
-        AppError::DbErr(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        AppError::ValidationError(_) => StatusCode::BAD_REQUEST,
-    };        
-    res.stuff(status_code, Json(self));
+        let status_code = match self.source_error {
+            AppError::AnyHow(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::ParseError(_) => StatusCode::BAD_REQUEST,
+            AppError::DbErr(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::ValidationError(_) => StatusCode::BAD_REQUEST,
+        };
+        res.stuff(status_code, Json(self));
     }
 }
 
 pub type AppResult<T> = Result<T, AppError>;
-
 #[async_trait]
 impl Writer for AppError {
     async fn write(mut self, _req: &mut Request, _depot: &mut Depot, res: &mut Response) {
+        println!("AppError: {:?}", self);
         ErrorResponseBuilder::with_err(self).into_response(res)
     }
 }
