@@ -1,9 +1,6 @@
 use salvo::{
-    async_trait,
-    hyper::StatusCode,
-    prelude::EndpointOutRegister,
-    writing::{Json, Redirect},
-    Depot, Request, Response, Writer,
+    async_trait, hyper::StatusCode, prelude::EndpointOutRegister, writing::Json, Depot, Request,
+    Response, Writer,
 };
 use serde::Serialize;
 

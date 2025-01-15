@@ -1,20 +1,25 @@
 use crate::middleware::{cors::cors_middleware, jwt::jwt_middleware};
+use chapter_records::ChapterRecordRouter;
 use dict::{delete_dict, get_dicts, post_add_dict, put_update_dict};
+use qwerty_learner::Routers;
 use salvo::{
     prelude::{CatchPanic, Logger, OpenApi, Scalar},
     Router,
 };
 use word::{delete_word, get_words, post_add_word, put_update_word};
+use word_records::WordRecordRouter;
 
 use self::{
     demo::hello,
     user::{delete_user, get_users, post_add_user, post_login, put_update_user},
 };
+pub mod chapter_records;
 pub mod demo;
 pub mod dict;
 mod static_routers;
 pub mod user;
 pub mod word;
+pub mod word_records;
 
 pub fn router() -> Router {
     let mut no_auth_routers = vec![Router::with_path("/api/login").post(post_login)];
@@ -57,6 +62,8 @@ pub fn router() -> Router {
         .push(
             Router::new()
                 .append(&mut need_auth_routers)
+                .append(&mut WordRecordRouter.build())
+                .append(&mut ChapterRecordRouter.build())
                 .hoop(jwt_middleware()),
         );
     let doc = OpenApi::new("salvo web api", "0.0.1").merge_router(&router);

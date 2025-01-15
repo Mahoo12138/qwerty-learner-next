@@ -4,6 +4,10 @@ pub mod prelude;
 
 pub mod users;
 
+pub mod word_records;
+
+pub mod chapter_records;
+
 pub mod dicts;
 
 pub mod words;

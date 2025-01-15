@@ -34,7 +34,7 @@ pub async fn add_word(req: WordAddRequest, user_id: String) -> AppResult<WordRes
     })
 }
 
-pub async fn update_word(req: WordUpdateRequest, user_id: String) -> AppResult<WordResponse> {
+pub async fn update_word(req: WordUpdateRequest, _user_id: String) -> AppResult<WordResponse> {
     let db = INTERNAL_DICT_DB
         .get()
         .ok_or(anyhow::anyhow!("数据库连接失败。"))?;
@@ -62,12 +62,12 @@ pub async fn update_word(req: WordUpdateRequest, user_id: String) -> AppResult<W
     })
 }
 
-pub async fn delete_word(id: String, user_id: String) -> AppResult<()> {
+pub async fn delete_word(id: String, _user_id: String) -> AppResult<()> {
     let db = INTERNAL_DICT_DB
         .get()
         .ok_or(anyhow::anyhow!("数据库连接失败。"))?;
 
-    let word = Words::find_by_id(id.clone())
+    let _word = Words::find_by_id(id.clone())
         .one(db)
         .await?
         .ok_or(anyhow::anyhow!("字典未找到。"))?;

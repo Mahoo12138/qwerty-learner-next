@@ -24,6 +24,7 @@ export async function exportDatabase(callback: (exportProgress: ExportProgress) 
   const [wordCount, chapterCount] = await Promise.all([db.wordRecords.count(), db.chapterRecords.count()])
 
   const json = await blob.text()
+  console.log(json);
   const compressed = pako.gzip(json)
   const compressedBlob = new Blob([compressed])
   const currentDate = getCurrentDate()
