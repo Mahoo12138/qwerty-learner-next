@@ -1,4 +1,5 @@
 import react from '@vitejs/plugin-react'
+import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 import { promises as fs } from 'fs'
 import { getLastCommit } from 'git-last-commit'
 import jotaiDebugLabel from 'jotai/babel/plugin-debug-label'
@@ -10,12 +11,14 @@ import { defineConfig } from 'vite'
 import type { PluginOption } from 'vite'
 
 // https://vitejs.dev/config/
+// @ts-ignore
 export default defineConfig(async ({ mode }) => {
   const latestCommitHash = await new Promise<string>((resolve) => {
     return getLastCommit((err, commit) => (err ? 'unknown' : resolve(commit.shortHash)))
   })
   return {
     plugins: [
+      TanStackRouterVite(),
       react({ babel: { plugins: [jotaiDebugLabel, jotaiReactRefresh] } }),
       visualizer() as PluginOption,
       Icons({
@@ -34,7 +37,7 @@ export default defineConfig(async ({ mode }) => {
       sourcemap: false,
     },
     esbuild: {
-      drop: mode === 'development' ? [] : ['console', 'debugger'],
+      drop: mode === 'development' ? undefined : ['console', 'debugger'],
     },
     define: {
       REACT_APP_DEPLOY_ENV: JSON.stringify(process.env.REACT_APP_DEPLOY_ENV),
