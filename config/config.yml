@@ -1,5 +1,5 @@
 server:
-  name: "qwerty-learner"
+  name: "qwerty-learner-next"
   address: "0.0.0.0:5800"
   ssl: false
   cors_allow_origin:

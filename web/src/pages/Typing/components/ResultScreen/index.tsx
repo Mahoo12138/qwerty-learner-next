@@ -282,7 +282,7 @@ const ResultScreen = () => {
                   <IconWechat fontSize={16} className="text-gray-500 hover:text-green-500 focus:outline-none" />
                 </button>
 
-                <a href="https://github.com/Kaiyiwing/qwerty-learner" target="_blank" rel="noreferrer" className="leading-[0px]">
+                <a href="https://github.com/mahoo12138/qwerty-learner-next" target="_blank" rel="noreferrer" className="leading-[0px]">
                   <IconGithub fontSize={16} className="text-gray-500 hover:text-green-800 focus:outline-none" />
                 </a>
               </div>

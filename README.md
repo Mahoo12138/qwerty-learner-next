@@ -17,8 +17,8 @@ SeaOrm-cli 的相关数据库迁移，自动创建实体等命令请查看文档
 ## 数据初始化
 你选择的是 sqlite 数据库，数据库已初始化完毕，在 data 文件夹下。
 # 项目目录说明
-# qwerty-learner
-- **目录:** qwerty-learner 
+# qwerty-learner-next
+- **目录:** qwerty-learner-next 
 - *文件:* .env         (存储数据库连接串的配置文件)
 - **目录:** .github 
     - **目录:** workflows 
