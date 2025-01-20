@@ -1,12 +1,12 @@
 use crate::middleware::{cors::cors_middleware, jwt::jwt_middleware};
 use chapter_records::ChapterRecordRouter;
-use dict::{delete_dict, get_dicts, post_add_dict, put_update_dict};
+use dict::{get_builtin_dicts, DictRouter};
 use qwerty_learner::Routers;
 use salvo::{
     prelude::{CatchPanic, Logger, OpenApi, Scalar},
     Router,
 };
-use word::{delete_word, get_words, post_add_word, put_update_word};
+use word::{delete_word, get_builtin_dict_words, get_words, post_add_word, put_update_word};
 use word_records::WordRecordRouter;
 
 use self::{
@@ -22,7 +22,11 @@ pub mod word;
 pub mod word_records;
 
 pub fn router() -> Router {
-    let mut no_auth_routers = vec![Router::with_path("/api/login").post(post_login)];
+    let mut no_auth_routers = vec![
+        Router::with_path("/api/login").post(post_login),
+        Router::with_path("/api/dict/public").get(get_builtin_dicts),
+        Router::with_path("/api/word/public").get(get_builtin_dict_words),
+    ];
 
     let _cors_handler = cors_middleware();
 
@@ -34,14 +38,6 @@ pub fn router() -> Router {
                 Router::with_path("<id>")
                     .put(put_update_user)
                     .delete(delete_user),
-            ),
-        Router::with_path("/api/dicts")
-            .get(get_dicts)
-            .post(post_add_dict)
-            .push(
-                Router::with_path("<id>")
-                    .put(put_update_dict)
-                    .delete(delete_dict),
             ),
         Router::with_path("/api/words")
             .get(get_words)
@@ -62,6 +58,7 @@ pub fn router() -> Router {
         .push(
             Router::new()
                 .append(&mut need_auth_routers)
+                .append(&mut DictRouter.build())
                 .append(&mut WordRecordRouter.build())
                 .append(&mut ChapterRecordRouter.build())
                 .hoop(jwt_middleware()),

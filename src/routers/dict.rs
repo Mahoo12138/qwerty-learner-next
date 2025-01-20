@@ -4,13 +4,14 @@ use crate::{
     middleware::jwt::JwtClaims,
     services::dict,
 };
+use qwerty_learner::Routers;
 use salvo::{
     oapi::{
         endpoint,
         extract::{JsonBody, PathParam},
     },
     prelude::JwtAuthDepotExt,
-    Request,
+    Request, Router,
 };
 use salvo::{Depot, Writer};
 
@@ -48,7 +49,6 @@ pub async fn put_update_dict(
 }
 
 #[endpoint(tags("dicts"))]
-
 pub async fn delete_dict(id: PathParam<String>, depot: &mut Depot) -> AppWriter<()> {
     let user_id = depot
         .jwt_auth_data::<JwtClaims>()
@@ -66,4 +66,25 @@ pub async fn get_dicts(depot: &mut Depot) -> AppWriter<Vec<DictResponse>> {
         .unwrap();
     let result = dict::dicts(user_id).await;
     AppWriter(result)
+}
+
+#[endpoint(tags("dicts"))]
+pub async fn get_builtin_dicts() -> AppWriter<Vec<DictResponse>> {
+    let result = dict::builtin_dicts().await;
+    AppWriter(result)
+}
+
+pub struct DictRouter;
+
+impl Routers for DictRouter {
+    fn build(self) -> Vec<Router> {
+        vec![Router::with_path("/api/dicts")
+            .get(get_dicts)
+            .post(post_add_dict)
+            .push(
+                Router::with_path("<id>")
+                    .put(put_update_dict)
+                    .delete(delete_dict),
+            )]
+    }
 }

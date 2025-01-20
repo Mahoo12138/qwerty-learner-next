@@ -11,6 +11,7 @@ pub struct Model {
     pub name: String,
     pub language: String,
     pub word_count: u32,
+    pub public: bool,
     pub builtin: bool,
     pub user_id: String,
     pub created_at: DateTime,

@@ -70,3 +70,9 @@ pub async fn get_words(
     let result = word::words(dict_id.into_inner(), user_id).await;
     AppWriter(result)
 }
+
+#[endpoint(tags("words"))]
+pub async fn get_builtin_dict_words(dict_id: QueryParam<String>) -> AppWriter<Vec<WordResponse>> {
+    let result = word::public_words(dict_id.into_inner()).await;
+    AppWriter(result)
+}

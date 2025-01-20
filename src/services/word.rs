@@ -8,7 +8,7 @@ use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 
-use super::dict::check_dict_permission;
+use super::dict::{check_dict_permission, check_dict_public};
 
 pub async fn add_word(req: WordAddRequest, user_id: String) -> AppResult<WordResponse> {
     let db = INTERNAL_DICT_DB
@@ -82,6 +82,34 @@ pub async fn words(dict_id: String, user_id: String) -> AppResult<Vec<WordRespon
         .ok_or(anyhow::anyhow!("数据库连接失败。"))?;
 
     check_dict_permission(&dict_id, &user_id).await?;
+
+    let words = Words::find()
+        .filter(words::Column::DictId.eq(dict_id))
+        .all(db)
+        .await?;
+    let res = words
+        .into_iter()
+        .map(|word| WordResponse {
+            id: word.id,
+            name: word.name,
+            trans: word.trans.as_array().map_or(vec![], |trans| {
+                trans
+                    .iter()
+                    .filter_map(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .collect()
+            }),
+        })
+        .collect::<Vec<_>>();
+    Ok(res)
+}
+
+pub async fn public_words(dict_id: String) -> AppResult<Vec<WordResponse>> {
+    let db = INTERNAL_DICT_DB
+        .get()
+        .ok_or(anyhow::anyhow!("数据库连接失败。"))?;
+
+    check_dict_public(&dict_id).await?;
 
     let words = Words::find()
         .filter(words::Column::DictId.eq(dict_id))

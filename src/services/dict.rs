@@ -22,6 +22,7 @@ pub async fn add_dict(req: DictAddRequest, user_id: String) -> AppResult<DictRes
         user_id: Set(user_id),
         created_at: Set(Utc::now().naive_utc()),
         updated_at: Set(Utc::now().naive_utc()),
+        public: Set(true),
     };
     let dict = Dicts::insert(model).exec(db).await?;
     Ok(DictResponse {
@@ -105,6 +106,29 @@ pub async fn dicts(user_id: String) -> AppResult<Vec<DictResponse>> {
     Ok(res)
 }
 
+pub async fn builtin_dicts() -> AppResult<Vec<DictResponse>> {
+    let db = INTERNAL_DICT_DB
+        .get()
+        .ok_or(anyhow::anyhow!("数据库连接失败。"))?;
+
+    let dicts = Dicts::find()
+        .filter(dicts::Column::Public.eq(true))
+        .filter(dicts::Column::Builtin.eq(true))
+        .all(db)
+        .await?;
+
+    let res = dicts
+        .into_iter()
+        .map(|dict| DictResponse {
+            id: dict.id,
+            name: dict.name,
+            language: dict.language,
+            word_count: dict.word_count,
+        })
+        .collect::<Vec<_>>();
+    Ok(res)
+}
+
 pub async fn check_dict_permission(dict_id: &String, user_id: &String) -> AppResult<()> {
     let db = INTERNAL_DICT_DB
         .get()
@@ -117,7 +141,26 @@ pub async fn check_dict_permission(dict_id: &String, user_id: &String) -> AppRes
 
     // 校验 user_id
     if dict.user_id != *user_id {
+        // if dict.user_id != user_id.as_str() {
+
+        print!("{}, {}", dict.user_id, user_id);
         return Err(anyhow::anyhow!("无权限操作该字典。").into());
+    }
+    Ok(())
+}
+
+pub async fn check_dict_public(dict_id: &String) -> AppResult<()> {
+    let db = INTERNAL_DICT_DB
+        .get()
+        .ok_or(anyhow::anyhow!("数据库连接失败。"))?;
+
+    let dict = Dicts::find_by_id(dict_id.clone())
+        .one(db)
+        .await?
+        .ok_or(anyhow::anyhow!("字典未找到。"))?;
+
+    if !dict.public {
+        return Err(anyhow::anyhow!("该字典未公开。").into());
     }
     Ok(())
 }
