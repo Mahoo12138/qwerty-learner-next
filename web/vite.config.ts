@@ -10,6 +10,9 @@ import Icons from 'unplugin-icons/vite'
 import { defineConfig } from 'vite'
 import type { PluginOption } from 'vite'
 
+
+const devProxyServer = "http://localhost:5800";
+
 // https://vitejs.dev/config/
 // @ts-ignore
 export default defineConfig(async ({ mode }) => {
@@ -35,6 +38,16 @@ export default defineConfig(async ({ mode }) => {
       minify: true,
       outDir: 'build',
       sourcemap: false,
+    },
+    server: {
+      host: "0.0.0.0",
+      port: 8500,
+      proxy: {
+        "^/api": {
+          target: devProxyServer,
+          xfwd: true,
+        },
+      },
     },
     esbuild: {
       drop: mode === 'development' ? undefined : ['console', 'debugger'],
