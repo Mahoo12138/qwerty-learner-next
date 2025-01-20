@@ -1,5 +1,5 @@
 import type { Dictionary, Word } from '@/typings'
-import { wordListFetcher } from '@/utils/wordListFetcher'
+import { wordListFetcher } from '@/utils/query'
 import { useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 

@@ -11,7 +11,7 @@ import type { WordPronunciationIconRef } from '@/components/WordPronunciationIco
 import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
 import { EXPLICIT_SPACE } from '@/constants'
 import useKeySounds from '@/hooks/useKeySounds'
-import { TypingContext, TypingStateActionType } from '@/pages/Typing/store'
+import { TypingContext, TypingStateActionType } from '@/pages/Explore/store'
 import {
   currentChapterAtom,
   currentDictInfoAtom,
@@ -32,7 +32,6 @@ import { useImmer } from 'use-immer'
 const vowelLetters = ['A', 'E', 'I', 'O', 'U']
 
 export default function WordComponent({ word, onFinish }: { word: Word; onFinish: () => void }) {
-  // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
   const { state, dispatch } = useContext(TypingContext)!
   const [wordState, setWordState] = useImmer<WordState>(structuredClone(initialWordState))
 
@@ -41,12 +40,12 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   const isIgnoreCase = useAtomValue(isIgnoreCaseAtom)
   const isShowAnswerOnHover = useAtomValue(isShowAnswerOnHoverAtom)
   const saveWordRecord = useSaveWordRecord()
-  const wordLogUploader = useMixPanelWordLogUploader(state)
+  // const wordLogUploader = useMixPanelWordLogUploader(state)
   const [playKeySound, playBeepSound, playHintSound] = useKeySounds()
   const pronunciationIsOpen = useAtomValue(pronunciationIsOpenAtom)
   const [isHoveringWord, setIsHoveringWord] = useState(false)
-  const currentLanguage = useAtomValue(currentDictInfoAtom).language
-  const currentLanguageCategory = useAtomValue(currentDictInfoAtom).languageCategory
+  const currentLanguage = useAtomValue(currentDictInfoAtom)?.language
+  // const currentLanguageCategory = useAtomValue(currentDictInfoAtom).languageCategory
   const currentChapter = useAtomValue(currentChapterAtom)
 
   const [showTipAlert, setShowTipAlert] = useState(false)
@@ -254,14 +253,14 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     if (wordState.isFinished) {
       dispatch({ type: TypingStateActionType.SET_IS_SAVING_RECORD, payload: true })
 
-      wordLogUploader({
-        headword: word.name,
-        timeStart: wordState.startTime,
-        timeEnd: wordState.endTime,
-        countInput: wordState.correctCount + wordState.wrongCount,
-        countCorrect: wordState.correctCount,
-        countTypo: wordState.wrongCount,
-      })
+      // wordLogUploader({
+      //   headword: word.name,
+      //   timeStart: wordState.startTime,
+      //   timeEnd: wordState.endTime,
+      //   countInput: wordState.correctCount + wordState.wrongCount,
+      //   countCorrect: wordState.correctCount,
+      //   countTypo: wordState.wrongCount,
+      // })
       saveWordRecord({
         word: word.name,
         wrongCount: wordState.wrongCount,
@@ -284,10 +283,10 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     <>
       <InputHandler updateInput={updateInput} />
       <div
-        lang={currentLanguageCategory !== 'code' ? currentLanguageCategory : 'en'}
+        // lang={currentLanguageCategory !== 'code' ? currentLanguageCategory : 'en'}
         className="flex flex-col items-center justify-center pb-1 pt-4"
       >
-        {['romaji', 'hapin'].includes(currentLanguage) && word.notation && <Notation notation={word.notation} />}
+        {currentLanguage && ['romaji', 'hapin'].includes(currentLanguage) && word.notation && <Notation notation={word.notation} />}
         <div
           className={`tooltip-info relative w-fit bg-transparent p-0 leading-normal shadow-none dark:bg-transparent ${
             wordDictationConfig.isOpen ? 'tooltip' : ''
@@ -306,7 +305,7 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
           {pronunciationIsOpen && (
             <div className="absolute -right-12 top-1/2 h-9 w-9 -translate-y-1/2 transform ">
               <Tooltip content={`快捷键${CTRL} + J`}>
-                <WordPronunciationIcon word={word} lang={currentLanguage} ref={wordPronunciationIconRef} className="h-full w-full" />
+                <WordPronunciationIcon word={word} lang={currentLanguage || ''} ref={wordPronunciationIconRef} className="h-full w-full" />
               </Tooltip>
             </div>
           )}

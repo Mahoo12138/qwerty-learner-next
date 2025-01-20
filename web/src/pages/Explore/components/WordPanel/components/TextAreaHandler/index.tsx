@@ -1,5 +1,5 @@
 import type { WordUpdateAction } from '../InputHandler'
-import { TypingContext } from '@/pages/Typing/store'
+import { TypingContext } from '@/pages/Explore/store'
 import type { FormEvent } from 'react'
 import { useCallback, useContext, useEffect, useRef } from 'react'
 

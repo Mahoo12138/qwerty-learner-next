@@ -101,7 +101,7 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
       newState.chapterData.index = initialIndex
       newState.chapterData.words = words
       newState.chapterData.userInputLogs = words.map((_, index) => ({ ...structuredClone(initialUserInputLog), index }))
-
+      console.log('SETUP_CHAPTER', state);
       return newState
     }
     case TypingStateActionType.SET_IS_SKIP:

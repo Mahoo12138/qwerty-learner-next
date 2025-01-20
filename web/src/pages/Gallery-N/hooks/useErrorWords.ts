@@ -1,7 +1,7 @@
 import type { Dictionary, Word } from '@/typings'
 import { db } from '@/utils/db'
 import type { WordRecord } from '@/utils/db/record'
-import { wordListFetcher } from '@/utils/wordListFetcher'
+import { wordListFetcher } from '@/utils/query'
 import { useEffect, useState } from 'react'
 import useSWR from 'swr'
 

@@ -20,14 +20,13 @@ export type Dictionary = {
   description: string
   category: string
   tags: string[]
-  url: string
-  length: number
+  word_count: number
   language: LanguageType
-  languageCategory: LanguageCategoryType
+  // languageCategory: LanguageCategoryType
   // calculated in the store
   chapterCount: number
   //override default pronunciation when not undefined
-  defaultPronIndex?: number
+  // defaultPronIndex?: number
 }
 
 export type PronunciationConfig = {

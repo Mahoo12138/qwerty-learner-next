@@ -10,7 +10,7 @@ import IconCheck from '~icons/tabler/check'
 export const DictChapterButton = () => {
   const currentDictInfo = useAtomValue(currentDictInfoAtom)
   const [currentChapter, setCurrentChapter] = useAtom(currentChapterAtom)
-  const chapterCount = currentDictInfo.chapterCount
+  const chapterCount = 20;
   const isReviewMode = useAtomValue(isReviewModeAtom)
 
   const handleKeyDown: React.KeyboardEventHandler<HTMLButtonElement> = (event) => {

@@ -13,7 +13,6 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import type { Word } from '@/typings'
 
 export default function WordPanel() {
-  // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
   const { state, dispatch } = useContext(TypingContext)!
   const phoneticConfig = useAtomValue(phoneticConfigAtom)
   const isShowPrevAndNextWord = useAtomValue(isShowPrevAndNextWordAtom)
