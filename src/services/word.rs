@@ -93,7 +93,11 @@ pub async fn words(dict_id: String, user_id: String) -> AppResult<Vec<WordRespon
             id: word.id,
             name: word.name,
             trans: word.trans.as_array().map_or(vec![], |trans| {
-                trans.iter().map(|v| v.to_string()).collect()
+                trans
+                    .iter()
+                    .filter_map(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .collect()
             }),
         })
         .collect::<Vec<_>>();
