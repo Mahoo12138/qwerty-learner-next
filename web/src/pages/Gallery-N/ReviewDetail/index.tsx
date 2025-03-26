@@ -6,7 +6,7 @@ import { timeStamp2String } from '@/utils'
 import { generateNewWordReviewRecord, useGetLatestReviewRecord } from '@/utils/db/review-record'
 import * as Progress from '@radix-ui/react-progress'
 import { useSetAtom } from 'jotai'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import MdiRobotAngry from '~icons/mdi/robot-angry'
 
 export function ReviewDetail({ errorData, dict }: { errorData: TErrorWordData[]; dict: Dictionary }) {

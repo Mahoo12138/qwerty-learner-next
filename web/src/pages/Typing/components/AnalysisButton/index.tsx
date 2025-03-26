@@ -1,6 +1,6 @@
 import { recordAnalysisAction } from '@/utils'
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import ChartPie from '~icons/heroicons/chart-pie-solid'
 
 const AnalysisButton = () => {

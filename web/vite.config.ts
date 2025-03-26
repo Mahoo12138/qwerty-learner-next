@@ -11,7 +11,7 @@ import { defineConfig } from 'vite'
 import type { PluginOption } from 'vite'
 
 
-const devProxyServer = "http://localhost:5800";
+const devProxyServer = "http://127.0.0.1:5800";
 
 // https://vitejs.dev/config/
 // @ts-ignore

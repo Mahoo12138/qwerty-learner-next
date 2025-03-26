@@ -4,7 +4,7 @@ import range from '@/utils/range'
 import { Listbox, Transition } from '@headlessui/react'
 import { useAtom, useAtomValue } from 'jotai'
 import { Fragment } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink } from '@tanstack/react-router'
 import IconCheck from '~icons/tabler/check'
 
 export const DictChapterButton = () => {

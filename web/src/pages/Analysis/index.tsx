@@ -9,7 +9,7 @@ import dayjs from 'dayjs'
 import { useAtom } from 'jotai'
 import { useCallback } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import IconX from '~icons/tabler/x'
 
 const Analysis = () => {

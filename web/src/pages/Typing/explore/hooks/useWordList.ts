@@ -26,7 +26,7 @@ export function useWordList(): UseWordListResult {
   const [, setDictList] = useAtom(publicDictListAtom);
   const currentDictInfo = useAtomValue(currentDictInfoAtom);
   const [currentChapter, setCurrentChapter] = useAtom(currentChapterAtom);
-  const { isReviewMode, reviewRecord } = useAtomValue(reviewModeInfoAtom);
+  // const { isReviewMode, reviewRecord } = useAtomValue(reviewModeInfoAtom);
 
   // Reset current chapter to 0, when currentChapter is greater than chapterCount.
   if (currentDictInfo && currentChapter >= currentDictInfo.chapterCount) {
@@ -50,11 +50,12 @@ export function useWordList(): UseWordListResult {
     enabled: !!currentDictId,
   });
 
+
   const words: WordWithIndex[] = useMemo(() => {
     let newWords: Word[];
-    if (isReviewMode) {
-      newWords = reviewRecord?.words ?? [];
-    } else if (wordList) {
+    console.log('newWords');
+
+    if (wordList) {
       newWords = wordList.slice(
         currentChapter * CHAPTER_LENGTH,
         (currentChapter + 1) * CHAPTER_LENGTH
@@ -63,7 +64,6 @@ export function useWordList(): UseWordListResult {
       newWords = [];
     }
 
-    // 记录原始 index, 并对 word.trans 做兜底处理
     return newWords.map((word, index) => {
       let trans: string[];
       if (Array.isArray(word.trans)) {
@@ -83,7 +83,7 @@ export function useWordList(): UseWordListResult {
         trans,
       };
     });
-  }, [isReviewMode, wordList, reviewRecord?.words, currentChapter]);
+  }, [wordList, currentChapter]);
 
   useEffect(() => {
     console.log("dictList", dictList);

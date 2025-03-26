@@ -1,6 +1,6 @@
 import { recordErrorBookAction } from '@/utils'
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from '@tanstack/react-router'
 import IconBook from '~icons/bxs/book'
 
 const ErrorBookButton = () => {

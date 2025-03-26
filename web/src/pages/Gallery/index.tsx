@@ -9,7 +9,7 @@ import groupBy from '@/utils/groupBy'
 import { useAtomValue } from 'jotai'
 import type React from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from '@tanstack/react-router'
 
 const GalleryPage: React.FC = () => {
   const currentDictInfo = useAtomValue(currentDictInfoAtom)

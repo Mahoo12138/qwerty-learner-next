@@ -5,18 +5,19 @@ import {
   TypingStateActionType,
   initialState,
   typingReducer,
-} from "./store";
+} from "../store";
 import Layout from "@/components/Layout";
 import Header from "@/components/Header";
-import Speed from "./components/Speed";
+import Speed from "../components/Speed";
 import { DictChapterButton } from "./components/DictChapterButton";
 import WordPanel from "./components/WordPanel";
 import { currentDictIdAtom } from "@/store";
 import { useAtom } from "jotai";
 import { isLegal } from "@/utils";
 import { useWordList } from "./hooks/useWordList";
-import StartButton from "./components/StartButton";
-import Switcher from "./components/Switcher";
+import StartButton from "../components/StartButton";
+import Switcher from "../components/Switcher";
+import ResultScreen from "../components/ResultScreen";
 
 const Explore: React.FC = () => {
   const [state, dispatch] = useImmerReducer(
@@ -28,6 +29,8 @@ const Explore: React.FC = () => {
   const [currentDictId, setCurrentDictId] = useAtom(currentDictIdAtom);
 
   const { words } = useWordList();
+  console.log("words", words);
+
 
   const skipWord = useCallback(() => {
     dispatch({ type: TypingStateActionType.SKIP_WORD });
@@ -44,14 +47,13 @@ const Explore: React.FC = () => {
 
   useEffect(() => {
     // setTimeout(() => { setIsLoading(false) }, 2000)
-    console.log("state.chapterData", state.chapterData);
+    // console.log("state.chapterData", state.chapterData);
     state.chapterData.words?.length > 0
       ? setIsLoading(false)
       : setIsLoading(true);
   }, [state.chapterData.words]);
 
   useEffect(() => {
-    console.log("words", words);
     if (words !== undefined) {
       const initialIndex = 0;
 
@@ -116,6 +118,8 @@ const Explore: React.FC = () => {
           </div>
         </div>
       </Layout>
+      {state.isFinished && <ResultScreen />}
+      {/* <ResultScreen /> */}
     </TypingContext.Provider>
   );
 };

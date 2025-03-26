@@ -4,7 +4,6 @@ import {
   DISMISS_START_CARD_DATE_KEY,
   defaultFontSizeConfig,
 } from "@/constants";
-import { idDictionaryMap } from "@/resources/dictionary";
 import {
   correctSoundResources,
   keySoundResources,
