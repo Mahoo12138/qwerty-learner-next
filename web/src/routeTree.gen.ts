@@ -15,6 +15,8 @@ import { Route as PublicRouteImport } from './routes/_public/route'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexImport } from './routes/_authenticated/index'
 import { Route as PublicExploreIndexImport } from './routes/_public/explore/index'
+import { Route as PublicAuthSignUpImport } from './routes/_public/auth/sign-up'
+import { Route as PublicAuthSignInImport } from './routes/_public/auth/sign-in'
 
 // Create/Update Routes
 
@@ -37,6 +39,18 @@ const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
 const PublicExploreIndexRoute = PublicExploreIndexImport.update({
   id: '/explore/',
   path: '/explore/',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+
+const PublicAuthSignUpRoute = PublicAuthSignUpImport.update({
+  id: '/auth/sign-up',
+  path: '/auth/sign-up',
+  getParentRoute: () => PublicRouteRoute,
+} as any)
+
+const PublicAuthSignInRoute = PublicAuthSignInImport.update({
+  id: '/auth/sign-in',
+  path: '/auth/sign-in',
   getParentRoute: () => PublicRouteRoute,
 } as any)
 
@@ -65,6 +79,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexImport
       parentRoute: typeof AuthenticatedRouteImport
     }
+    '/_public/auth/sign-in': {
+      id: '/_public/auth/sign-in'
+      path: '/auth/sign-in'
+      fullPath: '/auth/sign-in'
+      preLoaderRoute: typeof PublicAuthSignInImport
+      parentRoute: typeof PublicRouteImport
+    }
+    '/_public/auth/sign-up': {
+      id: '/_public/auth/sign-up'
+      path: '/auth/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof PublicAuthSignUpImport
+      parentRoute: typeof PublicRouteImport
+    }
     '/_public/explore/': {
       id: '/_public/explore/'
       path: '/explore'
@@ -89,10 +117,14 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface PublicRouteRouteChildren {
+  PublicAuthSignInRoute: typeof PublicAuthSignInRoute
+  PublicAuthSignUpRoute: typeof PublicAuthSignUpRoute
   PublicExploreIndexRoute: typeof PublicExploreIndexRoute
 }
 
 const PublicRouteRouteChildren: PublicRouteRouteChildren = {
+  PublicAuthSignInRoute: PublicAuthSignInRoute,
+  PublicAuthSignUpRoute: PublicAuthSignUpRoute,
   PublicExploreIndexRoute: PublicExploreIndexRoute,
 }
 
@@ -103,12 +135,16 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '': typeof PublicRouteRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
+  '/auth/sign-in': typeof PublicAuthSignInRoute
+  '/auth/sign-up': typeof PublicAuthSignUpRoute
   '/explore': typeof PublicExploreIndexRoute
 }
 
 export interface FileRoutesByTo {
   '': typeof PublicRouteRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
+  '/auth/sign-in': typeof PublicAuthSignInRoute
+  '/auth/sign-up': typeof PublicAuthSignUpRoute
   '/explore': typeof PublicExploreIndexRoute
 }
 
@@ -117,19 +153,23 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_public/auth/sign-in': typeof PublicAuthSignInRoute
+  '/_public/auth/sign-up': typeof PublicAuthSignUpRoute
   '/_public/explore/': typeof PublicExploreIndexRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '' | '/' | '/explore'
+  fullPaths: '' | '/' | '/auth/sign-in' | '/auth/sign-up' | '/explore'
   fileRoutesByTo: FileRoutesByTo
-  to: '' | '/' | '/explore'
+  to: '' | '/' | '/auth/sign-in' | '/auth/sign-up' | '/explore'
   id:
     | '__root__'
     | '/_authenticated'
     | '/_public'
     | '/_authenticated/'
+    | '/_public/auth/sign-in'
+    | '/_public/auth/sign-up'
     | '/_public/explore/'
   fileRoutesById: FileRoutesById
 }
@@ -167,12 +207,22 @@ export const routeTree = rootRoute
     "/_public": {
       "filePath": "_public/route.tsx",
       "children": [
+        "/_public/auth/sign-in",
+        "/_public/auth/sign-up",
         "/_public/explore/"
       ]
     },
     "/_authenticated/": {
       "filePath": "_authenticated/index.tsx",
       "parent": "/_authenticated"
+    },
+    "/_public/auth/sign-in": {
+      "filePath": "_public/auth/sign-in.tsx",
+      "parent": "/_public"
+    },
+    "/_public/auth/sign-up": {
+      "filePath": "_public/auth/sign-up.tsx",
+      "parent": "/_public"
     },
     "/_public/explore/": {
       "filePath": "_public/explore/index.tsx",
