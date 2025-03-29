@@ -7,6 +7,7 @@ import jotaiReactRefresh from 'jotai/babel/plugin-react-refresh'
 import path from 'node:path'
 import { visualizer } from 'rollup-plugin-visualizer'
 import Icons from 'unplugin-icons/vite'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import type { PluginOption } from 'vite'
 
@@ -24,6 +25,7 @@ export default defineConfig(async ({ mode }) => {
       TanStackRouterVite(),
       react({ babel: { plugins: [jotaiDebugLabel, jotaiReactRefresh] } }),
       visualizer() as PluginOption,
+      tailwindcss(),
       Icons({
         compiler: 'jsx',
         jsx: 'react',
