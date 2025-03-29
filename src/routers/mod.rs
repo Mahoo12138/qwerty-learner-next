@@ -6,9 +6,10 @@ use salvo::{
     prelude::{CatchPanic, Logger, OpenApi, Scalar},
     Router,
 };
+use user::post_signup;
 use word::{delete_word, get_builtin_dict_words, get_words, post_add_word, put_update_word};
 use word_records::WordRecordRouter;
-
+use crate::routers::system_settings::get_system_settings;
 use self::{
     demo::hello,
     user::{delete_user, get_users, post_add_user, post_login, put_update_user},
@@ -20,12 +21,15 @@ mod static_routers;
 pub mod user;
 pub mod word;
 pub mod word_records;
+mod system_settings;
 
 pub fn router() -> Router {
     let mut no_auth_routers = vec![
         Router::with_path("/api/login").post(post_login),
-        Router::with_path("/api/dict/public").get(get_builtin_dicts),
-        Router::with_path("/api/word/public").get(get_builtin_dict_words),
+        Router::with_path("/api/signup").post(post_signup),
+        Router::with_path("/api/system-settings").get(get_system_settings),
+        Router::with_path("/api/dicts/public").get(get_builtin_dicts),
+        Router::with_path("/api/words/public").get(get_builtin_dict_words),
     ];
 
     let _cors_handler = cors_middleware();

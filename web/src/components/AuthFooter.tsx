@@ -2,25 +2,19 @@
 import { cn } from "@/utils/ui";
 import AppearanceSelect from "./AppearanceSelect";
 import LocaleSelect from "./LocaleSelect";
-import { locale } from "dayjs";
+import { useGlobalStore } from "@/store/global";
 
 interface Props {
   className?: string;
 }
-
-const workspaceStore = {
-  state: {
-    locale: "en",
-    appearance: "light",
-  },
-};
 const AuthFooter = ({ className }: Props) => {
+  const { locale, appearance, setLocale, setAppearance } = useGlobalStore();
   const handleLocaleSelectChange = (locale: Locale) => {
-    // workspaceStore.state.setPartial({ locale });
+    setLocale(locale);
   };
 
   const handleAppearanceSelectChange = (appearance: Appearance) => {
-    // workspaceStore.state.setPartial({ appearance });
+    setAppearance(appearance);
   };
 
   return (
@@ -30,12 +24,9 @@ const AuthFooter = ({ className }: Props) => {
         className
       )}
     >
-      <LocaleSelect
-        value={workspaceStore.state.locale}
-        onChange={handleLocaleSelectChange}
-      />
+      <LocaleSelect value={locale} onChange={handleLocaleSelectChange} />
       <AppearanceSelect
-        value={workspaceStore.state.appearance as Appearance}
+        value={appearance as Appearance}
         onChange={handleAppearanceSelectChange}
       />
     </div>

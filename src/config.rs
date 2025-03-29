@@ -21,7 +21,7 @@ pub struct Server {
 #[derive(Debug, Deserialize)]
 pub struct DataBase {
     pub database_url: String,
-    pub costom_dict_db_url: String,
+    pub custom_dict_db_url: String,
     pub internal_dict_db_url: String,
 }
 

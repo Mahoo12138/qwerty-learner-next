@@ -14,7 +14,6 @@ mod app_writer;
 mod config;
 mod db;
 mod dtos;
-mod entities;
 mod middleware;
 mod routers;
 mod services;

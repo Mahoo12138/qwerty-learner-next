@@ -7,7 +7,7 @@ server:
 
 database:
   database_url: "sqlite:data/core.db"
-  costom_dict_db_url: "sqlite:data/costom_dict.db"
+  custom_dict_db_url: "sqlite:data/custom_dict.db"
   internal_dict_db_url: "sqlite:data/internal_dict.db"
 
 jwt:

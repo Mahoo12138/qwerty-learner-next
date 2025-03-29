@@ -1,12 +1,12 @@
+use chrono::Utc;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, Set};
+use uuid::Uuid;
+use entity::{prelude::WordRecords, word_records};
 use crate::{
     app_writer::AppResult,
     db::DB,
     dtos::word_record::{WordRecordAddRequest, WordRecordResponse},
-    entities::{prelude::WordRecords, word_records},
 };
-use chrono::Utc;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, Set};
-use uuid::Uuid;
 
 pub async fn add_word_record(
     req: WordRecordAddRequest,

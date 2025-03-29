@@ -3,6 +3,7 @@
 }
 
 @keyframes shake {
+
   10%,
   90% {
     transform: translate3d(-1px, 0, 0);
@@ -32,13 +33,15 @@
   transform: translateY(calc(-50% - 23px));
   right: -55px;
   cursor: pointer;
-  fill: theme('colors.gray.600');
+  fill: var('colors.gray.600');
 }
+
 .word-sound .prefix__icon {
   width: 40px;
   height: 40px;
 }
+
 .dark .word-sound {
-  fill: theme('colors.gray.50');
+  fill: var('colors.gray.50');
   opacity: 0.8;
 }

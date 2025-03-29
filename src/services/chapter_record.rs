@@ -2,8 +2,8 @@ use crate::{
     app_writer::AppResult,
     db::DB,
     dtos::chapter_record::{ChapterRecordAddRequest, ChapterRecordResponse},
-    entities::{chapter_records, prelude::ChapterRecords},
 };
+use entity::{chapter_records, prelude::ChapterRecords};
 use chrono::Utc;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;

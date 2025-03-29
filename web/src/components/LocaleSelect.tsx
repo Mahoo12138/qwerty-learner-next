@@ -1,8 +1,16 @@
 
-import { RadioGroup } from '@headlessui/react'
 
-// import { GlobeIcon } from "lucide-react";
 import { FC } from "react";
+import { GlobeIcon } from 'lucide-react';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { locales } from "@/i18n";
 
 interface Props {
@@ -19,33 +27,36 @@ const LocaleSelect: FC<Props> = (props: Props) => {
   };
 
   return (
-    <RadioGroup
-      className={`!min-w-[10rem] w-auto whitespace-nowrap ${className ?? ""}`}
-      // startDecorator={<GlobeIcon className="w-4 h-auto" />}
+    <Select
+      onValueChange={(value) => handleSelectChange(value as Locale)}
       value={value}
-      onChange={(value) => handleSelectChange(value as Locale)}
     >
-      {locales.map((locale) => {
-        try {
-          const languageName = new Intl.DisplayNames([locale], { type: "language" }).of(locale);
+      <SelectTrigger className="w-[180px]">
+      <GlobeIcon className="w-4 h-auto" />
+        <SelectValue placeholder="Language" />
+      </SelectTrigger>
+      <SelectContent
+        className={`!min-w-[10rem] w-auto whitespace-nowrap ${className ?? ""}`}
+      >
+        {locales.map((locale) => {
+          const languageName = new Intl.DisplayNames([locale], {
+            type: "language",
+          }).of(locale);
           if (languageName) {
             return (
-              <RadioGroup.Option key={locale} value={locale}>
-                {languageName.charAt(0).toUpperCase() + languageName.slice(1)}
-              </RadioGroup.Option>
+              <SelectItem key={locale} value={locale}>
+                 {languageName.charAt(0).toUpperCase() + languageName.slice(1)}
+              </SelectItem>
             );
           }
-        } catch (error) {
-          // do nth
-        }
-
-        return (
-          <RadioGroup.Option key={locale} value={locale}>
-            {locale}
-          </RadioGroup.Option>
-        );
-      })}
-    </RadioGroup>
+          return (
+            <SelectItem key={locale} value={locale}>
+              {locale}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 };
 

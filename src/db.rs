@@ -21,7 +21,7 @@ pub async fn init_db_conn() {
     .await;
     CUSTOM_DICT_DB
         .get_or_init(|| async {
-            let mut opt = ConnectOptions::new(CFG.database.costom_dict_db_url.to_owned());
+            let mut opt = ConnectOptions::new(CFG.database.custom_dict_db_url.to_owned());
             opt.max_connections(1000)
                 .min_connections(5)
                 .connect_timeout(Duration::from_secs(8))

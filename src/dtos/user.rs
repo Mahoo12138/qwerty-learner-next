@@ -15,6 +15,12 @@ pub struct UserLoginRequest {
     pub password: String,
 }
 
+#[derive(Debug, Deserialize, ToSchema, Default)]
+pub struct UserSignupRequest {
+    pub username: String,
+    pub password: String,
+}
+
 #[derive(Debug, Deserialize,Extractible,ToSchema, Default)]
 #[salvo(extract(default_source(from = "body", parse = "json")))]
 pub struct UserUpdateRequest {

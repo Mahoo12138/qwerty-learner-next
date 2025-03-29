@@ -1,5 +1,6 @@
+use crate::dtos::user::UserSignupRequest;
 use crate::{
-    app_writer::ErrorResponseBuilder,
+    // app_writer::ErrorResponseBuilder,
     app_writer::{AppResult, AppWriter},
     dtos::user::{
         UserAddRequest, UserLoginRequest, UserLoginResponse, UserResponse, UserUpdateRequest,
@@ -15,19 +16,29 @@ use salvo::{
 };
 
 #[endpoint(tags("auth"))]
-pub async fn post_login(req: JsonBody<UserLoginRequest>, res: &mut Response) {
+pub async fn post_login(req: JsonBody<UserLoginRequest>, res: &mut Response) -> AppWriter<UserLoginResponse> {
     let result: AppResult<UserLoginResponse> = user::login(req.0).await;
     match result {
-        Ok(data) => {
+        Ok(ref data) => {
             let jwt_token = data.token.clone();
             let cookie = Cookie::build(("jwt_token", jwt_token))
                 .path("/")
                 .http_only(true)
                 .build();
             res.add_cookie(cookie);
+            AppWriter(result)
         }
-        Err(e) => ErrorResponseBuilder::with_err(e).into_response(res),
+        Err(e) => {
+            // ErrorResponseBuilder::with_err(e).into_response(res);
+            AppWriter(Err(e))
+        }
     }
+}
+
+#[endpoint(tags("auth"))]
+pub async fn post_signup(req: JsonBody<UserSignupRequest>) -> AppWriter<UserResponse> {
+    let result = user::signup(req.0).await;
+    AppWriter(result)
 }
 
 #[endpoint(tags("users"))]

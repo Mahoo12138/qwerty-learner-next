@@ -2,8 +2,8 @@ use crate::{
     app_writer::AppResult,
     db::INTERNAL_DICT_DB,
     dtos::dict::{DictAddRequest, DictResponse, DictUpdateRequest},
-    entities::{dicts, prelude::Dicts},
 };
+use entity::{dicts, prelude::Dicts};
 use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
