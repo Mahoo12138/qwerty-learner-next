@@ -1,3 +1,6 @@
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use uuid::Uuid;
+use entity::{prelude::Users, users};
 use crate::{
     app_writer::AppResult,
     db::DB,
@@ -5,13 +8,10 @@ use crate::{
         UserAddRequest, UserLoginRequest, UserLoginResponse, UserResponse, UserSignupRequest,
         UserUpdateRequest,
     },
-    entities::{prelude::Users, users},
+
     middleware::jwt::get_token,
     utils::rand_utils,
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
-use uuid::Uuid;
-
 pub async fn signup(req: UserSignupRequest) -> AppResult<UserResponse> {
     let add_req = UserAddRequest {
         username: req.username,

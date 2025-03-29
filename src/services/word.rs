@@ -1,12 +1,12 @@
+use chrono::Utc;
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use uuid::Uuid;
+use entity::{prelude::Words, words};
 use crate::{
     app_writer::AppResult,
     db::INTERNAL_DICT_DB,
     dtos::word::{WordAddRequest, WordResponse, WordUpdateRequest},
-    entities::{prelude::Words, words},
 };
-use chrono::Utc;
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
-use uuid::Uuid;
 
 use super::dict::{check_dict_permission, check_dict_public};
 

@@ -1,8 +1,8 @@
 use sea_orm::EntityTrait;
+use entity::prelude::SystemSettings;
 use crate::app_writer::AppResult;
 use crate::db::DB;
 use crate::dtos::system_settings::SettingResponse;
-use crate::entities::prelude::SystemSettings;
 
 
 
