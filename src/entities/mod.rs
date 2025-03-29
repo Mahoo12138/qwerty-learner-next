@@ -4,7 +4,7 @@ pub mod prelude;
 
 pub mod users;
 pub mod user_setting;
-pub mod system_setting;
+pub mod system_settings;
 
 pub mod word_records;
 pub mod chapter_records;
