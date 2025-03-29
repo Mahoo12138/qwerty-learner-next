@@ -13,6 +13,7 @@ use salvo::{
     oapi::extract::{JsonBody, PathParam},
     Request, Response,
 };
+use crate::dtos::user::UserSignupRequest;
 
 #[endpoint(tags("auth"))]
 pub async fn post_login(req: JsonBody<UserLoginRequest>, res: &mut Response) {
@@ -28,6 +29,12 @@ pub async fn post_login(req: JsonBody<UserLoginRequest>, res: &mut Response) {
         }
         Err(e) => ErrorResponseBuilder::with_err(e).into_response(res),
     }
+}
+
+#[endpoint(tags("auth"))]
+pub async fn post_signup(req: JsonBody<UserSignupRequest>) -> AppWriter<UserResponse> {
+    let result = user::signup(req.0).await;
+    AppWriter(result)
 }
 
 #[endpoint(tags("users"))]

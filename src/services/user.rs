@@ -2,7 +2,8 @@ use crate::{
     app_writer::AppResult,
     db::DB,
     dtos::user::{
-        UserAddRequest, UserLoginRequest, UserLoginResponse, UserResponse, UserUpdateRequest,
+        UserAddRequest, UserLoginRequest, UserLoginResponse, UserResponse, UserSignupRequest,
+        UserUpdateRequest,
     },
     entities::{prelude::Users, users},
     middleware::jwt::get_token,
@@ -10,6 +11,14 @@ use crate::{
 };
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
+
+pub async fn signup(req: UserSignupRequest) -> AppResult<UserResponse> {
+    let add_req = UserAddRequest {
+        username: req.username,
+        password: req.password,
+    };
+    add_user(add_req).await
+}
 
 pub async fn add_user(req: UserAddRequest) -> AppResult<UserResponse> {
     let db = DB.get().ok_or(anyhow::anyhow!("数据库连接失败。"))?;

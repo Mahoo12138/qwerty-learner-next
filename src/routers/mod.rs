@@ -6,6 +6,7 @@ use salvo::{
     prelude::{CatchPanic, Logger, OpenApi, Scalar},
     Router,
 };
+use user::post_signup;
 use word::{delete_word, get_builtin_dict_words, get_words, post_add_word, put_update_word};
 use word_records::WordRecordRouter;
 
@@ -24,6 +25,7 @@ pub mod word_records;
 pub fn router() -> Router {
     let mut no_auth_routers = vec![
         Router::with_path("/api/login").post(post_login),
+        Router::with_path("/api/signup").post(post_signup),
         Router::with_path("/api/dict/public").get(get_builtin_dicts),
         Router::with_path("/api/word/public").get(get_builtin_dict_words),
     ];
