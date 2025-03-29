@@ -1,4 +1,5 @@
 import AuthFooter from '@/components/AuthFooter';
+import PasswordSignInForm from '@/components/PasswordSignInForm';
 import { useTranslate } from "@/utils/i18n";
 import { Link } from '@tanstack/react-router';
 // import { useEffect } from "react";
@@ -11,12 +12,12 @@ const SignIn = () => {
       <div className="w-full py-4 grow flex flex-col justify-center items-center">
         <div className="w-full flex flex-row justify-center items-center mb-6">
           <img
-            className="h-14 w-auto rounded-full shadow"
+            className="h-14 w-auto"
             // src={workspaceGeneralSetting.customProfile?.logoUrl || "/logo.webp"}
             src={"/logo.webp"}
             alt=""
           />
-          <p className="ml-2 text-5xl text-black opacity-80 dark:text-gray-200">
+          <p className="pb-2 ml-2 text-5xl text-black opacity-80 dark:text-gray-200">
             {/* {workspaceGeneralSetting.customProfile?.title || "Qwerty"} */}
             {"Qwerty"}
           </p>
@@ -28,7 +29,7 @@ const SignIn = () => {
             Password auth is not allowed.
           </p>
         )} */}
-        {/* <PasswordSignInForm /> */}
+        <PasswordSignInForm />
         {/* {!workspaceGeneralSetting.disallowUserRegistration &&
           !workspaceGeneralSetting.disallowPasswordAuth && (
             <p className="w-full mt-4 text-sm">

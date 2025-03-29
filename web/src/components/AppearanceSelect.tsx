@@ -1,6 +1,12 @@
 import { SunIcon, MoonIcon, SmileIcon } from "lucide-react";
 import { FC } from "react";
-import { RadioGroup } from '@headlessui/react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { useTranslate } from "@/utils/i18n";
 
@@ -32,22 +38,32 @@ const AppearanceSelect: FC<Props> = (props: Props) => {
   };
 
   return (
-    <RadioGroup
-      className={`!min-w-[10rem] w-auto whitespace-nowrap ${className ?? ""}`}
-      value={value}
-      onChange={(appearance) => {
+    <Select
+      onValueChange={(appearance) => {
         if (appearance) {
-          handleSelectChange(appearance);
+          handleSelectChange(appearance as Appearance);
         }
       }}
-      // startDecorator={getPrefixIcon(value)}
+      value={value}
     >
-      {appearanceList.map((item) => (
-        <RadioGroup.Option key={item} value={item} className="whitespace-nowrap">
-          {t(`setting.appearance-option.${item}`)}
-        </RadioGroup.Option>
-      ))}
-    </RadioGroup>
+      <SelectTrigger className="w-[180px] text-foreground">
+        {getPrefixIcon(value)}
+        <SelectValue placeholder="Appearance" />
+      </SelectTrigger>
+      <SelectContent className='bg-background'>
+        {appearanceList.map((appearance) => {
+          return (
+            <SelectItem
+              key={appearance}
+              value={appearance}
+              className="whitespace-nowrap hover:bg-accent hover:text-accent-foreground"
+            >
+              {t(`setting.appearance-option.${appearance}`)}
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
   );
 };
 

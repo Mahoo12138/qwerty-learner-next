@@ -185,7 +185,7 @@ const SignUp = () => {
                 type="submit"
                 color="primary"
                 size="lg"
-                // fullWidth
+                className="w-full"
                 disabled={actionBtnLoadingState.isLoading}
                 onClick={handleSignUpButtonClick}
               >
