@@ -1,7 +1,5 @@
 /target
 /migration/target
 /logs
-.idea/workspace.xml
-.idea/prettier.xml
-.idea/vcs.xml
-.idea/inspectionProfiles/Project_Default.xml
+.idea
+
