@@ -12,6 +12,9 @@ type Server struct {
 	Sqlite Sqlite          `mapstructure:"sqlite" json:"sqlite" yaml:"sqlite"`
 	DBList []SpecializedDB `mapstructure:"db-list" json:"db-list" yaml:"db-list"`
 
+	// oss
+	Local Local `mapstructure:"local" json:"local" yaml:"local"`
+
 	// 跨域配置
 	Cors CORS `mapstructure:"cors" json:"cors" yaml:"cors"`
 }

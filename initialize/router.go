@@ -6,7 +6,7 @@ import (
 
 	//"qwerty-learner/docs"
 	"qwerty-learner/global"
-	"qwerty-learner/middleware"
+	//"qwerty-learner/middleware"
 	"qwerty-learner/router"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +42,7 @@ func Routers() *gin.Engine {
 	}
 
 	systemRouter := router.RouterGroupApp.System
-	businessRouter := router.RouterGroupApp.Example
+	//businessRouter := router.RouterGroupApp.Example
 	// 如果想要不使用nginx代理前端网页，可以修改 web/.env.production 下的
 	// VUE_APP_BASE_API = /
 	// VUE_APP_BASE_PATH = http://localhost
@@ -56,15 +56,15 @@ func Routers() *gin.Engine {
 	// Router.Use(middleware.Cors()) // 直接放行全部跨域请求
 	// Router.Use(middleware.CorsByRules()) // 按照配置的规则放行跨域请求
 	// global.QL_LOG.Info("use middleware cors")
-	docs.SwaggerInfo.BasePath = global.QL_CONFIG.System.RouterPrefix
+	//docs.SwaggerInfo.BasePath = global.QL_CONFIG.System.RouterPrefix
 	Router.GET(global.QL_CONFIG.System.RouterPrefix+"/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	global.QL_LOG.Info("register swagger handler")
 	// 方便统一添加路由组前缀 多服务器上线使用
 
 	PublicGroup := Router.Group(global.QL_CONFIG.System.RouterPrefix)
-	PrivateGroup := Router.Group(global.QL_CONFIG.System.RouterPrefix)
+	//PrivateGroup := Router.Group(global.QL_CONFIG.System.RouterPrefix)
 
-	PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
+	//PrivateGroup.Use(middleware.JWTAuth()).Use(middleware.CasbinHandler())
 
 	{
 		// 健康监测
@@ -74,7 +74,7 @@ func Routers() *gin.Engine {
 	}
 	{
 		systemRouter.InitBaseRouter(PublicGroup) // 注册基础功能路由 不做鉴权
-		systemRouter.InitInitRouter(PublicGroup) // 自动初始化相关
+		//systemRouter.InitInitRouter(PublicGroup) // 自动初始化相关
 	}
 
 	//{
@@ -99,11 +99,11 @@ func Routers() *gin.Engine {
 	//
 	//}
 
-	//插件路由安装
-	InstallPlugin(PrivateGroup, PublicGroup, Router)
-
-	// 注册业务路由
-	initBizRouter(PrivateGroup, PublicGroup)
+	////插件路由安装
+	//InstallPlugin(PrivateGroup, PublicGroup, Router)
+	//
+	//// 注册业务路由
+	//initBizRouter(PrivateGroup, PublicGroup)
 
 	global.QL_ROUTERS = Router.Routes()
 

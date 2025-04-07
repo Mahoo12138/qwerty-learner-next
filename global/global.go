@@ -7,7 +7,7 @@ import (
 
 	"github.com/songzhibin97/gkit/cache/local_cache"
 
-	// "golang.org/x/sync/singleflight"
+	"golang.org/x/sync/singleflight"
 
 	"go.uber.org/zap"
 
@@ -25,9 +25,9 @@ var (
 	QL_VP     *viper.Viper
 	QL_LOG    *zap.Logger
 	// QL_Timer               timer.Timer = timer.NewTimerTask()
-	// QL_Concurrency_Control             = &singleflight.Group{}
-	QL_ROUTERS       gin.RoutesInfo
-	QL_ACTIVE_DBNAME *string
-	BlackCache       local_cache.Cache
-	lock             sync.RWMutex
+	QL_Concurrency_Control = &singleflight.Group{}
+	QL_ROUTERS             gin.RoutesInfo
+	QL_ACTIVE_DBNAME       *string
+	BlackCache             local_cache.Cache
+	lock                   sync.RWMutex
 )
