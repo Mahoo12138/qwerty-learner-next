@@ -9,15 +9,19 @@ import (
 )
 
 func main() {
-	global.QL_VP = core.Viper() // 初始化 Viper
-	global.QL_LOG = core.Zap()  // 初始化 zap 日志库
+	// 初始化 Viper
+	global.QL_VP = core.Viper()
+	// 初始化 zap 日志库
+	global.QL_LOG = core.Zap()
 	zap.ReplaceGlobals(global.QL_LOG)
-	global.QL_DB = initialize.Gorm() // gorm 连接数据库
+	// gorm 连接数据库
+	global.QL_DB = initialize.Gorm()
 
 	initialize.DBList()
 
 	if global.QL_DB != nil {
-		initialize.RegisterTables() // 初始化表
+		// 初始化表
+		initialize.RegisterTables()
 		// 程序结束前关闭数据库链接
 		db, _ := global.QL_DB.DB()
 		defer db.Close()
