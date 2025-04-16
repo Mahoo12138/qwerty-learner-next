@@ -69,5 +69,5 @@ func LoadAll() {
 	}
 	for i := 0; i < len(data); i++ {
 		global.BlackCache.SetDefault(data[i], struct{}{})
-	} // jwt黑名单 加入 BlackCache 中
+	} // jwt 黑名单 加入 BlackCache 中
 }

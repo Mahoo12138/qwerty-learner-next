@@ -4,7 +4,7 @@ type ServiceGroup struct {
 	JwtService
 	//ApiService
 	//MenuService
-	//UserService
+	UserService
 	//CasbinService
 	//InitDBService
 	//AutoCodeService

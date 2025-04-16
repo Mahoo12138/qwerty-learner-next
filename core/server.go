@@ -18,7 +18,7 @@ type server interface {
 
 func RunWindowsServer() {
 
-	// 从db加载jwt数据
+	// 从 db 加载 jwt 数据
 	if global.QL_DB != nil {
 		system.LoadAll()
 	}
@@ -32,8 +32,8 @@ func RunWindowsServer() {
 
 	fmt.Printf(`
 	默认文档地址: http://127.0.0.1%s/swagger/index.html
-	默认前端地址: http://127.0.0.1:8080
-`, address)
+	默认前端地址: http://127.0.0.1%s
+`, address, address)
 	global.QL_LOG.Error(s.ListenAndServe().Error())
 }
 

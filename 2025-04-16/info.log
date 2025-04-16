@@ -1,0 +1,12 @@
+2025-04-16 21:58:41.001	info	register swagger handler
+2025-04-16 21:58:41.013	info	router register success
+2025-04-16 21:58:41.013	info	server run success on 	{"address": ":8888"}
+2025-04-16 22:04:19.670	info	register swagger handler
+2025-04-16 22:04:19.683	info	router register success
+2025-04-16 22:04:19.683	info	server run success on 	{"address": ":8888"}
+2025-04-16 22:05:16.376	info	register swagger handler
+2025-04-16 22:05:16.387	info	router register success
+2025-04-16 22:05:16.387	info	server run success on 	{"address": ":8888"}
+2025-04-16 22:33:59.031	info	register swagger handler
+2025-04-16 22:33:59.045	info	router register success
+2025-04-16 22:33:59.045	info	server run success on 	{"address": ":8888"}
