@@ -4,14 +4,12 @@ import (
 	common "qwerty-learner/model/common/request"
 )
 
-// Register User register structure
-type Register struct {
+// SignUp User register structure
+type SignUp struct {
 	Username string `json:"userName" example:"用户名"`
 	Password string `json:"passWord" example:"密码"`
-	NickName string `json:"nickName" example:"昵称"`
 	Avatar   string `json:"avatar" example:"头像"`
 	Role     string `json:"role" example:"用户角色"`
-	Enable   int    `json:"enable" example:"是否启用"`
 	Email    string `json:"email" example:"电子邮箱"`
 }
 
@@ -42,12 +40,12 @@ type SetUserAuthorities struct {
 }
 
 type ChangeUserInfo struct {
-	ID       uint   `gorm:"primarykey"`                                                                        // 主键ID
-	Phone    string `json:"phone"  gorm:"comment:用户手机号"`                                                       // 用户手机号
-	Role     string `json:"role" gorm:"-"`                                                                     // 角色
+	ID       uint   `gorm:"primarykey"`                                                                            // 主键ID
+	Phone    string `json:"phone"  gorm:"comment:用户手机号"`                                                      // 用户手机号
+	Role     string `json:"role" gorm:"-"`                                                                         // 角色
 	Email    string `json:"email"  gorm:"comment:用户邮箱"`                                                        // 用户邮箱
 	Avatar   string `json:"avatar" gorm:"default:https://qmplusimg.henrongyi.top/gva_header.jpg;comment:用户头像"` // 用户头像
-	SideMode string `json:"sideMode"  gorm:"comment:用户侧边主题"`                                                   // 用户侧边主题
+	SideMode string `json:"sideMode"  gorm:"comment:用户侧边主题"`                                                 // 用户侧边主题
 	Enable   int    `json:"enable" gorm:"comment:冻结用户"`                                                        //冻结用户
 }
 
