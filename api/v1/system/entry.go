@@ -38,7 +38,7 @@ var (
 	// authorityBtnService     = service.ServiceGroupApp.SystemServiceGroup.AuthorityBtnService
 	// systemConfigService     = service.ServiceGroupApp.SystemServiceGroup.SystemConfigService
 	// sysParamsService        = service.ServiceGroupApp.SystemServiceGroup.SysParamsService
-	// operationRecordService  = service.ServiceGroupApp.SystemServiceGroup.OperationRecordService
+	operationRecordService = service.ServiceGroupApp.SystemServiceGroup.OperationRecordService
 	// dictionaryDetailService = service.ServiceGroupApp.SystemServiceGroup.DictionaryDetailService
 	// autoCodeService         = service.ServiceGroupApp.SystemServiceGroup.AutoCodeService
 	// autoCodePluginService   = service.ServiceGroupApp.SystemServiceGroup.AutoCodePlugin

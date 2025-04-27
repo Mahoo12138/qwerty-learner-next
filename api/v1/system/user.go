@@ -1,6 +1,8 @@
 package system
 
 import (
+	"errors"
+	"io"
 	"time"
 
 	"qwerty-learner/global"
@@ -14,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (b *BaseApi) Login(c *gin.Context) {
+func (api *BaseApi) Login(c *gin.Context) {
 	var l systemReq.Login
 	err := c.ShouldBindJSON(&l)
 	key := c.ClientIP()
@@ -56,7 +58,7 @@ func (b *BaseApi) Login(c *gin.Context) {
 			response.FailWithMessage("用户被禁止登录", c)
 			return
 		}
-		b.TokenNext(c, *user)
+		api.TokenNext(c, *user)
 		return
 	}
 	// 验证码次数+1
@@ -64,25 +66,25 @@ func (b *BaseApi) Login(c *gin.Context) {
 	response.FailWithMessage("验证码错误", c)
 }
 
-func (b *BaseApi) Register(c *gin.Context) {
-	var r systemReq.Register
+func (api *BaseApi) SignUp(c *gin.Context) {
+	var r systemReq.SignUp
 	err := c.ShouldBindJSON(&r)
 	if err != nil {
+		if errors.Is(err, io.EOF) {
+			// 新增空请求体判断
+			response.FailWithMessage("请求体不能为空", c)
+			return
+		}
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	err = utils.Verify(r, utils.RegisterVerify)
+	err = utils.Verify(r, utils.SignupVerify)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	var authorities []system.SysAuthority
-	for _, v := range r.AuthorityIds {
-		authorities = append(authorities, system.SysAuthority{
-			AuthorityId: v,
-		})
-	}
-	user := &system.User{Username: r.Username, NickName: r.NickName, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: r.Enable, Phone: r.Phone, Email: r.Email}
+
+	user := &system.User{Username: r.Username, Password: r.Password, Role: "host", Email: r.Email, Enable: 1}
 	userReturn, err := userService.Register(*user)
 	if err != nil {
 		global.QL_LOG.Error("注册失败!", zap.Error(err))
@@ -90,4 +92,54 @@ func (b *BaseApi) Register(c *gin.Context) {
 		return
 	}
 	response.OkWithDetailed(systemRes.UserResponse{User: userReturn}, "注册成功", c)
+}
+
+func (api *BaseApi) TokenNext(c *gin.Context, user system.User) {
+	token, claims, err := utils.LoginToken(&user)
+	if err != nil {
+		global.QL_LOG.Error("获取 token 失败!", zap.Error(err))
+		response.FailWithMessage("获取 token 失败", c)
+		return
+	}
+	utils.SetToken(c, token, int(claims.RegisteredClaims.ExpiresAt.Unix()-time.Now().Unix()))
+	response.OkWithDetailed(systemRes.LoginResponse{
+		User:      user,
+		Token:     token,
+		ExpiresAt: claims.RegisteredClaims.ExpiresAt.Unix() * 1000,
+	}, "登录成功", c)
+}
+
+// GetUserList
+// @Tags      SysUser
+// @Summary   分页获取用户列表
+// @Security  ApiKeyAuth
+// @accept    application/json
+// @Produce   application/json
+// @Param     data  body      systemReq.GetUserList                                        true  "页码, 每页大小"
+// @Success   200   {object}  response.Response{data=response.PageResult,msg=string}  "分页获取用户列表,返回包括列表,总数,页码,每页数量"
+// @Router    /user/getUserList [post]
+func (api *BaseApi) GetUserList(c *gin.Context) {
+	var pageInfo systemReq.GetUserList
+	err := c.ShouldBindJSON(&pageInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	err = utils.Verify(pageInfo, utils.PageInfoVerify)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, err := userService.GetUserInfoList(pageInfo)
+	if err != nil {
+		global.QL_LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败", c)
+		return
+	}
+	response.OkWithDetailed(response.PageResult{
+		List:     list,
+		Total:    total,
+		Page:     pageInfo.Page,
+		PageSize: pageInfo.PageSize,
+	}, "获取成功", c)
 }

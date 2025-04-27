@@ -26,7 +26,7 @@ type BaseApi struct{}
 // @Produce   application/json
 // @Success   200  {object}  response.Response{data=systemRes.SysCaptchaResponse,msg=string}  "生成验证码,返回包括随机数id,base64,验证码长度,是否开启验证码"
 // @Router    /base/captcha [post]
-func (b *BaseApi) Captcha(c *gin.Context) {
+func (api *BaseApi) Captcha(c *gin.Context) {
 	// 判断验证码是否开启
 	openCaptcha := global.QL_CONFIG.Captcha.OpenCaptcha               // 是否开启防爆次数
 	openCaptchaTimeOut := global.QL_CONFIG.Captcha.OpenCaptchaTimeOut // 缓存超时时间
