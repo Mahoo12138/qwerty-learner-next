@@ -93,17 +93,18 @@ func GetUserUuid(c *gin.Context) uuid.UUID {
 	}
 }
 
-// GetUserAuthorityId 从Gin的Context中获取从jwt解析出来的用户角色id
-func GetUserAuthorityId(c *gin.Context) uint {
+// GetUserRole
+// 从 Gin 的 Context 中获取从 jwt 解析出来的用户角色
+func GetUserRole(c *gin.Context) string {
 	if claims, exists := c.Get("claims"); !exists {
 		if cl, err := GetClaims(c); err != nil {
-			return 0
+			return "admin"
 		} else {
-			return cl.AuthorityId
+			return cl.Role
 		}
 	} else {
 		waitUse := claims.(*systemReq.CustomClaims)
-		return waitUse.AuthorityId
+		return waitUse.Role
 	}
 }
 
@@ -139,7 +140,7 @@ func LoginToken(user system.Login) (token string, claims systemReq.CustomClaims,
 	j := NewJWT()
 	claims = j.CreateClaims(systemReq.BaseClaims{
 		ID:       user.GetUserId(),
-		NickName: user.GetNickname(),
+		Email:    user.GetUserEmail(),
 		Username: user.GetUsername(),
 	})
 	token, err = j.CreateToken(claims)
