@@ -12,7 +12,7 @@ type ServiceGroup struct {
 	//AuthorityService
 	//DictionaryService
 	//SystemConfigService
-	//OperationRecordService
+	OperationRecordService
 	//DictionaryDetailService
 	//AuthorityBtnService
 	//SysExportTemplateService

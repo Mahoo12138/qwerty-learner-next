@@ -15,57 +15,55 @@ import (
 	"gorm.io/gorm"
 )
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: Register
-//@description: 用户注册
-//@param: u model.User
-//@return: userInter system.User, err error
-
 type UserService struct{}
 
 var UserServiceApp = new(UserService)
 
+// Register
+// @function: Register
+// @description: 用户注册
+// @param: u model.User
+// @return: userInter system.User, err error
 func (userService *UserService) Register(u system.User) (userInter system.User, err error) {
 	var user system.User
-	if !errors.Is(global.QL_DB.Where("username = ?", u.Username).First(&user).Error, gorm.ErrRecordNotFound) { // 判断用户名是否注册
+	// 判断用户名是否注册
+	if !errors.Is(global.QL_DB.Where("username = ?", u.Username).First(&user).Error, gorm.ErrRecordNotFound) {
 		return userInter, errors.New("用户名已注册")
 	}
-	// 否则 附加uuid 密码hash加密 注册
+	// 否则 密码 hash 加密 注册
 	u.Password = utils.BcryptHash(u.Password)
-	u.UUID = uuid.New()
+	// 附加 uuid
+	//u.UUID = uuid.New()
 	err = global.QL_DB.Create(&u).Error
 	return u, err
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@author: [SliverHorn](https://github.com/SliverHorn)
-//@function: Login
-//@description: 用户登录
-//@param: u *model.User
-//@return: err error, userInter *model.User
-
+// Login
+// @function: Login
+// @description: 用户登录
+// @param: u *model.User
+// @return: err error, userInter *model.User
 func (userService *UserService) Login(u *system.User) (userInter *system.User, err error) {
 	if nil == global.QL_DB {
 		return nil, fmt.Errorf("db not init")
 	}
 
 	var user system.User
-	err = global.QL_DB.Where("username = ?", u.Username).Preload("Authorities").Preload("Authority").First(&user).Error
+	err = global.QL_DB.Where("username = ?", u.Username).First(&user).Error
 	if err == nil {
 		if ok := utils.BcryptCheck(u.Password, user.Password); !ok {
 			return nil, errors.New("密码错误")
 		}
-		MenuServiceApp.UserAuthorityDefaultRouter(&user)
+		//MenuServiceApp.UserAuthorityDefaultRouter(&user)
 	}
 	return &user, err
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: ChangePassword
-//@description: 修改用户密码
-//@param: u *model.User, newPassword string
-//@return: userInter *model.User,err error
-
+// ChangePassword
+// @function: ChangePassword
+// @description: 修改用户密码
+// @param: u *model.User, newPassword string
+// @return: userInter *model.User,err error
 func (userService *UserService) ChangePassword(u *system.User, newPassword string) (userInter *system.User, err error) {
 	var user system.User
 	if err = global.QL_DB.Where("id = ?", u.ID).First(&user).Error; err != nil {
@@ -80,21 +78,17 @@ func (userService *UserService) ChangePassword(u *system.User, newPassword strin
 
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: GetUserInfoList
-//@description: 分页获取数据
-//@param: info request.PageInfo
-//@return: err error, list interface{}, total int64
-
+// GetUserInfoList
+// @function: GetUserInfoList
+// @description: 分页获取数据
+// @param: info request.PageInfo
+// @return: err error, list interface{}, total int64
 func (userService *UserService) GetUserInfoList(info systemReq.GetUserList) (list interface{}, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
 	db := global.QL_DB.Model(&system.User{})
 	var userList []system.User
 
-	if info.NickName != "" {
-		db = db.Where("nick_name LIKE ?", "%"+info.NickName+"%")
-	}
 	if info.Phone != "" {
 		db = db.Where("phone LIKE ?", "%"+info.Phone+"%")
 	}
@@ -109,133 +103,55 @@ func (userService *UserService) GetUserInfoList(info systemReq.GetUserList) (lis
 	if err != nil {
 		return
 	}
-	err = db.Limit(limit).Offset(offset).Preload("Authorities").Preload("Authority").Find(&userList).Error
+	err = db.Limit(limit).Offset(offset).Find(&userList).Error
 	return userList, total, err
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: SetUserAuthority
-//@description: 设置一个用户的权限
-//@param: uuid uuid.UUID, authorityId string
-//@return: err error
-
-func (userService *UserService) SetUserAuthority(id uint, authorityId uint) (err error) {
-
-	assignErr := global.QL_DB.Where("sys_user_id = ? AND sys_authority_authority_id = ?", id, authorityId).First(&system.UserAuthority{}).Error
-	if errors.Is(assignErr, gorm.ErrRecordNotFound) {
-		return errors.New("该用户无此角色")
-	}
-
-	var authority system.SysAuthority
-	err = global.QL_DB.Where("authority_id = ?", authorityId).First(&authority).Error
-	if err != nil {
-		return err
-	}
-	var authorityMenu []system.SysAuthorityMenu
-	var authorityMenuIDs []string
-	err = global.QL_DB.Where("sys_authority_authority_id = ?", authorityId).Find(&authorityMenu).Error
-	if err != nil {
-		return err
-	}
-
-	for i := range authorityMenu {
-		authorityMenuIDs = append(authorityMenuIDs, authorityMenu[i].MenuId)
-	}
-
-	var authorityMenus []system.SysBaseMenu
-	err = global.QL_DB.Preload("Parameters").Where("id in (?)", authorityMenuIDs).Find(&authorityMenus).Error
-	if err != nil {
-		return err
-	}
-	hasMenu := false
-	for i := range authorityMenus {
-		if authorityMenus[i].Name == authority.DefaultRouter {
-			hasMenu = true
-			break
-		}
-	}
-	if !hasMenu {
-		return errors.New("找不到默认路由,无法切换本角色")
-	}
-
-	err = global.QL_DB.Model(&system.User{}).Where("id = ?", id).Update("authority_id", authorityId).Error
-	return err
+// SetUserRole
+// @function: SetUserRole
+// @description: 设置用户角色
+// @param: id unit, role string
+// @return: err error
+func (userService *UserService) SetUserRole(id uint, role string) (err error) {
+	return global.QL_DB.Model(&system.User{}).
+		Select("updated_at", "username", "header_img", "role", "email", "enable").
+		Where("id=?", id).
+		Updates(map[string]interface{}{
+			"updated_at": time.Now(),
+			"role":       role,
+		}).Error
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: SetUserAuthorities
-//@description: 设置一个用户的权限
-//@param: id uint, authorityIds []string
-//@return: err error
-
-func (userService *UserService) SetUserAuthorities(adminAuthorityID, id uint, authorityIds []uint) (err error) {
-	return global.QL_DB.Transaction(func(tx *gorm.DB) error {
-		var user system.User
-		TxErr := tx.Where("id = ?", id).First(&user).Error
-		if TxErr != nil {
-			global.QL_LOG.Debug(TxErr.Error())
-			return errors.New("查询用户数据失败")
-		}
-		TxErr = tx.Delete(&[]system.UserAuthority{}, "sys_user_id = ?", id).Error
-		if TxErr != nil {
-			return TxErr
-		}
-		var useAuthority []system.UserAuthority
-		for _, v := range authorityIds {
-			e := AuthorityServiceApp.CheckAuthorityIDAuth(adminAuthorityID, v)
-			if e != nil {
-				return e
-			}
-			useAuthority = append(useAuthority, system.UserAuthority{
-				UserId: id, SysAuthorityAuthorityId: v,
-			})
-		}
-		TxErr = tx.Create(&useAuthority).Error
-		if TxErr != nil {
-			return TxErr
-		}
-		TxErr = tx.Model(&user).Update("authority_id", authorityIds[0]).Error
-		if TxErr != nil {
-			return TxErr
-		}
-		// 返回 nil 提交事务
-		return nil
-	})
-}
-
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: DeleteUser
-//@description: 删除用户
-//@param: id float64
-//@return: err error
-
+// DeleteUser
+// @function: DeleteUser
+// @description: 删除用户
+// @param: id float64
+// @return: err error
 func (userService *UserService) DeleteUser(id int) (err error) {
 	return global.QL_DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("id = ?", id).Delete(&system.User{}).Error; err != nil {
 			return err
 		}
-		if err := tx.Delete(&[]system.UserAuthority{}, "sys_user_id = ?", id).Error; err != nil {
-			return err
-		}
+		//if err := tx.Delete(&[]system.UserAuthority{}, "sys_user_id = ?", id).Error; err != nil {
+		//	return err
+		//}
 		return nil
 	})
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: SetUserInfo
-//@description: 设置用户信息
-//@param: reqUser model.User
-//@return: err error, user model.User
-
+// SetUserInfo
+// @function: SetUserInfo
+// @description: 设置用户信息
+// @param: reqUser model.User
+// @return: err error, user model.User
 func (userService *UserService) SetUserInfo(req system.User) error {
 	return global.QL_DB.Model(&system.User{}).
-		Select("updated_at", "nick_name", "header_img", "phone", "email", "enable").
+		Select("updated_at", "avatar", "role", "email", "enable").
 		Where("id=?", req.ID).
 		Updates(map[string]interface{}{
 			"updated_at": time.Now(),
-			"nick_name":  req.NickName,
-			"header_img": req.HeaderImg,
-			"phone":      req.Phone,
+			"avatar":     req.Avatar,
+			"role":       req.Role,
 			"email":      req.Email,
 			"enable":     req.Enable,
 		}).Error
@@ -253,7 +169,6 @@ func (userService *UserService) SetSelfInfo(req system.User) error {
 		Updates(req).Error
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
 //@function: SetSelfSetting
 //@description: 设置用户配置
 //@param: req datatypes.JSON, uid uint
@@ -263,8 +178,6 @@ func (userService *UserService) SetSelfSetting(req common.JSONMap, uid uint) err
 	return global.QL_DB.Model(&system.User{}).Where("id = ?", uid).Update("origin_setting", req).Error
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@author: [SliverHorn](https://github.com/SliverHorn)
 //@function: GetUserInfo
 //@description: 获取用户信息
 //@param: uuid uuid.UUID
@@ -272,11 +185,10 @@ func (userService *UserService) SetSelfSetting(req common.JSONMap, uid uint) err
 
 func (userService *UserService) GetUserInfo(uuid uuid.UUID) (user system.User, err error) {
 	var reqUser system.User
-	err = global.QL_DB.Preload("Authorities").Preload("Authority").First(&reqUser, "uuid = ?", uuid).Error
+	err = global.QL_DB.First(&reqUser, "uuid = ?", uuid).Error
 	if err != nil {
 		return reqUser, err
 	}
-	MenuServiceApp.UserAuthorityDefaultRouter(&reqUser)
 	return reqUser, err
 }
 
@@ -292,12 +204,11 @@ func (userService *UserService) FindUserById(id int) (user *system.User, err err
 	return &u, err
 }
 
-//@author: [SliverHorn](https://github.com/SliverHorn)
-//@function: FindUserByUuid
-//@description: 通过uuid获取用户信息
-//@param: uuid string
-//@return: err error, user *model.User
-
+// FindUserByUuid
+// @function: FindUserByUuid
+// @description: 通过uuid获取用户信息
+// @param: uuid string
+// @return: err error, user *model.User
 func (userService *UserService) FindUserByUuid(uuid string) (user *system.User, err error) {
 	var u system.User
 	if err = global.QL_DB.Where("uuid = ?", uuid).First(&u).Error; err != nil {
@@ -306,12 +217,11 @@ func (userService *UserService) FindUserByUuid(uuid string) (user *system.User, 
 	return &u, nil
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
-//@function: ResetPassword
-//@description: 修改用户密码
-//@param: ID uint
-//@return: err error
-
+// ResetPassword
+// @function: ResetPassword
+// @description: 修改用户密码
+// @param: ID uint
+// @return: err error
 func (userService *UserService) ResetPassword(ID uint) (err error) {
 	err = global.QL_DB.Model(&system.User{}).Where("id = ?", ID).Update("password", utils.BcryptHash("123456")).Error
 	return err

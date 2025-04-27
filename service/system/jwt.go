@@ -34,32 +34,6 @@ func (jwtService *JwtService) IsBlacklist(jwt string) bool {
 	// return !isNotFound
 }
 
-//@function: GetRedisJWT
-//@description: 从redis取jwt
-//@param: userName string
-//@return: redisJWT string, err error
-
-//func (jwtService *JwtService) GetRedisJWT(userName string) (redisJWT string, err error) {
-//	redisJWT, err = global.QL_REDIS.Get(context.Background(), userName).Result()
-//	return redisJWT, err
-//}
-
-//@function: SetRedisJWT
-//@description: jwt存入redis并设置过期时间
-//@param: jwt string, userName string
-//@return: err error
-
-//func (jwtService *JwtService) SetRedisJWT(jwt string, userName string) (err error) {
-//	// 此处过期时间等于jwt过期时间
-//	dr, err := utils.ParseDuration(global.QL_CONFIG.JWT.ExpiresTime)
-//	if err != nil {
-//		return err
-//	}
-//	timer := dr
-//	err = global.QL_REDIS.Set(context.Background(), userName, jwt, timer).Err()
-//	return err
-//}
-
 func LoadAll() {
 	var data []string
 	err := global.QL_DB.Model(&system.JwtBlacklist{}).Select("jwt").Find(&data).Error
