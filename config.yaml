@@ -1,0 +1,5 @@
+system:
+  db-type: mysql
+  oss-type: local
+  router-prefix: ""
+  addr: 8888
