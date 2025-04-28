@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
+type AuthApi struct{}
+
 func (api *BaseApi) Login(c *gin.Context) {
 	var l systemReq.Login
 	err := c.ShouldBindJSON(&l)

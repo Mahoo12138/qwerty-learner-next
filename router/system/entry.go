@@ -10,6 +10,7 @@ type RouterGroup struct {
 	//InitRouter
 	//MenuRouter
 	UserRouter
+	SettingRouter
 	//CasbinRouter
 	//AutoCodeRouter
 	//AuthorityRouter
@@ -24,7 +25,8 @@ type RouterGroup struct {
 var (
 	//	dbApi               = api.ApiGroupApp.SystemApiGroup.DBApi
 	//	jwtApi              = api.ApiGroupApp.SystemApiGroup.JwtApi
-	baseApi = api.ApiGroupApp.SystemApiGroup.BaseApi
+	baseApi    = api.ApiGroupApp.SystemApiGroup.BaseApi
+	settingApi = api.ApiGroupApp.SystemApiGroup.SettingApi
 	//	casbinApi           = api.ApiGroupApp.SystemApiGroup.CasbinApi
 	//	systemApi           = api.ApiGroupApp.SystemApiGroup.SystemApi
 	//	sysParamsApi        = api.ApiGroupApp.SystemApiGroup.SysParamsApi
