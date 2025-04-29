@@ -8,15 +8,14 @@ import (
 
 type Model struct {
 	BaseModel
-	ID        uint `gorm:"primarykey" json:"ID"` // 主键ID
-	CreatedBy uint // 创建人
-	UpdatedBy uint // 更新人
-	DeletedBy uint `json:"-"` // 删除人
+	CreatedBy uint `json:"createdBy"` // 创建人
+	UpdatedBy uint `json:"updatedBy"` // 更新人
+	DeletedBy uint `json:"-"`         // 删除人
 }
 
 type BaseModel struct {
-	ID        uint           `gorm:"primarykey" json:"ID"` // 主键ID
-	CreatedAt time.Time      // 创建时间
-	UpdatedAt time.Time      // 更新时间
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"` // 删除时间
+	ID        uint           `gorm:"primarykey" json:"id"` // 主键ID
+	CreatedAt time.Time      `json:"createdAt"`            // 创建时间
+	UpdatedAt time.Time      `json:"updatedAt"`            // 更新时间
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`       // 删除时间
 }

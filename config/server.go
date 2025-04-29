@@ -17,4 +17,6 @@ type Server struct {
 
 	// 跨域配置
 	Cors CORS `mapstructure:"cors" json:"cors" yaml:"cors"`
+
+	AutoCode Autocode `mapstructure:"autocode" json:"autocode" yaml:"autocode"`
 }

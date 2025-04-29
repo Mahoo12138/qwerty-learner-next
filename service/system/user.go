@@ -11,7 +11,6 @@ import (
 	"qwerty-learner/model/system"
 	"qwerty-learner/utils"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -157,7 +156,6 @@ func (userService *UserService) SetUserInfo(req system.User) error {
 		}).Error
 }
 
-//@author: [piexlmax](https://github.com/piexlmax)
 //@function: SetSelfInfo
 //@description: 设置用户信息
 //@param: reqUser model.User
@@ -180,25 +178,24 @@ func (userService *UserService) SetSelfSetting(req common.JSONMap, uid uint) err
 
 //@function: GetUserInfo
 //@description: 获取用户信息
-//@param: uuid uuid.UUID
+//@param: id uint
 //@return: err error, user system.User
 
-func (userService *UserService) GetUserInfo(uuid uuid.UUID) (user system.User, err error) {
+func (userService *UserService) GetUserInfo(id uint) (user system.User, err error) {
 	var reqUser system.User
-	err = global.QL_DB.First(&reqUser, "uuid = ?", uuid).Error
+	err = global.QL_DB.First(&reqUser, "id = ?", id).Error
 	if err != nil {
 		return reqUser, err
 	}
 	return reqUser, err
 }
 
-//@author: [SliverHorn](https://github.com/SliverHorn)
-//@function: FindUserById
-//@description: 通过id获取用户信息
-//@param: id int
-//@return: err error, user *model.User
-
-func (userService *UserService) FindUserById(id int) (user *system.User, err error) {
+// FindUserById
+// @function: FindUserById
+// @description: 通过id获取用户信息
+// @param: id int
+// @return: err error, user *model.User
+func (userService *UserService) FindUserById(id uint) (user *system.User, err error) {
 	var u system.User
 	err = global.QL_DB.Where("id = ?", id).First(&u).Error
 	return &u, err

@@ -3,6 +3,7 @@ package system
 import (
 	"errors"
 	"io"
+	"qwerty-learner/utils/validate"
 	"time"
 
 	"qwerty-learner/global"
@@ -16,6 +17,8 @@ import (
 	"go.uber.org/zap"
 )
 
+type AuthApi struct{}
+
 func (api *BaseApi) Login(c *gin.Context) {
 	var l systemReq.Login
 	err := c.ShouldBindJSON(&l)
@@ -25,7 +28,7 @@ func (api *BaseApi) Login(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	err = utils.Verify(l, utils.LoginVerify)
+	err = validate.Verify(l)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -78,7 +81,7 @@ func (api *BaseApi) SignUp(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	err = utils.Verify(r, utils.SignupVerify)
+	err = validate.Verify(r)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
@@ -125,7 +128,7 @@ func (api *BaseApi) GetUserList(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	err = utils.Verify(pageInfo, utils.PageInfoVerify)
+	err = validate.Verify(pageInfo)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return

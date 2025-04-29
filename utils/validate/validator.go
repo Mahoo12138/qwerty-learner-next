@@ -1,4 +1,4 @@
-package utils
+package validate
 
 import (
 	"errors"
@@ -7,10 +7,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-type Rules map[string][]string
-
-type RulesMap map[string]Rules
 
 var CustomizeMap = make(map[string]Rules)
 
@@ -104,7 +100,15 @@ func Gt(mark string) string {
 // @description: 校验方法
 // @param: st interface{}, roleMap Rules(入参实例，规则map)
 // @return: err error
-func Verify(st interface{}, roleMap Rules) (err error) {
+func Verify(st interface{}) (err error) {
+	var roleMap Rules
+
+	if validatable, ok := st.(Validatable); ok {
+		roleMap = validatable.ValidationRules()
+	} else {
+		return errors.New("未实现 Validatable 接口")
+	}
+
 	compareMap := map[string]bool{
 		"lt": true,
 		"le": true,
@@ -127,7 +131,7 @@ func Verify(st interface{}, roleMap Rules) (err error) {
 		tagVal := typ.Field(i)
 		val := val.Field(i)
 		if tagVal.Type.Kind() == reflect.Struct {
-			if err = Verify(val.Interface(), roleMap); err != nil {
+			if err = Verify(val.Interface()); err != nil {
 				return err
 			}
 		}
