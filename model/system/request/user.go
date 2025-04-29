@@ -2,6 +2,7 @@ package request
 
 import (
 	common "qwerty-learner/model/common/request"
+	"qwerty-learner/utils/validate"
 )
 
 // SignUp User register structure
@@ -13,12 +14,28 @@ type SignUp struct {
 	Email    string `json:"email" example:"电子邮箱"`
 }
 
+func (u SignUp) ValidationRules() validate.Rules {
+	return validate.Rules{
+		"Username": {validate.NotEmpty()},
+		"Password": {validate.NotEmpty()},
+		"Email":    {validate.NotEmpty()},
+	}
+}
+
 // Login User login structure
 type Login struct {
 	Username  string `json:"username"`  // 用户名
 	Password  string `json:"password"`  // 密码
 	Captcha   string `json:"captcha"`   // 验证码
 	CaptchaId string `json:"captchaId"` // 验证码ID
+}
+
+func (l Login) ValidationRules() validate.Rules {
+	return validate.Rules{
+		"CaptchaId": {validate.NotEmpty()},
+		"Username":  {validate.NotEmpty()},
+		"Password":  {validate.NotEmpty()},
+	}
 }
 
 // ChangePasswordReq Modify password structure

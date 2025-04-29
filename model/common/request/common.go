@@ -2,6 +2,7 @@ package request
 
 import (
 	"gorm.io/gorm"
+	"qwerty-learner/utils/validate"
 )
 
 // PageInfo Paging common input parameter structure
@@ -9,6 +10,13 @@ type PageInfo struct {
 	Page     int    `json:"page" form:"page"`         // 页码
 	PageSize int    `json:"pageSize" form:"pageSize"` // 每页大小
 	Keyword  string `json:"keyword" form:"keyword"`   // 关键字
+}
+
+func (r *PageInfo) Validatable() validate.Rules {
+	return validate.Rules{
+		"Page":     {validate.NotEmpty()},
+		"PageSize": {validate.NotEmpty()},
+	}
 }
 
 func (r *PageInfo) Paginate() func(db *gorm.DB) *gorm.DB {
