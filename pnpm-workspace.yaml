@@ -1,4 +1,5 @@
 packages:
   - server
   - web
+  - docs
   - packages/**
