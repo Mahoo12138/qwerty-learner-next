@@ -27,8 +27,8 @@ import { LoginReqDto } from './dto/login.req.dto';
 import { LoginResDto } from './dto/login.res.dto';
 import { RefreshReqDto } from './dto/refresh.req.dto';
 import { RefreshResDto } from './dto/refresh.res.dto';
-import { RegisterReqDto } from './dto/register.req.dto';
-import { RegisterResDto } from './dto/register.res.dto';
+import { SigninReqDto } from './dto/signin.req.dto';
+import { SigninResDto } from './dto/signin.res.dto';
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { JwtRefreshPayloadType } from './types/jwt-refresh-payload.type';
 
@@ -59,7 +59,7 @@ export class AuthService {
    * @param dto LoginReqDto
    * @returns LoginResDto
    */
-  async signIn(dto: LoginReqDto): Promise<LoginResDto> {
+  async login(dto: LoginReqDto): Promise<LoginResDto> {
     const { email, password } = dto;
     const user = await this.userRepository.findOne({
       where: { email },
@@ -98,7 +98,7 @@ export class AuthService {
     });
   }
 
-  async register(dto: RegisterReqDto): Promise<RegisterResDto> {
+  async signin(dto: SigninReqDto): Promise<SigninResDto> {
     // Check if the user already exists
     const isExistUser = await UserEntity.exists({
       where: { email: dto.email },
@@ -140,7 +140,7 @@ export class AuthService {
       { attempts: 3, backoff: { type: 'exponential', delay: 60000 } },
     );
 
-    return plainToInstance(RegisterResDto, {
+    return plainToInstance(SigninResDto, {
       userId: user.id,
     });
   }

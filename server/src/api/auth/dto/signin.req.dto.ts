@@ -1,6 +1,6 @@
 import { EmailField, PasswordField } from '@/decorators/field.decorators';
 
-export class RegisterReqDto {
+export class SigninReqDto {
   @EmailField()
   email!: string;
 

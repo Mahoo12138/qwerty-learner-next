@@ -7,8 +7,8 @@ import { LoginReqDto } from './dto/login.req.dto';
 import { LoginResDto } from './dto/login.res.dto';
 import { RefreshReqDto } from './dto/refresh.req.dto';
 import { RefreshResDto } from './dto/refresh.res.dto';
-import { RegisterReqDto } from './dto/register.req.dto';
-import { RegisterResDto } from './dto/register.res.dto';
+import { SigninReqDto } from './dto/signin.req.dto';
+import { SigninResDto } from './dto/signin.res.dto';
 import { JwtPayloadType } from './types/jwt-payload.type';
 
 @ApiTags('auth')
@@ -21,17 +21,19 @@ export class AuthController {
 
   @ApiPublic({
     type: LoginResDto,
-    summary: 'Sign in',
+    summary: 'Login in',
   })
-  @Post('email/login')
-  async signIn(@Body() userLogin: LoginReqDto): Promise<LoginResDto> {
-    return await this.authService.signIn(userLogin);
+  @Post('login')
+  async login(@Body() userLogin: LoginReqDto): Promise<LoginResDto> {
+    return await this.authService.login(userLogin);
   }
 
-  @ApiPublic()
-  @Post('email/register')
-  async register(@Body() dto: RegisterReqDto): Promise<RegisterResDto> {
-    return await this.authService.register(dto);
+  @ApiPublic({
+    summary: 'Sign in',
+  })
+  @Post('signin')
+  async signin(@Body() dto: SigninReqDto): Promise<SigninResDto> {
+    return await this.authService.signin(dto);
   }
 
   @ApiAuth({
