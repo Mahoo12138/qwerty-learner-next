@@ -1,8 +1,8 @@
 {
-  "name": "nestjs-boilerplate",
+  "name": "qwerty-learner",
   "version": "0.0.1",
   "description": "NestJS Boilerplate, Typescript, Postgres, TypeORM",
-  "author": "vndevteam",
+  "author": "mahoo12138",
   "private": true,
   "license": "MIT",
   "scripts": {
@@ -25,7 +25,7 @@
     "migration:create": "typeorm migration:create",
     "migration:generate": "pnpm typeorm migration:generate --pretty",
     "db:create": "env-cmd ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:create",
-    "db:drop": "env-cmd ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:drop",
+    "db:drop": "cdenv-cmd ts-node ./node_modules/typeorm-extension/bin/cli.cjs db:drop",
     "seed:run": "env-cmd ts-node ./node_modules/typeorm-extension/bin/cli.cjs seed:run",
     "seed:create": "env-cmd ts-node ./node_modules/typeorm-extension/bin/cli.cjs seed:create",
     "prepare": "husky || true",
