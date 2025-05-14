@@ -26,10 +26,16 @@ async function bootstrap() {
 
   app.useLogger(app.get(Logger));
 
-  // Setup security headers
-  app.use(helmet());
+  // Setup security headers 允许从 Scalar CDN 加载脚本
+  app.use(helmet.contentSecurityPolicy({
+    directives: {
+      scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+    },
+  }));
 
-  // For high-traffic websites in production, it is strongly recommended to offload compression from the application server - typically in a reverse proxy (e.g., Nginx). In that case, you should not use compression middleware.
+  // For high-traffic websites in production, 
+  // it is strongly recommended to offload compression from the application server typically in a reverse proxy (e.g., Nginx). 
+  // In that case, you should not use compression middleware.
   app.use(compression());
 
   const configService = app.get(ConfigService<AllConfigType>);

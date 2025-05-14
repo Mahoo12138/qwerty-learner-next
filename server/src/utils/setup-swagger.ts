@@ -2,7 +2,7 @@ import { type AllConfigType } from '@/config/config.type';
 import { type INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
+import { apiReference } from '@scalar/nestjs-api-reference'
 function setupSwagger(app: INestApplication) {
   const configService = app.get(ConfigService<AllConfigType>);
   const appName = configService.getOrThrow('app.name', { infer: true });
@@ -21,9 +21,10 @@ function setupSwagger(app: INestApplication) {
     .addServer('https://example.com', 'Staging')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document, {
-    customSiteTitle: appName,
-  });
+  app.use('/reference', apiReference({ content: document }));
+  // SwaggerModule.setup('api-docs', app, document, {
+  //   customSiteTitle: appName,
+  // });
 }
 
 export default setupSwagger;
