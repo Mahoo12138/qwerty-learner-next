@@ -35,13 +35,13 @@ export class SettingService {
         name: setting.name,
         description: setting.description,
         content: setting.content,
-        user: setting.user
       }, { excludeExtraneousValues: true })
     );
   }
 
   async upsertSystemSetting(
     reqDto: UpsertSettingReqDto,
+    userId: Uuid
   ): Promise<SystemSettingResDto> {
     const { name, description, content } = reqDto;
     
@@ -50,7 +50,7 @@ export class SettingService {
     });
 
     if (!setting) {
-      setting = new SystemSettingEntity({ name, description, content });
+      setting = new SystemSettingEntity({ name, description, content, createdBy: userId, updatedBy: userId });
     } else {
       setting.description = description;
       setting.content = content;
@@ -79,7 +79,9 @@ export class SettingService {
         name, 
         description, 
         content,
-        userId 
+        userId,
+        createdBy: userId,
+        updatedBy: userId
       });
     } else {
       setting.description = description;
@@ -92,7 +94,6 @@ export class SettingService {
       name: setting.name,
       description: setting.description,
       content: setting.content,
-      user: setting.user
     }, { excludeExtraneousValues: true });
   }
 }

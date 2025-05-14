@@ -17,7 +17,6 @@ export class UserSettingController {
   @Get()
   @ApiAuth({
     summary: 'Get all user settings',
-    isPaginated: true,
   })
   async findAll(@CurrentUser('id') userId: Uuid) {
     return this.settingService.findAllUserSettings(userId);
