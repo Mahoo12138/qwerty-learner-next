@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsNumber, IsArray, IsObject, Length, Min, Max } from 'class-validator';
+import { Uuid } from '@/common/types/common.type';
+import { IsString, IsOptional, IsNumber, IsArray, IsObject, Length, Min, Max, IsUUID } from 'class-validator';
 
 export class CreateWordDto {
   @IsString()
@@ -61,6 +62,6 @@ export class CreateWordDto {
   @IsObject()
   metadata?: Record<string, any>;
 
-  @IsNumber()
-  dictionaryId: number;
+  @IsUUID()
+  dictionaryId: Uuid;
 } 

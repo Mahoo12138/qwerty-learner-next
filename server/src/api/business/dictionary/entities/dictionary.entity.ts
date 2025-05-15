@@ -11,6 +11,11 @@ import { AbstractEntity } from '@/database/entities/abstract.entity';
 
 @Entity('dictionary')
 export class DictionaryEntity extends AbstractEntity {
+  constructor(data?: Partial<DictionaryEntity>) {
+    super();
+    Object.assign(this, data);
+  }
+
   @PrimaryGeneratedColumn('uuid', {
     primaryKeyConstraintName: 'PK_dictionary_id',
   })

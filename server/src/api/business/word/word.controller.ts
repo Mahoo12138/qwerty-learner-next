@@ -7,6 +7,8 @@ import { ListWordReqDto } from './dto/list-word.req.dto';
 import { WordResDto } from './dto/word.res.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OffsetPaginationDto } from '../../../common/dto/offset-pagination/offset-pagination.dto';
+import { CurrentUser } from '@/decorators/current-user.decorator';
+import { Uuid } from '@/common/types/common.type';
 
 @ApiTags('Word')
 @Controller({
@@ -18,8 +20,8 @@ export class WordController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new word' })
-  async create(@Body() createWordDto: CreateWordDto): Promise<WordEntity> {
-    return await this.wordService.create(createWordDto);
+  async create(@Body() createWordDto: CreateWordDto, @CurrentUser('id') userId: Uuid): Promise<WordEntity> {
+    return await this.wordService.create(createWordDto, userId);
   }
 
   @Get()

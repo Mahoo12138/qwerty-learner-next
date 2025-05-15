@@ -12,6 +12,10 @@ import { AbstractEntity } from '@/database/entities/abstract.entity';
 
 @Entity('word')
 export class WordEntity extends AbstractEntity {
+  constructor(data?: Partial<WordEntity>) {
+    super();
+    Object.assign(this, data);
+  }
   @PrimaryGeneratedColumn('uuid', {
     primaryKeyConstraintName: 'PK_word_id',
   })
@@ -39,7 +43,7 @@ export class WordEntity extends AbstractEntity {
   audioUrl: string;
 
   @Column({ length: 50, nullable: true, comment: '词性' })
-  partOfSpeech: string; 
+  partOfSpeech: string;
 
   @Column({ type: 'text', array: true, nullable: true })
   synonyms: string[];
@@ -56,8 +60,8 @@ export class WordEntity extends AbstractEntity {
   @Column({ type: 'json', nullable: true, comment: '词元数据' })
   metadata: Record<string, any>; // 额外元数据，如词源、记忆技巧等
 
-  @Column()
-  dictionaryId: number;
+  @Column({ type: 'uuid' })
+  dictionaryId: Uuid;
 
   @ManyToOne(() => DictionaryEntity, (dictionary) => dictionary.words, {
     onDelete: 'CASCADE',

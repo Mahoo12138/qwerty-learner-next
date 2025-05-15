@@ -4,14 +4,16 @@ import { CreateDictionaryDto } from './dto/create-dictionary.dto';
 import { UpdateDictionaryDto } from './dto/update-dictionary.dto';
 import { DictionaryEntity } from './entities/dictionary.entity';
 import { ListDictionaryReqDto } from './dto/list-dictionary.req.dto';
+import { CurrentUser } from '@/decorators/current-user.decorator';
+import { Uuid } from '@/common/types/common.type';
 
 @Controller({ path: 'dictionary', version: '1' })
 export class DictionaryController {
   constructor(private readonly dictionaryService: DictionaryService) { }
 
   @Post()
-  async create(@Body() createDictionaryDto: CreateDictionaryDto): Promise<DictionaryEntity> {
-    return await this.dictionaryService.create(createDictionaryDto);
+  async create(@Body() createDictionaryDto: CreateDictionaryDto, @CurrentUser('id') userId: Uuid): Promise<DictionaryEntity> {
+    return await this.dictionaryService.create(createDictionaryDto, userId);
   }
 
   @Get()
@@ -20,21 +22,21 @@ export class DictionaryController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<DictionaryEntity> {
-    return await this.dictionaryService.findOne(+id);
+  async findOne(@Param('id') id: Uuid): Promise<DictionaryEntity> {
+    return await this.dictionaryService.findOne(id);
   }
 
   @Put(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id') id: Uuid,
     @Body() updateDictionaryDto: UpdateDictionaryDto,
   ): Promise<DictionaryEntity> {
-    return await this.dictionaryService.update(+id, updateDictionaryDto);
+    return await this.dictionaryService.update(id, updateDictionaryDto);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<void> {
-    return await this.dictionaryService.remove(+id);
+  async remove(@Param('id') id: Uuid): Promise<void> {
+    return await this.dictionaryService.remove(id);
   }
 
   @Get('language/:language')
@@ -49,9 +51,9 @@ export class DictionaryController {
 
   @Put(':id/word-count')
   async updateWordCount(
-    @Param('id') id: string,
+    @Param('id') id: Uuid,
     @Query('increment') increment: string,
   ): Promise<DictionaryEntity> {
-    return await this.dictionaryService.updateWordCount(+id, increment ? +increment : 1);
+    return await this.dictionaryService.updateWordCount(id, increment ? +increment : 1);
   }
 }

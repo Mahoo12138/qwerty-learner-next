@@ -10,6 +10,7 @@ import { WordResDto } from './dto/word.res.dto';
 import { plainToInstance } from 'class-transformer';
 import { paginate } from '@/utils/offset-pagination';
 import { OffsetPaginatedDto } from '@/common/dto/offset-pagination/paginated.dto';
+import { Uuid } from '@/common/types/common.type';
 
 @Injectable()
 export class WordService {
@@ -19,11 +20,14 @@ export class WordService {
     private dictionaryService: DictionaryService,
   ) { }
 
-  async create(createWordDto: CreateWordDto): Promise<WordEntity> {
+  async create(createWordDto: CreateWordDto, userId: Uuid): Promise<WordEntity> {
     // 验证字典是否存在
     await this.dictionaryService.findOne(createWordDto.dictionaryId);
-
-    const word = this.wordRepository.create(createWordDto);
+    const word = new WordEntity({
+      ...createWordDto,
+      createdBy: userId,
+      updatedBy: userId,
+    });
     const savedWord = await this.wordRepository.save(word);
 
     // 更新字典的单词数量

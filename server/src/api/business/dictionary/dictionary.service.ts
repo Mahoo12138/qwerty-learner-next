@@ -9,6 +9,7 @@ import { OffsetPaginatedDto } from '@/common/dto/offset-pagination/paginated.dto
 import { plainToInstance } from 'class-transformer';
 import { DictionaryResDto } from './dto/dictionary.res.dto';
 import { ListDictionaryReqDto } from './dto/list-dictionary.req.dto';
+import { Uuid } from '@/common/types/common.type';
 
 @Injectable()
 export class DictionaryService {
@@ -17,8 +18,15 @@ export class DictionaryService {
     private dictionaryRepository: Repository<DictionaryEntity>,
   ) { }
 
-  async create(createDictionaryDto: CreateDictionaryDto): Promise<DictionaryEntity> {
-    const dictionary = this.dictionaryRepository.create(createDictionaryDto);
+  async create(createDictionaryDto: CreateDictionaryDto, userId: Uuid): Promise<DictionaryEntity> {
+    const { name, language } = createDictionaryDto
+    const newDict = new DictionaryEntity({
+      name, 
+      language,
+      createdBy: userId,
+      updatedBy: userId,
+    });
+    const dictionary = this.dictionaryRepository.create(newDict);
     return await this.dictionaryRepository.save(dictionary);
   }
 
@@ -33,7 +41,7 @@ export class DictionaryService {
     return new OffsetPaginatedDto(plainToInstance(DictionaryResDto, words), metaDto);
   }
 
-  async findOne(id: number): Promise<DictionaryEntity> {
+  async findOne(id: Uuid): Promise<DictionaryEntity> {
     const dictionary = await this.dictionaryRepository.findOne({ where: { id } });
     if (!dictionary) {
       throw new NotFoundException(`Dictionary with ID ${id} not found`);
@@ -41,13 +49,13 @@ export class DictionaryService {
     return dictionary;
   }
 
-  async update(id: number, updateDictionaryDto: UpdateDictionaryDto): Promise<DictionaryEntity> {
+  async update(id: Uuid, updateDictionaryDto: UpdateDictionaryDto): Promise<DictionaryEntity> {
     const dictionary = await this.findOne(id);
     Object.assign(dictionary, updateDictionaryDto);
     return await this.dictionaryRepository.save(dictionary);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: Uuid): Promise<void> {
     const result = await this.dictionaryRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Dictionary with ID ${id} not found`);
@@ -62,7 +70,7 @@ export class DictionaryService {
     return await this.dictionaryRepository.find({ where: { category } });
   }
 
-  async updateWordCount(id: number, increment: number = 1): Promise<DictionaryEntity> {
+  async updateWordCount(id: Uuid, increment: number = 1): Promise<DictionaryEntity> {
     const dictionary = await this.findOne(id);
     dictionary.wordCount += increment;
     return await this.dictionaryRepository.save(dictionary);
