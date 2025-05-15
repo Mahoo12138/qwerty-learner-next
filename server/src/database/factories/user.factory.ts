@@ -1,4 +1,4 @@
-import { UserEntity } from '@/api/user/entities/user.entity';
+import { UserEntity } from '@/api/system/user/entities/user.entity';
 import { SYSTEM_USER_ID } from '@/constants/app.constant';
 import { setSeederFactory } from 'typeorm-extension';
 

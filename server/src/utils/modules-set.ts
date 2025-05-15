@@ -1,5 +1,5 @@
 import { ApiModule } from '@/api/api.module';
-import authConfig from '@/api/auth/config/auth.config';
+import authConfig from '@/api/system/auth/config/auth.config';
 import { BackgroundModule } from '@/background/background.module';
 import appConfig from '@/config/app.config';
 import { AllConfigType } from '@/config/config.type';

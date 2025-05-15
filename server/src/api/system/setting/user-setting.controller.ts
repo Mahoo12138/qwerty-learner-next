@@ -1,4 +1,4 @@
-import { SettingService } from '@/api/setting/setting.service';
+import { SettingService } from '@/api/system/setting/setting.service';
 import { Uuid } from '@/common/types/common.type';
 import { CurrentUser } from '@/decorators/current-user.decorator';
 import { ApiAuth } from '@/decorators/http.decorators';

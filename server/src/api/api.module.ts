@@ -1,11 +1,8 @@
+import { BusinessModule } from '@/api/business/business.module';
+import { SystemModule } from '@/api/system/system.module';
 import { Module } from '@nestjs/common';
-import { AuthModule } from './auth/auth.module';
-import { HealthModule } from './health/health.module';
-import { HomeModule } from './home/home.module';
-import { SettingModule } from './setting/setting.module';
-import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [UserModule, HealthModule, AuthModule, HomeModule, SettingModule],
+  imports: [SystemModule, BusinessModule],
 })
 export class ApiModule {}
