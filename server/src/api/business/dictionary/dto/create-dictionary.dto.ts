@@ -14,6 +14,10 @@ export class CreateDictionaryDto {
   description?: string;
 
   @IsOptional()
+  @IsBoolean()
+  isPublic?: boolean;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   wordCount?: number;
@@ -36,4 +40,4 @@ export class CreateDictionaryDto {
   @IsOptional()
   @IsObject()
   metadata?: Record<string, any>;
-} 
+}
