@@ -47,7 +47,7 @@ export class WordService {
     return new OffsetPaginatedDto(plainToInstance(WordResDto, words), metaDto);
   }
 
-  async findOne(id: number): Promise<WordEntity> {
+  async findOne(id: Uuid): Promise<WordEntity> {
     const word = await this.wordRepository.findOne({
       where: { id },
       relations: ['dictionary'],
@@ -60,7 +60,7 @@ export class WordService {
     return word;
   }
 
-  async update(id: number, updateWordDto: UpdateWordDto): Promise<WordEntity> {
+  async update(id: Uuid, updateWordDto: UpdateWordDto): Promise<WordEntity> {
     const word = await this.findOne(id);
 
     if (updateWordDto.dictionaryId && updateWordDto.dictionaryId !== word.dictionaryId) {
@@ -73,7 +73,7 @@ export class WordService {
     return await this.wordRepository.save(word);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: Uuid): Promise<void> {
     const word = await this.findOne(id);
     await this.wordRepository.remove(word);
 
@@ -81,7 +81,7 @@ export class WordService {
     await this.dictionaryService.updateWordCount(word.dictionaryId, -1);
   }
 
-  async findByDictionary(dictionaryId: number): Promise<WordEntity[]> {
+  async findByDictionary(dictionaryId: Uuid): Promise<WordEntity[]> {
     return await this.wordRepository.find({
       where: { dictionaryId },
       relations: ['dictionary'],
@@ -102,5 +102,32 @@ export class WordService {
       where: { difficulty },
       relations: ['dictionary'],
     });
+  }
+
+  /**
+   * 查询公开词典的单词 (带分页)
+   * @param dictionaryId 词典ID
+   * @param reqDto 分页请求参数
+   * @returns 单词列表 (分页结果)
+   */
+  async findWordsByPublicDictionary(dictionaryId: Uuid, reqDto: ListWordReqDto): Promise<OffsetPaginatedDto<WordResDto>> {
+    // 验证词典是否存在且为公开
+    const dictionary = await this.dictionaryService.findOne(dictionaryId);
+    if (!dictionary.isPublic) {
+      throw new NotFoundException(`Dictionary with ID ${dictionaryId} is not public`);
+    }
+
+    // 查询该公开词典下的所有单词 (带分页)
+    const query = this.wordRepository
+      .createQueryBuilder('word')
+      .where('word.dictionaryId = :dictionaryId', { dictionaryId })
+      .orderBy('word.createdAt', 'DESC');
+
+    const [words, metaDto] = await paginate<WordEntity>(query, reqDto, {
+      skipCount: false,
+      takeAll: false,
+    });
+
+    return new OffsetPaginatedDto(plainToInstance(WordResDto, words), metaDto);
   }
 }

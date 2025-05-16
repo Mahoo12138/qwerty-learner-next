@@ -1,24 +1,56 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Query } from '@nestjs/common';
+import { OffsetPaginatedDto } from '@/common/dto/offset-pagination/paginated.dto'; // 导入 OffsetPaginatedDto
+import { Uuid } from '@/common/types/common.type';
+import { CurrentUser } from '@/decorators/current-user.decorator';
+import { ApiPublic } from '@/decorators/http.decorators';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DictionaryService } from './dictionary.service';
 import { CreateDictionaryDto } from './dto/create-dictionary.dto';
+import { DictionaryResDto } from './dto/dictionary.res.dto';
+import { ListDictionaryReqDto } from './dto/list-dictionary.req.dto';
 import { UpdateDictionaryDto } from './dto/update-dictionary.dto';
 import { DictionaryEntity } from './entities/dictionary.entity';
-import { ListDictionaryReqDto } from './dto/list-dictionary.req.dto';
-import { CurrentUser } from '@/decorators/current-user.decorator';
-import { Uuid } from '@/common/types/common.type';
 
+@ApiTags('Dictionary')
 @Controller({ path: 'dictionary', version: '1' })
 export class DictionaryController {
-  constructor(private readonly dictionaryService: DictionaryService) { }
+  constructor(private readonly dictionaryService: DictionaryService) {}
 
   @Post()
-  async create(@Body() createDictionaryDto: CreateDictionaryDto, @CurrentUser('id') userId: Uuid): Promise<DictionaryEntity> {
+  async create(
+    @Body() createDictionaryDto: CreateDictionaryDto,
+    @CurrentUser('id') userId: Uuid,
+  ): Promise<DictionaryEntity> {
     return await this.dictionaryService.create(createDictionaryDto, userId);
   }
 
   @Get()
   async findAll(@Query() reqDto: ListDictionaryReqDto) {
     return await this.dictionaryService.findAll(reqDto);
+  }
+
+  // 修改查询所有公开词典的接口，接受分页参数
+  @Get('public')
+  @ApiOperation({ summary: 'Find all public dictionaries with pagination' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return a paginated list of public dictionaries',
+    type: OffsetPaginatedDto<DictionaryEntity>, // 或者 OffsetPaginatedDto<DictionaryResDto>
+  })
+  @ApiPublic()
+  async findPublic(
+    @Query() reqDto: ListDictionaryReqDto,
+  ): Promise<OffsetPaginatedDto<DictionaryResDto>> {
+    return await this.dictionaryService.findPublicDictionaries(reqDto);
   }
 
   @Get(':id')
@@ -40,12 +72,16 @@ export class DictionaryController {
   }
 
   @Get('language/:language')
-  async findByLanguage(@Param('language') language: string): Promise<DictionaryEntity[]> {
+  async findByLanguage(
+    @Param('language') language: string,
+  ): Promise<DictionaryEntity[]> {
     return await this.dictionaryService.findByLanguage(language);
   }
 
   @Get('category/:category')
-  async findByCategory(@Param('category') category: string): Promise<DictionaryEntity[]> {
+  async findByCategory(
+    @Param('category') category: string,
+  ): Promise<DictionaryEntity[]> {
     return await this.dictionaryService.findByCategory(category);
   }
 
@@ -54,6 +90,9 @@ export class DictionaryController {
     @Param('id') id: Uuid,
     @Query('increment') increment: string,
   ): Promise<DictionaryEntity> {
-    return await this.dictionaryService.updateWordCount(id, increment ? +increment : 1);
+    return await this.dictionaryService.updateWordCount(
+      id,
+      increment ? +increment : 1,
+    );
   }
 }

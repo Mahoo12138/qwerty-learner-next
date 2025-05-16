@@ -39,6 +39,9 @@ export class DictionaryEntity extends AbstractEntity {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ default: false, comment: '是否公开' }) 
+  isPublic: boolean;
+
   @Column({ nullable: true })
   difficulty: number;
 

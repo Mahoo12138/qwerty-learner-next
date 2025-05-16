@@ -19,10 +19,11 @@ export class DictionaryService {
   ) { }
 
   async create(createDictionaryDto: CreateDictionaryDto, userId: Uuid): Promise<DictionaryEntity> {
-    const { name, language } = createDictionaryDto
+    const { name, language, isPublic } = createDictionaryDto // 包含 isPublic
     const newDict = new DictionaryEntity({
-      name, 
+      name,
       language,
+      isPublic, // 设置 isPublic
       createdBy: userId,
       updatedBy: userId,
     });
@@ -51,7 +52,7 @@ export class DictionaryService {
 
   async update(id: Uuid, updateDictionaryDto: UpdateDictionaryDto): Promise<DictionaryEntity> {
     const dictionary = await this.findOne(id);
-    Object.assign(dictionary, updateDictionaryDto);
+    Object.assign(dictionary, updateDictionaryDto); // Object.assign 会处理 isPublic 字段
     return await this.dictionaryRepository.save(dictionary);
   }
 
@@ -74,5 +75,19 @@ export class DictionaryService {
     const dictionary = await this.findOne(id);
     dictionary.wordCount += increment;
     return await this.dictionaryRepository.save(dictionary);
+  }
+
+  async findPublicDictionaries(reqDto: ListDictionaryReqDto): Promise<OffsetPaginatedDto<DictionaryResDto>> {
+    const query = this.dictionaryRepository
+      .createQueryBuilder('dictionary')
+      .where('dictionary.isPublic = :isPublic', { isPublic: true }) // 过滤公开词典
+      .orderBy('dictionary.createdAt', 'DESC');
+
+    const [dictionaries, metaDto] = await paginate<DictionaryEntity>(query, reqDto, {
+      skipCount: false,
+      takeAll: false,
+    });
+
+    return new OffsetPaginatedDto(plainToInstance(DictionaryResDto, dictionaries), metaDto);
   }
 }
