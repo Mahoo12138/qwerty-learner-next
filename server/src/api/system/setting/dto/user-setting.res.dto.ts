@@ -1,4 +1,4 @@
-import { UserResDto } from '@/api/user/dto/user.res.dto';
+import { UserResDto } from '@/api/system/user/dto/user.res.dto';
 import { WrapperType } from '@/common/types/types';
 import {
   ClassField,

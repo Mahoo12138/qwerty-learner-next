@@ -1,3 +1,5 @@
+import { SessionEntity } from '@/api/system/user/entities/session.entity';
+import { UserEntity } from '@/api/system/user/entities/user.entity';
 import { IEmailJob, IVerifyEmailJob } from '@/common/interfaces/job.interface';
 import { Branded } from '@/common/types/types';
 import { AllConfigType } from '@/config/config.type';
@@ -21,8 +23,6 @@ import { plainToInstance } from 'class-transformer';
 import crypto from 'crypto';
 import ms from 'ms';
 import { Repository } from 'typeorm';
-import { SessionEntity } from '../user/entities/session.entity';
-import { UserEntity } from '../user/entities/user.entity';
 import { LoginReqDto } from './dto/login.req.dto';
 import { LoginResDto } from './dto/login.res.dto';
 import { RefreshReqDto } from './dto/refresh.req.dto';

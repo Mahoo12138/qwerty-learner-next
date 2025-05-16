@@ -12,7 +12,7 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import compression from 'compression';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
-import { AuthService } from './api/auth/auth.service';
+import { AuthService } from './api/system/auth/auth.service';
 import { AppModule } from './app.module';
 import { type AllConfigType } from './config/config.type';
 import { GlobalExceptionFilter } from './filters/global-exception.filter';
@@ -33,8 +33,8 @@ async function bootstrap() {
     },
   }));
 
-  // For high-traffic websites in production, 
-  // it is strongly recommended to offload compression from the application server typically in a reverse proxy (e.g., Nginx). 
+  // For high-traffic websites in production,
+  // it is strongly recommended to offload compression from the application server typically in a reverse proxy (e.g., Nginx).
   // In that case, you should not use compression middleware.
   app.use(compression());
 

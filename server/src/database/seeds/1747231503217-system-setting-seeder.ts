@@ -1,4 +1,4 @@
-import { SystemSettingEntity } from '@/api/setting/entities/system-setting.entity';
+import { SystemSettingEntity } from '@/api/system/setting/entities/system-setting.entity';
 import { DataSource } from 'typeorm';
 import { Seeder, SeederFactoryManager } from 'typeorm-extension';
 

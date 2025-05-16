@@ -1,4 +1,4 @@
-import { AuthService } from '@/api/auth/auth.service';
+import { AuthService } from '@/api/system/auth/auth.service';
 import { IS_AUTH_OPTIONAL, IS_PUBLIC } from '@/constants/app.constant';
 import {
   CanActivate,
