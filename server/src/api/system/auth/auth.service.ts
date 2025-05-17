@@ -1,5 +1,5 @@
 import { SessionEntity } from '@/api/system/user/entities/session.entity';
-import { UserEntity } from '@/api/system/user/entities/user.entity';
+import { UserEntity, UserRole } from '@/api/system/user/entities/user.entity';
 import { IEmailJob, IVerifyEmailJob } from '@/common/interfaces/job.interface';
 import { Branded } from '@/common/types/types';
 import { AllConfigType } from '@/config/config.type';
@@ -31,6 +31,7 @@ import { SigninReqDto } from './dto/signin.req.dto';
 import { SigninResDto } from './dto/signin.res.dto';
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { JwtRefreshPayloadType } from './types/jwt-refresh-payload.type';
+import { UserService } from '../user/user.service';
 
 type Token = Branded<
   {
@@ -46,13 +47,14 @@ export class AuthService {
   constructor(
     private readonly configService: ConfigService<AllConfigType>,
     private readonly jwtService: JwtService,
+    private readonly userService: UserService,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     @InjectQueue(QueueName.EMAIL)
     private readonly emailQueue: Queue<IEmailJob, any, string>,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
-  ) {}
+  ) { }
 
   /**
    * Sign in user
@@ -99,6 +101,10 @@ export class AuthService {
   }
 
   async signin(dto: SigninReqDto): Promise<SigninResDto> {
+    // Check if a host user exists
+    const hostUser = await this.userService.findHostUser();
+    // Determine the role for the new user
+    const role = hostUser ? UserRole.USER : UserRole.HOST;
     // Check if the user already exists
     const isExistUser = await UserEntity.exists({
       where: { email: dto.email },
@@ -110,6 +116,7 @@ export class AuthService {
 
     // Register user
     const user = new UserEntity({
+      role,
       email: dto.email,
       password: dto.password,
       createdBy: SYSTEM_USER_ID,
