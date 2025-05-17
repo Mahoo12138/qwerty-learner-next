@@ -17,7 +17,7 @@ import { ListUserReqDto } from './dto/list-user.req.dto';
 import { LoadMoreUsersReqDto } from './dto/load-more-users.req.dto';
 import { UpdateUserReqDto } from './dto/update-user.req.dto';
 import { UserResDto } from './dto/user.res.dto';
-import { UserEntity } from './entities/user.entity';
+import { UserEntity, UserRole } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
@@ -29,7 +29,7 @@ export class UserService {
   ) {}
 
   async create(dto: CreateUserReqDto): Promise<UserResDto> {
-    const { username, email, password, bio, image } = dto;
+    const { username, email, password, role, image } = dto;
 
     // check uniqueness of username/email
     const user = await this.userRepository.findOne({
@@ -51,8 +51,8 @@ export class UserService {
       username,
       email,
       password,
-      bio,
       image,
+      role,
       createdBy: SYSTEM_USER_ID,
       updatedBy: SYSTEM_USER_ID,
     });
@@ -114,7 +114,7 @@ export class UserService {
   async update(id: Uuid, updateUserDto: UpdateUserReqDto) {
     const user = await this.userRepository.findOneByOrFail({ id });
 
-    user.bio = updateUserDto.bio;
+    user.role = updateUserDto.role;
     user.image = updateUserDto.image;
     user.updatedBy = SYSTEM_USER_ID;
 
@@ -124,5 +124,11 @@ export class UserService {
   async remove(id: Uuid) {
     await this.userRepository.findOneByOrFail({ id });
     await this.userRepository.softDelete(id);
+  }
+  async findHostUser(): Promise<UserResDto> {
+    const hostUser = await this.userRepository.findOne({
+      where: { role: UserRole.HOST },
+    });
+    return plainToInstance(UserResDto, hostUser);
   }
 }
