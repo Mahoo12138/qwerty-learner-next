@@ -10,9 +10,15 @@ import {
   Index,
   OneToMany,
   PrimaryGeneratedColumn,
-  Relation,
 } from 'typeorm';
 import { SessionEntity } from './session.entity';
+
+// 定义用户角色枚举
+export enum UserRole {
+  HOST = 'host',
+  ADMIN = 'admin',
+  USER = 'user',
+}
 
 @Entity('user')
 export class UserEntity extends AbstractEntity {
@@ -42,10 +48,14 @@ export class UserEntity extends AbstractEntity {
   password!: string;
 
   @Column({ default: '' })
-  bio?: string;
-
-  @Column({ default: '' })
   image?: string;
+
+  @Column({
+    type: 'enum', // 使用 enum 类型
+    enum: UserRole, // 指定枚举
+    default: UserRole.USER, // 设置默认值
+  })
+  role: UserRole; // 添加 role 字段
 
   @DeleteDateColumn({
     name: 'deleted_at',
@@ -56,7 +66,6 @@ export class UserEntity extends AbstractEntity {
 
   @OneToMany(() => SessionEntity, (session) => session.user)
   sessions?: SessionEntity[];
-
 
   @BeforeInsert()
   @BeforeUpdate()

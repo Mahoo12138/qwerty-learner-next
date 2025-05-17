@@ -1,4 +1,4 @@
-import { UserEntity } from '@/api/system/user/entities/user.entity';
+import { UserEntity, UserRole } from '@/api/system/user/entities/user.entity';
 import { SYSTEM_USER_ID } from '@/constants/app.constant';
 import { DataSource } from 'typeorm';
 import { Seeder, SeederFactoryManager } from 'typeorm-extension';
@@ -19,7 +19,7 @@ export class UserSeeder1722335726360 implements Seeder {
           username: 'admin',
           email: 'admin@example.com',
           password: '12345678',
-          bio: "hello, i'm a backend developer",
+          role: UserRole.ADMIN,
           image: 'https://example.com/avatar.png',
           createdBy: SYSTEM_USER_ID,
           updatedBy: SYSTEM_USER_ID,
