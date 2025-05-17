@@ -1,10 +1,10 @@
+import { Uuid } from '@/common/types/common.type';
+import { CurrentUser } from '@/decorators/current-user.decorator';
 import { ApiAuth, ApiPublic } from '@/decorators/http.decorators'; // 导入 ApiPublic
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger'; // 导入 ApiOperation 和 ApiResponse
 import { UpsertSettingReqDto } from './dto/upsert-setting.req.dto';
 import { SettingService } from './setting.service';
-import { CurrentUser } from '@/decorators/current-user.decorator';
-import { Uuid } from '@/common/types/common.type';
 
 @ApiTags('system-setting')
 @Controller({
@@ -27,7 +27,10 @@ export class SystemSettingController {
     type: UpsertSettingReqDto,
     summary: 'Create or update a system setting',
   })
-  async createOrUpdate(@Body() reqDto: UpsertSettingReqDto, @CurrentUser('id') userId: Uuid) {
+  async createOrUpdate(
+    @Body() reqDto: UpsertSettingReqDto,
+    @CurrentUser('id') userId: Uuid,
+  ) {
     return this.settingService.upsertSystemSetting(reqDto, userId);
   }
 
