@@ -6,6 +6,8 @@ import {
 } from '@/decorators/field.decorators';
 import { lowerCaseTransformer } from '@/utils/transformers/lower-case.transformer';
 import { Transform } from 'class-transformer';
+import { UserRole } from '../entities/user.entity';
+import { IsEnum } from 'class-validator';
 
 export class CreateUserReqDto {
   @StringField()
@@ -19,7 +21,8 @@ export class CreateUserReqDto {
   password: string;
 
   @StringFieldOptional()
-  bio?: string;
+  @IsEnum(UserRole)
+  role?: UserRole;
 
   @StringFieldOptional()
   image?: string;

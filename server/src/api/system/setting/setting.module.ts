@@ -6,5 +6,6 @@ import { UserSettingController } from './user-setting.controller';
 @Module({
   controllers: [SystemSettingController, UserSettingController],
   providers: [SettingService],
+  exports: [SettingService],
 })
 export class SettingModule {}
