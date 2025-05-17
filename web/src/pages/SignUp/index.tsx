@@ -6,54 +6,55 @@ import { useState } from "react";
 import AuthFooter from "@/components/AuthFooter";
 import useLoading from "@/hooks/useLoading";
 import useNavigateTo from "@/hooks/useNavigateTo";
-// import { workspaceStore } from "@/store/v2";
-// import { initialUserStore } from "@/store/v2/user";
 import { useTranslate } from "@/utils/i18n";
+import { useGlobalStore } from '@/store/global';
+import { Link } from '@tanstack/react-router';
 
 const SignUp = () => {
   const t = useTranslate();
+  const { statusData } = useGlobalStore();
   const navigateTo = useNavigateTo();
   const actionBtnLoadingState = useLoading(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // const workspaceGeneralSetting = workspaceStore.state.generalSetting;
 
-  const handleUsernameInputChanged = (
+  const handleEmailInputChanged = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    // const text = e.target.value as string;
-    // setUsername(text);
+    const text = e.target.value as string;
+    setEmail(text);
   };
 
   const handlePasswordInputChanged = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
-    // const text = e.target.value as string;
-    // setPassword(text);
+    const text = e.target.value as string;
+    setPassword(text);
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // e.preventDefault();
-    // handleSignUpButtonClick();
+    e.preventDefault();
+    handleSignUpButtonClick();
   };
 
   const handleSignUpButtonClick = async () => {
-    // if (username === "" || password === "") {
-    //   return;
-    // }
-    // if (actionBtnLoadingState.isLoading) {
-    //   return;
-    // }
-    // try {
-    //   actionBtnLoadingState.setLoading();
-    //   await authServiceClient.signUp({ username, password });
-    //   await initialUserStore();
-    //   navigateTo("/");
-    // } catch (error: any) {
-    //   console.error(error);
-    //   toast.error((error as ClientError).details || "Sign up failed");
-    // }
-    // actionBtnLoadingState.setFinish();
+    console.log("email", email);
+    if (email === "" || password === "") {
+      return;
+    }
+    if (actionBtnLoadingState.isLoading) {
+      return;
+    }
+    try {
+      actionBtnLoadingState.setLoading();
+      // await authServiceClient.signUp({ email, password });
+      // await initialUserStore();
+      navigateTo("/");
+    } catch (error: any) {
+      console.error(error);
+      // toast.error((error as ClientError).details || "Sign up failed");
+    }
+    actionBtnLoadingState.setFinish();
   };
 
   return (
@@ -71,72 +72,6 @@ const SignUp = () => {
             {"Qwerty"}
           </p>
         </div>
-        {/* {!workspaceGeneralSetting.disallowUserRegistration ? (
-          <>
-            <p className="w-full text-2xl mt-2 dark:text-gray-500">
-              {t("auth.create-your-account")}
-            </p>
-            <form className="w-full mt-2" onSubmit={handleFormSubmit}>
-              <div className="flex flex-col justify-start items-start w-full gap-4">
-                <div className="w-full flex flex-col justify-start items-start">
-                  <span className="leading-8 text-gray-600">
-                    {t("common.username")}
-                  </span>
-                  <Input
-                    className="w-full bg-white dark:bg-black"
-                    size="lg"
-                    type="text"
-                    readOnly={actionBtnLoadingState.isLoading}
-                    placeholder={t("common.username")}
-                    value={username}
-                    autoComplete="username"
-                    autoCapitalize="off"
-                    spellCheck={false}
-                    onChange={handleUsernameInputChanged}
-                    required
-                  />
-                </div>
-                <div className="w-full flex flex-col justify-start items-start">
-                  <span className="leading-8 text-gray-600">
-                    {t("common.password")}
-                  </span>
-                  <Input
-                    className="w-full bg-white dark:bg-black"
-                    size="lg"
-                    type="password"
-                    readOnly={actionBtnLoadingState.isLoading}
-                    placeholder={t("common.password")}
-                    value={password}
-                    autoComplete="password"
-                    autoCapitalize="off"
-                    spellCheck={false}
-                    onChange={handlePasswordInputChanged}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="flex flex-row justify-end items-center w-full mt-6">
-                <Button
-                  type="submit"
-                  color="primary"
-                  size="lg"
-                  fullWidth
-                  disabled={actionBtnLoadingState.isLoading}
-                  onClick={handleSignUpButtonClick}
-                >
-                  {t("common.sign-up")}
-                  {actionBtnLoadingState.isLoading && (
-                    <LoaderIcon className="w-5 h-auto ml-2 animate-spin opacity-60" />
-                  )}
-                </Button>
-              </div>
-            </form>
-          </>
-        ) : (
-          <p className="w-full text-2xl mt-2 dark:text-gray-500">
-            Sign up is not allowed.
-          </p>
-        )} */}
         <>
           <p className="w-full text-2xl mt-2 dark:text-gray-500">
             {t("auth.create-your-account")}
@@ -145,19 +80,19 @@ const SignUp = () => {
             <div className="flex flex-col justify-start items-start w-full gap-4">
               <div className="w-full flex flex-col justify-start items-start">
                 <span className="leading-8 text-gray-600">
-                  {t("common.username")}
+                  {t("common.email")}
                 </span>
                 <Input
                   className="w-full bg-white dark:bg-black"
                   // size={}
-                  type="text"
+                  type="email"
                   readOnly={actionBtnLoadingState.isLoading}
-                  placeholder={t("common.username")}
-                  value={username}
-                  autoComplete="username"
+                  placeholder={t("common.email")}
+                  value={email}
+                  autoComplete="email"
                   autoCapitalize="off"
                   spellCheck={false}
-                  onChange={handleUsernameInputChanged}
+                  onChange={handleEmailInputChanged}
                   required
                 />
               </div>
@@ -197,7 +132,7 @@ const SignUp = () => {
             </div>
           </form>
         </>
-        {/* {!workspaceStore.state.profile.owner ? (
+        {!statusData?.host ? (
           <p className="w-full mt-4 text-sm font-medium dark:text-gray-500">
             {t("auth.host-tip")}
           </p>
@@ -205,14 +140,14 @@ const SignUp = () => {
           <p className="w-full mt-4 text-sm">
             <span className="dark:text-gray-500">{t("auth.sign-in-tip")}</span>
             <Link
-              to="/auth"
+              to="/auth/sign-in"
               className="cursor-pointer ml-2 text-blue-600 hover:underline"
               viewTransition
             >
               {t("common.sign-in")}
             </Link>
           </p>
-        )} */}
+        )}
       </div>
       <AuthFooter />
     </div>

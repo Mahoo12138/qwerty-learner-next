@@ -14,7 +14,7 @@ export const wordListQueryFn: QueryFunction<Word[], string[]> = async (
   context
 ): Promise<Word[]> => {
   const [url, dictId] = context.queryKey;
-  const response = await fetch(`${url}?dict_id=${dictId}`);
+  const response = await fetch(`${url}/${dictId}`);
   const { data } = await response.json();
   return data as Word[];
 };
