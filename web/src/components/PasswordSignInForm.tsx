@@ -9,20 +9,21 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import { useMutation } from '@tanstack/react-query';
+import { useAuthStore } from '@/store/auth';
 
 const PasswordSignInForm = () => {
   const t = useTranslate();
   const navigateTo = useNavigateTo();
-
+  const { setToken } = useAuthStore()
   const actionBtnLoadingState = useLoading(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
 
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: { username: string; password: string }) => {
-      const response = await fetch('/api/login', {
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,7 +35,9 @@ const PasswordSignInForm = () => {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("token", data)
+      setToken(data)
       navigateTo("/");
     },
     onError: (error: Error) => {
@@ -46,7 +49,7 @@ const PasswordSignInForm = () => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const text = e.target.value as string;
-    setUsername(text);
+    setEmail(text);
   };
 
   const handlePasswordInputChanged = (
@@ -62,7 +65,7 @@ const PasswordSignInForm = () => {
   };
 
   const handleSignInButtonClick = async () => {
-    if (username === "" || password === "") {
+    if (email === "" || password === "") {
       return;
     }
 
@@ -72,7 +75,7 @@ const PasswordSignInForm = () => {
 
     try {
       actionBtnLoadingState.setLoading();
-      await loginMutation.mutateAsync({ username, password });
+      await loginMutation.mutateAsync({ email, password });
     } catch (error: any) {
       console.error(error);
     } finally {
@@ -85,16 +88,16 @@ const PasswordSignInForm = () => {
       <div className="flex flex-col justify-start items-start w-full gap-4">
         <div className="w-full flex flex-col justify-start items-start">
           <span className="leading-8 text-gray-600">
-            {t("common.username")}
+            {t("common.email")}
           </span>
           <Input
             className="w-full bg-white dark:bg-black"
             size={24}
-            type="text"
+            type="email"
             readOnly={actionBtnLoadingState.isLoading}
-            placeholder={t("common.username")}
-            value={username}
-            autoComplete="username"
+            placeholder={t("common.email")}
+            value={email}
+            autoComplete="email"
             autoCapitalize="off"
             spellCheck={false}
             onChange={handleUsernameInputChanged}

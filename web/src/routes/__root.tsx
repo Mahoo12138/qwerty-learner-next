@@ -1,15 +1,21 @@
-// import { QueryClient } from '@tanstack/react-query'
-import App from "@/App";
 import Loading from "@/components/Loading";
-import { createRootRouteWithContext } from "@tanstack/react-router";
-// import GeneralError from '@/features/errors/general-error'
-// import NotFoundError from '@/features/errors/not-found-error'
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from '@tanstack/router-devtools';
 
 export const Route = createRootRouteWithContext<{
   //   queryClient: QueryClient
-  token: String | null;
+  token: {} | null;
+  host: String | null;
 }>()({
-  component: App,
+  component: () => <>
+    <Outlet />
+    {import.meta.env.MODE === "development" && (
+      <>
+        {/* <ReactQueryDevtools buttonPosition='bottom-left' /> */}
+        <TanStackRouterDevtools position="bottom-right" />
+      </>
+    )}
+  </>,
   pendingComponent: Loading,
   //   notFoundComponent: NotFoundError,
   //   errorComponent: GeneralError,
