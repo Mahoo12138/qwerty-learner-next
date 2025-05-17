@@ -34,8 +34,8 @@ export class HealthController {
         ? [
             () =>
               this.http.pingCheck(
-                'api-docs',
-                `${this.configService.get('app.url', { infer: true })}/api-docs`,
+                'reference',
+                `${this.configService.get('app.url', { infer: true })}/reference`,
               ),
           ]
         : []),
