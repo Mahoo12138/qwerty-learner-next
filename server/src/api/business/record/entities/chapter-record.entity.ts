@@ -1,10 +1,12 @@
 import {
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Uuid } from '@/common/types/common.type';
 import { AbstractEntity } from '@/database/entities/abstract.entity';
+import { WordRecordEntity } from './word-record.entity';
 
 @Entity('chapter_record')
 export class ChapterRecordEntity extends AbstractEntity {
@@ -18,14 +20,12 @@ export class ChapterRecordEntity extends AbstractEntity {
   })
   id!: Uuid;
 
-  @Column({ length: 100, comment: '词典标识或功能类型' })
-  dict: string;
+  @Column({ type: 'uuid', comment: '词典标识或功能类型' })
+  dict: Uuid;
 
   @Column({ type: 'int', nullable: true, comment: '章节索引，错题场景为-1' })
   chapter: number | null;
 
-  @Column({ type: 'bigint', comment: '时间戳' })
-  timeStamp: number;
 
   @Column({ type: 'int', comment: '练习时间（秒）' })
   time: number;
@@ -45,8 +45,12 @@ export class ChapterRecordEntity extends AbstractEntity {
   @Column({ type: 'int', comment: '章节总单词数' })
   wordNumber: number;
 
-  @Column({ type: 'uuid', array: true, comment: '单词记录ID列表' })
-  wordRecordIds: Uuid[];
+  // 添加与单词记录的一对多关系
+  @OneToMany(() => WordRecordEntity, wordRecord => wordRecord.chapterRecordId)
+  words: WordRecordEntity[];
+
+  @Column({ type: 'boolean', default: false, comment: '是否已完成' })
+  isFinished: boolean;
 
   @Column({ type: 'uuid', comment: '用户ID' })
   userId: Uuid;

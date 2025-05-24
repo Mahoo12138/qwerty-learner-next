@@ -1,10 +1,15 @@
 import {
   Column,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
+  Relation,
 } from 'typeorm';
 import { Uuid } from '@/common/types/common.type';
 import { AbstractEntity } from '@/database/entities/abstract.entity';
+import { WordEntity } from '../../word/entities/word.entity';
+import { ChapterRecordEntity } from './chapter-record.entity';
 
 export interface LetterMistakes {
   [index: number]: string[];
@@ -22,14 +27,30 @@ export class WordRecordEntity extends AbstractEntity {
   })
   id!: Uuid;
 
+  // 添加与记录的关系
+  @Column({ type: 'uuid', nullable: true, comment: '记录ID' })
+  chapterRecordId: Uuid | null;
+
+  @ManyToOne(() => ChapterRecordEntity, chapterRecord => chapterRecord.words, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'chapterRecordId' })
+  chapterRecord: ChapterRecordEntity;
+
+  @Column({ type: 'uuid', comment: '词典ID' })
+  dictId: Uuid;
+
+  @ManyToOne(() => WordEntity, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'wordId' })
+  word: Relation<WordEntity>;
+
+  @Column({ type: 'uuid', comment: '单词ID', nullable: true })
+  wordId: Uuid;
+
   @Column({ length: 100, comment: '练习的单词' })
-  word: string;
-
-  @Column({ type: 'bigint', comment: '时间戳' })
-  timeStamp: number;
-
-  @Column({ length: 100, comment: '词典标识或功能类型' })
-  dict: string;
+  wordName: string;
 
   @Column({ type: 'int', nullable: true, comment: '章节索引，从0开始，错题等场景为null' })
   chapter: number | null;
