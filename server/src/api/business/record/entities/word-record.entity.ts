@@ -35,7 +35,7 @@ export class WordRecordEntity extends AbstractEntity {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'chapterRecordId' })
-  chapterRecord: ChapterRecordEntity;
+  chapterRecord: Relation<ChapterRecordEntity>;
 
   @Column({ type: 'uuid', comment: '词典ID' })
   dictId: Uuid;
