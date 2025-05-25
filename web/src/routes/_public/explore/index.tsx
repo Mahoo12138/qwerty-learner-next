@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import Explore from '@/pages/Typing/explore'
+import Explore from '@/pages/Home/explore'
 // import Typing from "@/pages/Typing";
 
 export const Route = createFileRoute('/_public/explore/')({

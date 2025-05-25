@@ -1,4 +1,4 @@
-import Layout from '../../components/Layout'
+import Layout from '../../components/layouts/Layout'
 import ezbdc from '@/assets/friendlinks/ezbdc.jpg'
 import kk from '@/assets/friendlinks/kk.jpg'
 import web_worker from '@/assets/friendlinks/web-worker.png'

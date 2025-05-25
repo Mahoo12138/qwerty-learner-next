@@ -8,6 +8,7 @@ export const Route = createRootRouteWithContext<{
   host: String | null;
 }>()({
   component: () => <>
+  
     <Outlet />
     {import.meta.env.MODE === "development" && (
       <>

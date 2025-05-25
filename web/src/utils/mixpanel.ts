@@ -1,4 +1,4 @@
-import type { TypingState } from '@/pages/Typing/store/type'
+import type { TypingState } from '@/pages/Home/store/type'
 import {
   currentChapterAtom,
   currentDictInfoAtom,

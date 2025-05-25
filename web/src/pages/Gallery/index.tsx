@@ -1,7 +1,7 @@
 import ChapterGroup from './ChapterGroup'
 import DictionaryGroup from './DictionaryGroup'
 import Header from '@/components/Header'
-import Layout from '@/components/Layout'
+import Layout from '@/components/layouts/Layout'
 import Tooltip from '@/components/Tooltip'
 import { dictionaries } from '@/resources/dictionary'
 import { currentDictInfoAtom } from '@/store'
@@ -9,7 +9,7 @@ import groupBy from '@/utils/groupBy'
 import { useAtomValue } from 'jotai'
 import type React from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import { NavLink, useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 
 const GalleryPage: React.FC = () => {
   const currentDictInfo = useAtomValue(currentDictInfoAtom)
@@ -27,9 +27,9 @@ const GalleryPage: React.FC = () => {
     <Layout>
       <Header>
         <Tooltip content="快捷键 Enter or Esc">
-          <NavLink className="rounded-lg bg-indigo-400 px-6 py-1 text-lg text-white focus:outline-none dark:text-opacity-80" to="/">
+          <Link className="rounded-lg bg-indigo-400 px-6 py-1 text-lg text-white focus:outline-none dark:text-opacity-80" to="/">
             完成选择
-          </NavLink>
+          </Link>
         </Tooltip>
       </Header>
       <div className="mb-auto mt-auto flex w-auto space-x-4 overflow-y-auto">
