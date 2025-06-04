@@ -61,6 +61,7 @@ export default defineConfig(async ({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'),
+        '$panda': path.resolve(__dirname, 'styled-system'),
       },
     },
     css: {
