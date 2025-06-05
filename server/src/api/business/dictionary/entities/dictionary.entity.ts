@@ -1,13 +1,19 @@
+import { TagEntity } from '@/api/business/tag/entities/tag.entity';
+import { Uuid } from '@/common/types/common.type';
+import { AbstractEntity } from '@/database/entities/abstract.entity';
 import {
   Column,
   Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
+import { CategoryEntity } from '../../category/entities/category.entity';
 import { WordEntity } from '../../word/entities/word.entity';
-import { Uuid } from '@/common/types/common.type';
-import { AbstractEntity } from '@/database/entities/abstract.entity';
 
 @Entity('dictionary')
 export class DictionaryEntity extends AbstractEntity {
@@ -33,13 +39,21 @@ export class DictionaryEntity extends AbstractEntity {
   @Column({ default: 0 })
   wordCount: number;
 
-  @Column({ length: 50, default: 'general' })
-  category: string;
+  @ManyToOne(() => CategoryEntity)
+  @JoinColumn({ name: 'categoryId' })
+  category: Relation<CategoryEntity>;
+
+  @Column({ nullable: true })
+  categoryId: Uuid;
+
+  @ManyToMany(() => TagEntity, (tag) => tag.dictionaries, { cascade: true })
+  @JoinTable()
+  tags: Relation<TagEntity>[];
 
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ default: false, comment: '是否公开' }) 
+  @Column({ default: false, comment: '是否公开' })
   isPublic: boolean;
 
   @Column({ nullable: true })
