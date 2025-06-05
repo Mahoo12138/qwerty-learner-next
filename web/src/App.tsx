@@ -4,12 +4,8 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { useTranslation } from "react-i18next";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { Theme } from "@radix-ui/themes";
-
-
 
 import { StatusData } from "./typings/status";
-
 
 import Loading from "./components/Loading";
 
@@ -17,7 +13,6 @@ import { routeTree } from "./routeTree.gen";
 import { queryClient } from "./api/client";
 import { useAuthStore } from "./store/auth";
 import { IsDesktop } from "./utils";
-
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -103,12 +98,10 @@ const App: React.FC = () => {
   }
 
   return (
-    <Theme>
-      <RouterProvider
-        router={router}
-        context={{ token, host: statusData?.host }}
-      />
-    </Theme>
+    <RouterProvider
+      router={router}
+      context={{ token, host: statusData?.host }}
+    />
   );
 };
 
