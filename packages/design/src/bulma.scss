@@ -11,10 +11,14 @@ $beige-lighter: #eff0eb;
   $grey-dark: $brown,
   $grey-light: $beige-light,
   $primary: $purple,
-  $link: $pink,
+  $link: $purple,
   $control-border-width: 2px,
-  $input-shadow: none
+  $input-shadow: none,
+
+  $tabs-border-bottom-width: 2px,
 );
+
+@use "./custom.scss";
 
 // Import the Google Font
 @import url("https://fonts.googleapis.com/css?family=Nunito:400,700");
