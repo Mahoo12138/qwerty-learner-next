@@ -1,13 +1,10 @@
+import path from 'node:path'
 import react from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
-// import { promises as fs } from 'fs'
 import { getLastCommit } from 'git-last-commit'
 import jotaiDebugLabel from 'jotai/babel/plugin-debug-label'
 import jotaiReactRefresh from 'jotai/babel/plugin-react-refresh'
-import path from 'node:path'
 import { visualizer } from 'rollup-plugin-visualizer'
-import Icons from 'unplugin-icons/vite'
-import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import type { PluginOption } from 'vite'
 
@@ -24,17 +21,7 @@ export default defineConfig(async ({ mode }) => {
     plugins: [
       TanStackRouterVite(),
       react({ babel: { plugins: [jotaiDebugLabel, jotaiReactRefresh] } }),
-      visualizer() as PluginOption,
-      tailwindcss(),
-      Icons({
-        compiler: 'jsx',
-        jsx: 'react',
-        customCollections: {
-          // 'my-icons': {
-          //   xiaohongshu: () => fs.readFile('./src/assets/xiaohongshu.svg', 'utf-8'),
-          // },
-        },
-      }),
+      visualizer() as PluginOption
     ],
     build: {
       minify: true,
@@ -60,7 +47,7 @@ export default defineConfig(async ({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, 'src'),
+        '@': path.resolve(__dirname, 'src')
       },
     },
     css: {

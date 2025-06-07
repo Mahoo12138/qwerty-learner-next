@@ -1,7 +1,6 @@
 import { CHAPTER_LENGTH } from '@/constants'
 import type { Howl } from 'howler'
 
-export * from './mixpanel'
 
 const bannedKeys = [
   'Enter',

@@ -14,6 +14,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as PublicRouteImport } from './routes/_public/route'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedDictionaryImport } from './routes/_authenticated/dictionary'
 import { Route as PublicExploreIndexImport } from './routes/_public/explore/index'
 import { Route as PublicAuthSignUpImport } from './routes/_public/auth/sign-up'
 import { Route as PublicAuthSignInImport } from './routes/_public/auth/sign-in'
@@ -33,6 +34,12 @@ const AuthenticatedRouteRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+
+const AuthenticatedDictionaryRoute = AuthenticatedDictionaryImport.update({
+  id: '/dictionary',
+  path: '/dictionary',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
@@ -72,6 +79,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicRouteImport
       parentRoute: typeof rootRoute
     }
+    '/_authenticated/dictionary': {
+      id: '/_authenticated/dictionary'
+      path: '/dictionary'
+      fullPath: '/dictionary'
+      preLoaderRoute: typeof AuthenticatedDictionaryImport
+      parentRoute: typeof AuthenticatedRouteImport
+    }
     '/_authenticated/': {
       id: '/_authenticated/'
       path: '/'
@@ -106,10 +120,12 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDictionaryRoute: typeof AuthenticatedDictionaryRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDictionaryRoute: AuthenticatedDictionaryRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
@@ -134,6 +150,7 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
 
 export interface FileRoutesByFullPath {
   '': typeof PublicRouteRouteWithChildren
+  '/dictionary': typeof AuthenticatedDictionaryRoute
   '/': typeof AuthenticatedIndexRoute
   '/auth/sign-in': typeof PublicAuthSignInRoute
   '/auth/sign-up': typeof PublicAuthSignUpRoute
@@ -142,6 +159,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '': typeof PublicRouteRouteWithChildren
+  '/dictionary': typeof AuthenticatedDictionaryRoute
   '/': typeof AuthenticatedIndexRoute
   '/auth/sign-in': typeof PublicAuthSignInRoute
   '/auth/sign-up': typeof PublicAuthSignUpRoute
@@ -152,6 +170,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
+  '/_authenticated/dictionary': typeof AuthenticatedDictionaryRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_public/auth/sign-in': typeof PublicAuthSignInRoute
   '/_public/auth/sign-up': typeof PublicAuthSignUpRoute
@@ -160,13 +179,20 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '' | '/' | '/auth/sign-in' | '/auth/sign-up' | '/explore'
+  fullPaths:
+    | ''
+    | '/dictionary'
+    | '/'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/explore'
   fileRoutesByTo: FileRoutesByTo
-  to: '' | '/' | '/auth/sign-in' | '/auth/sign-up' | '/explore'
+  to: '' | '/dictionary' | '/' | '/auth/sign-in' | '/auth/sign-up' | '/explore'
   id:
     | '__root__'
     | '/_authenticated'
     | '/_public'
+    | '/_authenticated/dictionary'
     | '/_authenticated/'
     | '/_public/auth/sign-in'
     | '/_public/auth/sign-up'
@@ -201,6 +227,7 @@ export const routeTree = rootRoute
     "/_authenticated": {
       "filePath": "_authenticated/route.tsx",
       "children": [
+        "/_authenticated/dictionary",
         "/_authenticated/"
       ]
     },
@@ -211,6 +238,10 @@ export const routeTree = rootRoute
         "/_public/auth/sign-up",
         "/_public/explore/"
       ]
+    },
+    "/_authenticated/dictionary": {
+      "filePath": "_authenticated/dictionary.tsx",
+      "parent": "/_authenticated"
     },
     "/_authenticated/": {
       "filePath": "_authenticated/index.tsx",

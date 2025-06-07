@@ -3,17 +3,16 @@ import { useGlobalStore } from "./store/global";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { useTranslation } from "react-i18next";
-import { QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { StatusData } from './typings/status';
-import Loading from './components/Loading';
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 
+import { StatusData } from "./typings/status";
 
-import { routeTree } from './routeTree.gen';
-import { queryClient } from './api/client';
-import { useAuthStore } from './store/auth';
+import Loading from "./components/Loading";
+
+import { routeTree } from "./routeTree.gen";
+import { queryClient } from "./api/client";
+import { useAuthStore } from "./store/auth";
 import { IsDesktop } from "./utils";
-
-
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -28,16 +27,23 @@ const router = createRouter({
 
 const App: React.FC = () => {
   const { i18n } = useTranslation();
-  const { appearance, locale, isAppInit, setIsAppInit, setStatusData, statusData } = useGlobalStore();
+  const {
+    appearance,
+    locale,
+    isAppInit,
+    setIsAppInit,
+    setStatusData,
+    statusData,
+  } = useGlobalStore();
   const { token } = useAuthStore();
 
   const { data, isLoading, error } = useQuery<StatusData>({
-    queryKey: ['status'], // 唯一的 query key
+    queryKey: ["status"], // 唯一的 query key
     queryFn: async () => {
-      const response = await fetch('/api/v1/status');
+      const response = await fetch("/api/v1/status");
       if (!response.ok) {
         // 如果请求失败，抛出错误
-        throw new Error('Failed to fetch status');
+        throw new Error("Failed to fetch status");
       }
       return response.json();
     },
@@ -50,11 +56,11 @@ const App: React.FC = () => {
     if (!IsDesktop()) {
       setTimeout(() => {
         alert(
-          ' Qwerty Learner 目的为提高键盘工作者的英语输入效率，目前暂未适配移动端，希望您使用桌面端浏览器访问。如您使用的是 Ipad 等平板电脑设备，可以使用外接键盘使用本软件。',
-        )
-      }, 500)
+          " Qwerty Learner 目的为提高键盘工作者的英语输入效率，目前暂未适配移动端，希望您使用桌面端浏览器访问。如您使用的是 Ipad 等平板电脑设备，可以使用外接键盘使用本软件。"
+        );
+      }, 500);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (isLoading) {
@@ -75,24 +81,27 @@ const App: React.FC = () => {
       : document.documentElement.classList.remove("dark");
   }, [appearance]);
 
-  useEffect(() => {
-    const currentLocale = locale;
-    // This will trigger re-rendering of the whole app.
-    i18n.changeLanguage(currentLocale);
-    document.documentElement.setAttribute("lang", currentLocale);
-    if (["ar", "fa"].includes(currentLocale)) {
-      document.documentElement.setAttribute("dir", "rtl");
-    } else {
-      document.documentElement.setAttribute("dir", "ltr");
-    }
-  }, [locale]);
+  // useEffect(() => {
+  //   const currentLocale = locale;
+  //   // This will trigger re-rendering of the whole app.
+  //   i18n.changeLanguage(currentLocale);
+  //   document.documentElement.setAttribute("lang", currentLocale);
+  //   if (["ar", "fa"].includes(currentLocale)) {
+  //     document.documentElement.setAttribute("dir", "rtl");
+  //   } else {
+  //     document.documentElement.setAttribute("dir", "ltr");
+  //   }
+  // }, [locale]);
 
   if (isAppInit) {
     return <Loading />;
   }
 
   return (
-    <RouterProvider router={router} context={{ token, host: statusData?.host }} />
+    <RouterProvider
+      router={router}
+      context={{ token, host: statusData?.host }}
+    />
   );
 };
 

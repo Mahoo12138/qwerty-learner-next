@@ -1,67 +1,117 @@
-import Header from "@/components/Header";
 import type React from "react";
-import { Keyboard, Bookmark, PlaneLanding } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import Header from "@/components/Header";
+import { Book, AlertCircle, BarChart2, Calendar } from "lucide-react";
 
 const Home: React.FC = () => {
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) {
-      return "Good morning";
-    }
-    if (hour < 18) {
-      return "Good afternoon";
-    }
-    return "Good evening";
+    if (hour < 12) return "早上好";
+    if (hour < 18) return "下午好";
+    return "晚上好";
   };
 
-  const userName = "Mahoo"; // 后续根据接口展示
-
   return (
-    <div className="bg-app-background min-h-screen flex flex-col justify-between p-6">
+    <div className="container">
       <Header />
-      <main className="flex-grow flex flex-col items-center justify-center">
-        <div className="flex-grow flex flex-col items-center justify-center">
-          <div className="text-center mb-14">
-            <p className="text-5xl font-semibold text-app-text text-shadow">
-              {getGreeting()}, {userName}!
-            </p>
-          </div>
-          <button className="w-full max-w-sm bg-app-primary hover:bg-app-secondary transition-all text-white text-xl font-semibold py-5 px-6 rounded-xl element-shadow hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-app-secondary focus:ring-opacity-75 flex items-center justify-center space-x-3">
-            <Keyboard />
-            <span>Start Practice</span>
-          </button>
-        </div>
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-14 mt-12 p-12 text-white">
-          <div className="bg-app-secondary backdrop-blur-sm p-6 rounded-xl element-shadow hover:border hover:border-app-primary transition-all cursor-pointer group">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xl font-semibold text-white text-shadow group-hover:text-green-100 transition-colors">
-                Dictionary
-              </h2>
-              <Bookmark />
-            </div>
-            <p className="text-white/80 text-sm text-shadow">
-              View your dictionaries
-            </p>
-            <div className="mt-4 h-2 bg-white/40 rounded-full overflow-hidden">
-              <div className="h-full bg-app-primary w-3/5"></div>
-            </div>
-          </div>
-          <div className="bg-app-secondary backdrop-blur-sm p-6 rounded-xl element-shadow hover:border hover:border-app-primary transition-all cursor-pointer group">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-xl font-semibold text-white text-shadow group-hover:text-green-100 transition-colors">
-                Dashboard
-              </h2>
-              <PlaneLanding />
-            </div>
-            <p className="text-white/80 text-sm text-shadow">
-              View your progress
-            </p>
-            <div className="mt-4 h-2 bg-white/40 rounded-full overflow-hidden">
-              <div className="h-full bg-app-primary w-4/5"></div>
+      <div className="has-text-centered" style={{ marginTop: "8rem" }}>
+        <h2 className="title is-1 mb-6">
+          {getGreeting()}
+        </h2>
+        <p className="subtitle is-4 mb-6 has-text-grey">
+          准备好开始今天的打字练习了吗？
+        </p>
+        <Link
+          to="/"
+          className="button is-primary is-large"
+        >
+          开始练习
+        </Link>
+      </div>
+
+      <div className="columns is-multiline mt-6">
+        <div className="column is-6">
+          <div className="card has-background-light">
+            <div className="card-content">
+              <div className="is-flex is-justify-content-space-between is-align-items-center">
+                <div className="card-text">
+                  <h3 className="title is-4 mb-3">词库</h3>
+                  <p className="has-text-grey">管理你的词库，添加新的单词和短语</p>
+                </div>
+                <Link to="/dictionary" className="is-block">
+                  <Book className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
-      </main>
+
+        <div className="column is-6">
+          <div className="card has-background-light">
+            <div className="card-content">
+              <div className="is-flex is-justify-content-space-between is-align-items-center">
+                <div className="card-text">
+                  <h3 className="title is-4 mb-3">错题本</h3>
+                  <p className="has-text-grey">查看和复习你经常出错的单词</p>
+                </div>
+                <Link to="/mistakes" className="is-block">
+                  <AlertCircle className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="column is-6">
+          <div className="card has-background-light">
+            <div className="card-content">
+              <div className="is-flex is-justify-content-space-between is-align-items-center">
+                <div className="card-text">
+                  <h3 className="title is-4 mb-3">统计</h3>
+                  <p className="has-text-grey">查看你的练习数据和进步情况</p>
+                </div>
+                <Link to="/statistics" className="is-block">
+                  <BarChart2 className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="column is-6">
+          <div className="card has-background-light">
+            <div className="card-content">
+              <div className="is-flex is-justify-content-space-between is-align-items-center">
+                <div className="card-text">
+                  <h3 className="title is-4 mb-3">练习计划</h3>
+                  <p className="has-text-grey">制定和跟踪你的练习计划</p>
+                </div>
+                <Link to="/plan" className="is-block">
+                  <Calendar className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .card:hover .has-text-grey-light {
+          color: var(--bulma-primary) !important;
+        }
+        .card-text {
+          transition: transform 0.3s;
+        }
+        .card:hover .card-text {
+          transform: translateX(8px);
+        }
+        .card:hover .card-text .title {
+          color: var(--bulma-primary) !important;
+        }
+        .card:hover .card-text .has-text-grey {
+          color: var(--bulma-grey-dark) !important;
+        }
+      `}</style>
     </div>
   );
 };
