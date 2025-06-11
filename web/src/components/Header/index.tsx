@@ -2,8 +2,28 @@ import logo from "@/assets/logo.svg";
 import type { PropsWithChildren } from "react";
 import type React from "react";
 import { Link as RouterLink } from "@tanstack/react-router";
+import { useState, useRef, useEffect } from "react";
+import { Settings, LogOut, Info } from "lucide-react";
 
 const Header: React.FC<PropsWithChildren> = ({ children }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
+
   return (
     <header className="py-5 px-6">
       <div className="container">
@@ -21,28 +41,38 @@ const Header: React.FC<PropsWithChildren> = ({ children }) => {
             <h1 className="title is-2 mb-0">Qwerty Learner</h1>
           </RouterLink>
           <div className="is-flex is-align-items-center">
-            <span className="has-text-grey mr-3">mahoo12138</span>
-            <div className="is-flex is-align-items-center image">
-              <img
-                src="https://avatars.githubusercontent.com/u/45908451"
-                className="is-rounded"
-                style={{ width: "3rem", height: "3rem" }}
-                alt="User Avatar"
-              />
+            <div
+              className={`dropdown is-hoverable is-right${dropdownOpen ? " is-active" : ""}`}
+              ref={dropdownRef}
+            >
+              <div className="dropdown-trigger image">
+                <img
+                  src="https://avatars.githubusercontent.com/u/45908451"
+                  className="is-rounded"
+                  style={{ width: "3rem", height: "3rem" }}
+                  alt="User Avatar"
+                />
+              </div>
+              <div className="dropdown-menu" id="dropdown-menu" role="menu">
+                <div className="dropdown-content">
+                  <RouterLink to="/setting" className="dropdown-item is-flex is-align-items-center">
+                    <Settings size={18} className="mr-2" />
+                    设置
+                  </RouterLink>
+                  <RouterLink to="/about" className="dropdown-item is-flex is-align-items-center">
+                    <Info size={18} className="mr-2" />
+                    关于
+                  </RouterLink>
+                  <hr className="dropdown-divider" />
+                  <button className="dropdown-item is-flex is-align-items-center has-text-danger">
+                    <LogOut size={18} className="mr-2" />
+                    退出登录
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-
         </div>
-      </div>
-      <div className="relative element-shadow">
-        <img
-          alt="User Profile Picture"
-          className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border-4 border-white"
-          src="https://avatars.githubusercontent.com/u/45908451"
-        />
-        <span className="absolute -bottom-1 -right-1 bg-app-primary text-white text-xs sm:text-xs font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full element-shadow">
-          Lvl 3
-        </span>
       </div>
     </header>
   );
