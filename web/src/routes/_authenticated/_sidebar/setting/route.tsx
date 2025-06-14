@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import SettingPage from "@/pages/Setting";
+import SettingLayout from '@/components/layouts/Setting';
 
 export const Route = createFileRoute("/_authenticated/_sidebar/setting")({
-  component: SettingPage,
+  component: SettingLayout,
 });
