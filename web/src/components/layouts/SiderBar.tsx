@@ -13,9 +13,7 @@ function SideBarLayout() {
           padding: "24px", // 容器内部的间距
         }}
       >
-        <div className="box" style={{ borderRadius: 12, padding: "32px" }}>
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </div>
   );
