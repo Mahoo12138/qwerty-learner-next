@@ -1,12 +1,29 @@
-import React from "react";
+import { HTMLAttributes } from "react";
 
-interface MainProps extends React.HTMLAttributes<HTMLElement> {
+interface MainProps extends HTMLAttributes<HTMLElement> {
   fixed?: boolean;
-  ref?: React.Ref<HTMLElement>;
 }
 
 export const Main = ({ fixed, className, ...props }: MainProps) => {
-  return <main {...props} />;
-};
+  return (
+    <main
+      className={`${fixed ? 'is-fixed' : ''} ${className || ''}`}
+      style={{
+        minHeight: "calc(100vh - 10rem)",
+        ...(fixed && {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        })
+      }}
+      {...props}
+    />
+  )
+}
 
 Main.displayName = "Main";
