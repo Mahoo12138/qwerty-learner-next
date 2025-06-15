@@ -1,4 +1,4 @@
-import { User, Home, BookOpen, Search, Bell, FileText, Settings, Book } from "lucide-react";
+import { User, Home, BookOpen, Search, Bell, FileText, Settings, Book, BarChart2, AlertCircle } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import styles from "./style.module.scss";
 
@@ -6,9 +6,9 @@ function Sidebar() {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.userInfo}>
-        <img 
-          src="https://avatars.githubusercontent.com/u/45908451" 
-          alt="avatar" 
+        <img
+          src="https://avatars.githubusercontent.com/u/45908451"
+          alt="avatar"
           className={styles.avatar}
         />
         <span className={styles.username}>mahoo12138</span>
@@ -25,6 +25,17 @@ function Sidebar() {
               <Book size={18} className={styles.icon} />词库
             </Link>
           </li>
+          <li className={styles.menuItem}>
+            <Link className={styles.link} to="/mistake">
+              <AlertCircle className={styles.icon} size={18} /> 错题本
+            </Link>
+          </li>
+          <li className={styles.menuItem}>
+            <Link className={styles.link} to="/statistic">
+              <BarChart2 size={18} className={styles.icon} /> 统计
+            </Link>
+          </li>
+
           <li className={styles.menuItem}>
             <Link className={styles.link} to='/setting'>
               <Settings size={18} className={styles.icon} />设置
