@@ -6,7 +6,7 @@ function SideBarLayout() {
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar />
       <div
-        className="has-background-white-bis"
+        className="has-background-white-ter"
         style={{
           marginLeft: "14rem",
           flexGrow: 1,

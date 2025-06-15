@@ -54,7 +54,7 @@ const Home: React.FC = () => {
                   <h3 className="title is-4 mb-3">错题本</h3>
                   <p className="has-text-grey">查看和复习你经常出错的单词</p>
                 </div>
-                <Link to="/mistakes" className="is-block">
+                <Link to="/mistake" className="is-block">
                   <AlertCircle className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
                 </Link>
               </div>
@@ -70,7 +70,7 @@ const Home: React.FC = () => {
                   <h3 className="title is-4 mb-3">统计</h3>
                   <p className="has-text-grey">查看你的练习数据和进步情况</p>
                 </div>
-                <Link to="/statistics" className="is-block">
+                <Link to="/statistic" className="is-block">
                   <BarChart2 className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
                 </Link>
               </div>

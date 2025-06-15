@@ -7,7 +7,7 @@ interface MainProps extends HTMLAttributes<HTMLElement> {
 export const Main = ({ fixed, className, ...props }: MainProps) => {
   return (
     <main
-      className={`${fixed ? 'is-fixed' : ''} ${className || ''}`}
+      className={`${className || ''}`}
       style={{
         minHeight: "calc(100vh - 10rem)",
         ...(fixed && {

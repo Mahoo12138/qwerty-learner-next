@@ -18,6 +18,8 @@ import { Route as AuthenticatedSidebarRouteImport } from './routes/_authenticate
 import { Route as PublicExploreIndexImport } from './routes/_public/explore/index'
 import { Route as PublicAuthSignUpImport } from './routes/_public/auth/sign-up'
 import { Route as PublicAuthSignInImport } from './routes/_public/auth/sign-in'
+import { Route as AuthenticatedSidebarStatisticImport } from './routes/_authenticated/_sidebar/statistic'
+import { Route as AuthenticatedSidebarMistakeImport } from './routes/_authenticated/_sidebar/mistake'
 import { Route as AuthenticatedSidebarDictionaryImport } from './routes/_authenticated/_sidebar/dictionary'
 import { Route as AuthenticatedSidebarSettingRouteImport } from './routes/_authenticated/_sidebar/setting/route'
 import { Route as AuthenticatedSidebarSettingIndexImport } from './routes/_authenticated/_sidebar/setting/index'
@@ -63,6 +65,20 @@ const PublicAuthSignInRoute = PublicAuthSignInImport.update({
   path: '/auth/sign-in',
   getParentRoute: () => PublicRouteRoute,
 } as any)
+
+const AuthenticatedSidebarStatisticRoute =
+  AuthenticatedSidebarStatisticImport.update({
+    id: '/statistic',
+    path: '/statistic',
+    getParentRoute: () => AuthenticatedSidebarRouteRoute,
+  } as any)
+
+const AuthenticatedSidebarMistakeRoute =
+  AuthenticatedSidebarMistakeImport.update({
+    id: '/mistake',
+    path: '/mistake',
+    getParentRoute: () => AuthenticatedSidebarRouteRoute,
+  } as any)
 
 const AuthenticatedSidebarDictionaryRoute =
   AuthenticatedSidebarDictionaryImport.update({
@@ -138,6 +154,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSidebarDictionaryImport
       parentRoute: typeof AuthenticatedSidebarRouteImport
     }
+    '/_authenticated/_sidebar/mistake': {
+      id: '/_authenticated/_sidebar/mistake'
+      path: '/mistake'
+      fullPath: '/mistake'
+      preLoaderRoute: typeof AuthenticatedSidebarMistakeImport
+      parentRoute: typeof AuthenticatedSidebarRouteImport
+    }
+    '/_authenticated/_sidebar/statistic': {
+      id: '/_authenticated/_sidebar/statistic'
+      path: '/statistic'
+      fullPath: '/statistic'
+      preLoaderRoute: typeof AuthenticatedSidebarStatisticImport
+      parentRoute: typeof AuthenticatedSidebarRouteImport
+    }
     '/_public/auth/sign-in': {
       id: '/_public/auth/sign-in'
       path: '/auth/sign-in'
@@ -199,6 +229,8 @@ const AuthenticatedSidebarSettingRouteRouteWithChildren =
 interface AuthenticatedSidebarRouteRouteChildren {
   AuthenticatedSidebarSettingRouteRoute: typeof AuthenticatedSidebarSettingRouteRouteWithChildren
   AuthenticatedSidebarDictionaryRoute: typeof AuthenticatedSidebarDictionaryRoute
+  AuthenticatedSidebarMistakeRoute: typeof AuthenticatedSidebarMistakeRoute
+  AuthenticatedSidebarStatisticRoute: typeof AuthenticatedSidebarStatisticRoute
 }
 
 const AuthenticatedSidebarRouteRouteChildren: AuthenticatedSidebarRouteRouteChildren =
@@ -206,6 +238,8 @@ const AuthenticatedSidebarRouteRouteChildren: AuthenticatedSidebarRouteRouteChil
     AuthenticatedSidebarSettingRouteRoute:
       AuthenticatedSidebarSettingRouteRouteWithChildren,
     AuthenticatedSidebarDictionaryRoute: AuthenticatedSidebarDictionaryRoute,
+    AuthenticatedSidebarMistakeRoute: AuthenticatedSidebarMistakeRoute,
+    AuthenticatedSidebarStatisticRoute: AuthenticatedSidebarStatisticRoute,
   }
 
 const AuthenticatedSidebarRouteRouteWithChildren =
@@ -247,6 +281,8 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
   '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
+  '/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/statistic': typeof AuthenticatedSidebarStatisticRoute
   '/auth/sign-in': typeof PublicAuthSignInRoute
   '/auth/sign-up': typeof PublicAuthSignUpRoute
   '/explore': typeof PublicExploreIndexRoute
@@ -258,6 +294,8 @@ export interface FileRoutesByTo {
   '': typeof AuthenticatedSidebarRouteRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
   '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
+  '/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/statistic': typeof AuthenticatedSidebarStatisticRoute
   '/auth/sign-in': typeof PublicAuthSignInRoute
   '/auth/sign-up': typeof PublicAuthSignUpRoute
   '/explore': typeof PublicExploreIndexRoute
@@ -273,6 +311,8 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/_sidebar/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
   '/_authenticated/_sidebar/dictionary': typeof AuthenticatedSidebarDictionaryRoute
+  '/_authenticated/_sidebar/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/_authenticated/_sidebar/statistic': typeof AuthenticatedSidebarStatisticRoute
   '/_public/auth/sign-in': typeof PublicAuthSignInRoute
   '/_public/auth/sign-up': typeof PublicAuthSignUpRoute
   '/_public/explore/': typeof PublicExploreIndexRoute
@@ -287,6 +327,8 @@ export interface FileRouteTypes {
     | '/'
     | '/setting'
     | '/dictionary'
+    | '/mistake'
+    | '/statistic'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/explore'
@@ -297,6 +339,8 @@ export interface FileRouteTypes {
     | ''
     | '/'
     | '/dictionary'
+    | '/mistake'
+    | '/statistic'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/explore'
@@ -310,6 +354,8 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/_sidebar/setting'
     | '/_authenticated/_sidebar/dictionary'
+    | '/_authenticated/_sidebar/mistake'
+    | '/_authenticated/_sidebar/statistic'
     | '/_public/auth/sign-in'
     | '/_public/auth/sign-up'
     | '/_public/explore/'
@@ -362,7 +408,9 @@ export const routeTree = rootRoute
       "parent": "/_authenticated",
       "children": [
         "/_authenticated/_sidebar/setting",
-        "/_authenticated/_sidebar/dictionary"
+        "/_authenticated/_sidebar/dictionary",
+        "/_authenticated/_sidebar/mistake",
+        "/_authenticated/_sidebar/statistic"
       ]
     },
     "/_authenticated/": {
@@ -379,6 +427,14 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_sidebar/dictionary": {
       "filePath": "_authenticated/_sidebar/dictionary.tsx",
+      "parent": "/_authenticated/_sidebar"
+    },
+    "/_authenticated/_sidebar/mistake": {
+      "filePath": "_authenticated/_sidebar/mistake.tsx",
+      "parent": "/_authenticated/_sidebar"
+    },
+    "/_authenticated/_sidebar/statistic": {
+      "filePath": "_authenticated/_sidebar/statistic.tsx",
       "parent": "/_authenticated/_sidebar"
     },
     "/_public/auth/sign-in": {
