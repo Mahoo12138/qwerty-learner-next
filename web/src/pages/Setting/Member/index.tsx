@@ -40,7 +40,7 @@ export default function Member() {
   };
 
   return (
-    <div className={styles.container}>
+    <>
       <div className={styles.card}>
         <h2 className={`title is-4 ${styles.cardTitle}`}>创建成员</h2>
         <div className="field">
@@ -129,6 +129,6 @@ export default function Member() {
           </table>
         </div>
       </div>
-    </div>
+    </>
   );
 } 

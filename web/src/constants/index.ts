@@ -25,3 +25,14 @@ export const menuItems = [
   { path: '/statistic', icon: 'BarChart2', label: '统计' },
   { path: '/setting', icon: 'Settings', label: '设置' },
 ] as const;
+
+export const tabItems = 
+[
+  { path: '/setting/preference', icon: 'Home', label: '偏好设置' },
+  { path: '/setting/system', icon: 'Home', label: '系统设置' },
+  { path: '/setting/dictionary', icon: 'Book', label: '词库管理' },
+  { path: '/setting/member', icon: 'AlertCircle', label: '成员管理' },
+  { path: '/setting/sso', icon: 'BarChart2', label: '单点登录' },
+] as const;
+
+
