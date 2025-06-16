@@ -19,6 +19,7 @@ import { Route as PublicExploreIndexImport } from './routes/_public/explore/inde
 import { Route as PublicAuthSignUpImport } from './routes/_public/auth/sign-up'
 import { Route as PublicAuthSignInImport } from './routes/_public/auth/sign-in'
 import { Route as AuthenticatedSidebarStatisticImport } from './routes/_authenticated/_sidebar/statistic'
+import { Route as AuthenticatedSidebarProfileImport } from './routes/_authenticated/_sidebar/profile'
 import { Route as AuthenticatedSidebarMistakeImport } from './routes/_authenticated/_sidebar/mistake'
 import { Route as AuthenticatedSidebarDictionaryImport } from './routes/_authenticated/_sidebar/dictionary'
 import { Route as AuthenticatedSidebarSettingRouteImport } from './routes/_authenticated/_sidebar/setting/route'
@@ -70,6 +71,13 @@ const AuthenticatedSidebarStatisticRoute =
   AuthenticatedSidebarStatisticImport.update({
     id: '/statistic',
     path: '/statistic',
+    getParentRoute: () => AuthenticatedSidebarRouteRoute,
+  } as any)
+
+const AuthenticatedSidebarProfileRoute =
+  AuthenticatedSidebarProfileImport.update({
+    id: '/profile',
+    path: '/profile',
     getParentRoute: () => AuthenticatedSidebarRouteRoute,
   } as any)
 
@@ -161,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSidebarMistakeImport
       parentRoute: typeof AuthenticatedSidebarRouteImport
     }
+    '/_authenticated/_sidebar/profile': {
+      id: '/_authenticated/_sidebar/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedSidebarProfileImport
+      parentRoute: typeof AuthenticatedSidebarRouteImport
+    }
     '/_authenticated/_sidebar/statistic': {
       id: '/_authenticated/_sidebar/statistic'
       path: '/statistic'
@@ -230,6 +245,7 @@ interface AuthenticatedSidebarRouteRouteChildren {
   AuthenticatedSidebarSettingRouteRoute: typeof AuthenticatedSidebarSettingRouteRouteWithChildren
   AuthenticatedSidebarDictionaryRoute: typeof AuthenticatedSidebarDictionaryRoute
   AuthenticatedSidebarMistakeRoute: typeof AuthenticatedSidebarMistakeRoute
+  AuthenticatedSidebarProfileRoute: typeof AuthenticatedSidebarProfileRoute
   AuthenticatedSidebarStatisticRoute: typeof AuthenticatedSidebarStatisticRoute
 }
 
@@ -239,6 +255,7 @@ const AuthenticatedSidebarRouteRouteChildren: AuthenticatedSidebarRouteRouteChil
       AuthenticatedSidebarSettingRouteRouteWithChildren,
     AuthenticatedSidebarDictionaryRoute: AuthenticatedSidebarDictionaryRoute,
     AuthenticatedSidebarMistakeRoute: AuthenticatedSidebarMistakeRoute,
+    AuthenticatedSidebarProfileRoute: AuthenticatedSidebarProfileRoute,
     AuthenticatedSidebarStatisticRoute: AuthenticatedSidebarStatisticRoute,
   }
 
@@ -282,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
   '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
   '/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/profile': typeof AuthenticatedSidebarProfileRoute
   '/statistic': typeof AuthenticatedSidebarStatisticRoute
   '/auth/sign-in': typeof PublicAuthSignInRoute
   '/auth/sign-up': typeof PublicAuthSignUpRoute
@@ -295,6 +313,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
   '/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/profile': typeof AuthenticatedSidebarProfileRoute
   '/statistic': typeof AuthenticatedSidebarStatisticRoute
   '/auth/sign-in': typeof PublicAuthSignInRoute
   '/auth/sign-up': typeof PublicAuthSignUpRoute
@@ -312,6 +331,7 @@ export interface FileRoutesById {
   '/_authenticated/_sidebar/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
   '/_authenticated/_sidebar/dictionary': typeof AuthenticatedSidebarDictionaryRoute
   '/_authenticated/_sidebar/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/_authenticated/_sidebar/profile': typeof AuthenticatedSidebarProfileRoute
   '/_authenticated/_sidebar/statistic': typeof AuthenticatedSidebarStatisticRoute
   '/_public/auth/sign-in': typeof PublicAuthSignInRoute
   '/_public/auth/sign-up': typeof PublicAuthSignUpRoute
@@ -328,6 +348,7 @@ export interface FileRouteTypes {
     | '/setting'
     | '/dictionary'
     | '/mistake'
+    | '/profile'
     | '/statistic'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -340,6 +361,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dictionary'
     | '/mistake'
+    | '/profile'
     | '/statistic'
     | '/auth/sign-in'
     | '/auth/sign-up'
@@ -355,6 +377,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_sidebar/setting'
     | '/_authenticated/_sidebar/dictionary'
     | '/_authenticated/_sidebar/mistake'
+    | '/_authenticated/_sidebar/profile'
     | '/_authenticated/_sidebar/statistic'
     | '/_public/auth/sign-in'
     | '/_public/auth/sign-up'
@@ -410,6 +433,7 @@ export const routeTree = rootRoute
         "/_authenticated/_sidebar/setting",
         "/_authenticated/_sidebar/dictionary",
         "/_authenticated/_sidebar/mistake",
+        "/_authenticated/_sidebar/profile",
         "/_authenticated/_sidebar/statistic"
       ]
     },
@@ -431,6 +455,10 @@ export const routeTree = rootRoute
     },
     "/_authenticated/_sidebar/mistake": {
       "filePath": "_authenticated/_sidebar/mistake.tsx",
+      "parent": "/_authenticated/_sidebar"
+    },
+    "/_authenticated/_sidebar/profile": {
+      "filePath": "_authenticated/_sidebar/profile.ts",
       "parent": "/_authenticated/_sidebar"
     },
     "/_authenticated/_sidebar/statistic": {

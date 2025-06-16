@@ -16,3 +16,12 @@ export const defaultFontSizeConfig = {
   foreignFont: 48,
   translateFont: 18,
 }
+
+export const menuItems = [
+  { path: '/', icon: 'Home', label: '首页' },
+  { path: '/profile', icon: 'Profile', label: '我的' },
+  { path: '/dictionary', icon: 'Book', label: '词库' },
+  { path: '/mistake', icon: 'AlertCircle', label: '错题本' },
+  { path: '/statistic', icon: 'BarChart2', label: '统计' },
+  { path: '/setting', icon: 'Settings', label: '设置' },
+] as const;

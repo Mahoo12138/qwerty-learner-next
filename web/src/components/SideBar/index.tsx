@@ -1,11 +1,24 @@
-import { User, Home, BookOpen, Search, Bell, FileText, Settings, Book, BarChart2, AlertCircle } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { User, Home, FileText, Settings, Book, BarChart2, AlertCircle } from "lucide-react";
+import { Link, useLocation } from "@tanstack/react-router";
+import { menuItems } from "@/constants";
 import styles from "./style.module.scss";
 
-function Sidebar() {
+const iconMap = {
+  Home,
+  Book,
+  AlertCircle,
+  BarChart2,
+  Settings,
+  Profile: User,
+  default: FileText,
+} as const;
+
+const SideBar: React.FC = () => {
+  const location = useLocation();
+
   return (
     <aside className={styles.sidebar}>
-      <div className={styles.userInfo}>
+        <div className={styles.userInfo}>
         <img
           src="https://avatars.githubusercontent.com/u/45908451"
           alt="avatar"
@@ -15,36 +28,23 @@ function Sidebar() {
       </div>
       <nav className={styles.nav}>
         <ul className={styles.menu}>
-          <li className={styles.menuItem}>
-            <Link className={styles.link} to="/">
-              <Home size={18} className={styles.icon} />首页
-            </Link>
-          </li>
-          <li className={styles.menuItem}>
-            <Link className={styles.link} to="/dictionary">
-              <Book size={18} className={styles.icon} />词库
-            </Link>
-          </li>
-          <li className={styles.menuItem}>
-            <Link className={styles.link} to="/mistake">
-              <AlertCircle className={styles.icon} size={18} /> 错题本
-            </Link>
-          </li>
-          <li className={styles.menuItem}>
-            <Link className={styles.link} to="/statistic">
-              <BarChart2 size={18} className={styles.icon} /> 统计
-            </Link>
-          </li>
-
-          <li className={styles.menuItem}>
-            <Link className={styles.link} to='/setting'>
-              <Settings size={18} className={styles.icon} />设置
-            </Link>
-          </li>
+          {menuItems.map(({ path, icon, label }) => {
+            const IconComponent = iconMap[icon] || iconMap.default;
+            return (
+              <li key={path} className={styles.menuItem}>
+                <Link 
+                  className={`${styles.link} ${location.pathname === path ? styles.active : ''}`} 
+                  to={path}
+                >
+                  <IconComponent size={18} className={styles.icon} /> {label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
     </aside>
   );
-}
+};
 
-export default Sidebar;
+export default SideBar;
