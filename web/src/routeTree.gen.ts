@@ -8,220 +8,291 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as PublicRouteRouteImport } from './routes/_public/route'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedSidebarRouteRouteImport } from './routes/_authenticated/_sidebar/route'
+import { Route as PublicExploreIndexRouteImport } from './routes/_public/explore/index'
+import { Route as PublicAuthSignUpRouteImport } from './routes/_public/auth/sign-up'
+import { Route as PublicAuthSignInRouteImport } from './routes/_public/auth/sign-in'
+import { Route as AuthenticatedSidebarStatisticRouteImport } from './routes/_authenticated/_sidebar/statistic'
+import { Route as AuthenticatedSidebarProfileRouteImport } from './routes/_authenticated/_sidebar/profile'
+import { Route as AuthenticatedSidebarMistakeRouteImport } from './routes/_authenticated/_sidebar/mistake'
+import { Route as AuthenticatedSidebarDictionaryRouteImport } from './routes/_authenticated/_sidebar/dictionary'
+import { Route as AuthenticatedSidebarSettingRouteRouteImport } from './routes/_authenticated/_sidebar/setting/route'
+import { Route as AuthenticatedSidebarSettingIndexRouteImport } from './routes/_authenticated/_sidebar/setting/index'
+import { Route as AuthenticatedSidebarSettingMemberRouteImport } from './routes/_authenticated/_sidebar/setting/member'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as PublicRouteImport } from './routes/_public/route'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated/route'
-import { Route as AuthenticatedIndexImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedSidebarRouteImport } from './routes/_authenticated/_sidebar/route'
-import { Route as PublicExploreIndexImport } from './routes/_public/explore/index'
-import { Route as PublicAuthSignUpImport } from './routes/_public/auth/sign-up'
-import { Route as PublicAuthSignInImport } from './routes/_public/auth/sign-in'
-import { Route as AuthenticatedSidebarStatisticImport } from './routes/_authenticated/_sidebar/statistic'
-import { Route as AuthenticatedSidebarProfileImport } from './routes/_authenticated/_sidebar/profile'
-import { Route as AuthenticatedSidebarMistakeImport } from './routes/_authenticated/_sidebar/mistake'
-import { Route as AuthenticatedSidebarDictionaryImport } from './routes/_authenticated/_sidebar/dictionary'
-import { Route as AuthenticatedSidebarSettingRouteImport } from './routes/_authenticated/_sidebar/setting/route'
-import { Route as AuthenticatedSidebarSettingIndexImport } from './routes/_authenticated/_sidebar/setting/index'
-import { Route as AuthenticatedSidebarSettingMemberImport } from './routes/_authenticated/_sidebar/setting/member'
-
-// Create/Update Routes
-
-const PublicRouteRoute = PublicRouteImport.update({
+const PublicRouteRoute = PublicRouteRouteImport.update({
   id: '/_public',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthenticatedRouteRoute = AuthenticatedRouteImport.update({
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthenticatedIndexRoute = AuthenticatedIndexImport.update({
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-
-const AuthenticatedSidebarRouteRoute = AuthenticatedSidebarRouteImport.update({
-  id: '/_sidebar',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-
-const PublicExploreIndexRoute = PublicExploreIndexImport.update({
+const AuthenticatedSidebarRouteRoute =
+  AuthenticatedSidebarRouteRouteImport.update({
+    id: '/_sidebar',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const PublicExploreIndexRoute = PublicExploreIndexRouteImport.update({
   id: '/explore/',
   path: '/explore/',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-
-const PublicAuthSignUpRoute = PublicAuthSignUpImport.update({
+const PublicAuthSignUpRoute = PublicAuthSignUpRouteImport.update({
   id: '/auth/sign-up',
   path: '/auth/sign-up',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-
-const PublicAuthSignInRoute = PublicAuthSignInImport.update({
+const PublicAuthSignInRoute = PublicAuthSignInRouteImport.update({
   id: '/auth/sign-in',
   path: '/auth/sign-in',
   getParentRoute: () => PublicRouteRoute,
 } as any)
-
 const AuthenticatedSidebarStatisticRoute =
-  AuthenticatedSidebarStatisticImport.update({
+  AuthenticatedSidebarStatisticRouteImport.update({
     id: '/statistic',
     path: '/statistic',
     getParentRoute: () => AuthenticatedSidebarRouteRoute,
   } as any)
-
 const AuthenticatedSidebarProfileRoute =
-  AuthenticatedSidebarProfileImport.update({
+  AuthenticatedSidebarProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
     getParentRoute: () => AuthenticatedSidebarRouteRoute,
   } as any)
-
 const AuthenticatedSidebarMistakeRoute =
-  AuthenticatedSidebarMistakeImport.update({
+  AuthenticatedSidebarMistakeRouteImport.update({
     id: '/mistake',
     path: '/mistake',
     getParentRoute: () => AuthenticatedSidebarRouteRoute,
   } as any)
-
 const AuthenticatedSidebarDictionaryRoute =
-  AuthenticatedSidebarDictionaryImport.update({
+  AuthenticatedSidebarDictionaryRouteImport.update({
     id: '/dictionary',
     path: '/dictionary',
     getParentRoute: () => AuthenticatedSidebarRouteRoute,
   } as any)
-
 const AuthenticatedSidebarSettingRouteRoute =
-  AuthenticatedSidebarSettingRouteImport.update({
+  AuthenticatedSidebarSettingRouteRouteImport.update({
     id: '/setting',
     path: '/setting',
     getParentRoute: () => AuthenticatedSidebarRouteRoute,
   } as any)
-
 const AuthenticatedSidebarSettingIndexRoute =
-  AuthenticatedSidebarSettingIndexImport.update({
+  AuthenticatedSidebarSettingIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedSidebarSettingRouteRoute,
   } as any)
-
 const AuthenticatedSidebarSettingMemberRoute =
-  AuthenticatedSidebarSettingMemberImport.update({
+  AuthenticatedSidebarSettingMemberRouteImport.update({
     id: '/member',
     path: '/member',
     getParentRoute: () => AuthenticatedSidebarSettingRouteRoute,
   } as any)
 
-// Populate the FileRoutesByPath interface
+export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute
+  '/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
+  '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
+  '/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/profile': typeof AuthenticatedSidebarProfileRoute
+  '/statistic': typeof AuthenticatedSidebarStatisticRoute
+  '/auth/sign-in': typeof PublicAuthSignInRoute
+  '/auth/sign-up': typeof PublicAuthSignUpRoute
+  '/explore': typeof PublicExploreIndexRoute
+  '/setting/member': typeof AuthenticatedSidebarSettingMemberRoute
+  '/setting/': typeof AuthenticatedSidebarSettingIndexRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof AuthenticatedIndexRoute
+  '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
+  '/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/profile': typeof AuthenticatedSidebarProfileRoute
+  '/statistic': typeof AuthenticatedSidebarStatisticRoute
+  '/auth/sign-in': typeof PublicAuthSignInRoute
+  '/auth/sign-up': typeof PublicAuthSignUpRoute
+  '/explore': typeof PublicExploreIndexRoute
+  '/setting/member': typeof AuthenticatedSidebarSettingMemberRoute
+  '/setting': typeof AuthenticatedSidebarSettingIndexRoute
+}
+export interface FileRoutesById {
+  __root__: typeof rootRouteImport
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_public': typeof PublicRouteRouteWithChildren
+  '/_authenticated/_sidebar': typeof AuthenticatedSidebarRouteRouteWithChildren
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/_sidebar/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
+  '/_authenticated/_sidebar/dictionary': typeof AuthenticatedSidebarDictionaryRoute
+  '/_authenticated/_sidebar/mistake': typeof AuthenticatedSidebarMistakeRoute
+  '/_authenticated/_sidebar/profile': typeof AuthenticatedSidebarProfileRoute
+  '/_authenticated/_sidebar/statistic': typeof AuthenticatedSidebarStatisticRoute
+  '/_public/auth/sign-in': typeof PublicAuthSignInRoute
+  '/_public/auth/sign-up': typeof PublicAuthSignUpRoute
+  '/_public/explore/': typeof PublicExploreIndexRoute
+  '/_authenticated/_sidebar/setting/member': typeof AuthenticatedSidebarSettingMemberRoute
+  '/_authenticated/_sidebar/setting/': typeof AuthenticatedSidebarSettingIndexRoute
+}
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/setting'
+    | '/dictionary'
+    | '/mistake'
+    | '/profile'
+    | '/statistic'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/explore'
+    | '/setting/member'
+    | '/setting/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/dictionary'
+    | '/mistake'
+    | '/profile'
+    | '/statistic'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/explore'
+    | '/setting/member'
+    | '/setting'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/_public'
+    | '/_authenticated/_sidebar'
+    | '/_authenticated/'
+    | '/_authenticated/_sidebar/setting'
+    | '/_authenticated/_sidebar/dictionary'
+    | '/_authenticated/_sidebar/mistake'
+    | '/_authenticated/_sidebar/profile'
+    | '/_authenticated/_sidebar/statistic'
+    | '/_public/auth/sign-in'
+    | '/_public/auth/sign-up'
+    | '/_public/explore/'
+    | '/_authenticated/_sidebar/setting/member'
+    | '/_authenticated/_sidebar/setting/'
+  fileRoutesById: FileRoutesById
+}
+export interface RootRouteChildren {
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  PublicRouteRoute: typeof PublicRouteRouteWithChildren
+}
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRoute
-    }
     '/_public': {
       id: '/_public'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof PublicRouteImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof PublicRouteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/_sidebar': {
-      id: '/_authenticated/_sidebar'
+    '/_authenticated': {
+      id: '/_authenticated'
       path: ''
       fullPath: ''
-      preLoaderRoute: typeof AuthenticatedSidebarRouteImport
-      parentRoute: typeof AuthenticatedRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/': {
       id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexImport
-      parentRoute: typeof AuthenticatedRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/_sidebar/setting': {
-      id: '/_authenticated/_sidebar/setting'
-      path: '/setting'
-      fullPath: '/setting'
-      preLoaderRoute: typeof AuthenticatedSidebarSettingRouteImport
-      parentRoute: typeof AuthenticatedSidebarRouteImport
-    }
-    '/_authenticated/_sidebar/dictionary': {
-      id: '/_authenticated/_sidebar/dictionary'
-      path: '/dictionary'
-      fullPath: '/dictionary'
-      preLoaderRoute: typeof AuthenticatedSidebarDictionaryImport
-      parentRoute: typeof AuthenticatedSidebarRouteImport
-    }
-    '/_authenticated/_sidebar/mistake': {
-      id: '/_authenticated/_sidebar/mistake'
-      path: '/mistake'
-      fullPath: '/mistake'
-      preLoaderRoute: typeof AuthenticatedSidebarMistakeImport
-      parentRoute: typeof AuthenticatedSidebarRouteImport
-    }
-    '/_authenticated/_sidebar/profile': {
-      id: '/_authenticated/_sidebar/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedSidebarProfileImport
-      parentRoute: typeof AuthenticatedSidebarRouteImport
-    }
-    '/_authenticated/_sidebar/statistic': {
-      id: '/_authenticated/_sidebar/statistic'
-      path: '/statistic'
-      fullPath: '/statistic'
-      preLoaderRoute: typeof AuthenticatedSidebarStatisticImport
-      parentRoute: typeof AuthenticatedSidebarRouteImport
-    }
-    '/_public/auth/sign-in': {
-      id: '/_public/auth/sign-in'
-      path: '/auth/sign-in'
-      fullPath: '/auth/sign-in'
-      preLoaderRoute: typeof PublicAuthSignInImport
-      parentRoute: typeof PublicRouteImport
-    }
-    '/_public/auth/sign-up': {
-      id: '/_public/auth/sign-up'
-      path: '/auth/sign-up'
-      fullPath: '/auth/sign-up'
-      preLoaderRoute: typeof PublicAuthSignUpImport
-      parentRoute: typeof PublicRouteImport
+    '/_authenticated/_sidebar': {
+      id: '/_authenticated/_sidebar'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthenticatedSidebarRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_public/explore/': {
       id: '/_public/explore/'
       path: '/explore'
       fullPath: '/explore'
-      preLoaderRoute: typeof PublicExploreIndexImport
-      parentRoute: typeof PublicRouteImport
+      preLoaderRoute: typeof PublicExploreIndexRouteImport
+      parentRoute: typeof PublicRouteRoute
     }
-    '/_authenticated/_sidebar/setting/member': {
-      id: '/_authenticated/_sidebar/setting/member'
-      path: '/member'
-      fullPath: '/setting/member'
-      preLoaderRoute: typeof AuthenticatedSidebarSettingMemberImport
-      parentRoute: typeof AuthenticatedSidebarSettingRouteImport
+    '/_public/auth/sign-up': {
+      id: '/_public/auth/sign-up'
+      path: '/auth/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof PublicAuthSignUpRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_public/auth/sign-in': {
+      id: '/_public/auth/sign-in'
+      path: '/auth/sign-in'
+      fullPath: '/auth/sign-in'
+      preLoaderRoute: typeof PublicAuthSignInRouteImport
+      parentRoute: typeof PublicRouteRoute
+    }
+    '/_authenticated/_sidebar/statistic': {
+      id: '/_authenticated/_sidebar/statistic'
+      path: '/statistic'
+      fullPath: '/statistic'
+      preLoaderRoute: typeof AuthenticatedSidebarStatisticRouteImport
+      parentRoute: typeof AuthenticatedSidebarRouteRoute
+    }
+    '/_authenticated/_sidebar/profile': {
+      id: '/_authenticated/_sidebar/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedSidebarProfileRouteImport
+      parentRoute: typeof AuthenticatedSidebarRouteRoute
+    }
+    '/_authenticated/_sidebar/mistake': {
+      id: '/_authenticated/_sidebar/mistake'
+      path: '/mistake'
+      fullPath: '/mistake'
+      preLoaderRoute: typeof AuthenticatedSidebarMistakeRouteImport
+      parentRoute: typeof AuthenticatedSidebarRouteRoute
+    }
+    '/_authenticated/_sidebar/dictionary': {
+      id: '/_authenticated/_sidebar/dictionary'
+      path: '/dictionary'
+      fullPath: '/dictionary'
+      preLoaderRoute: typeof AuthenticatedSidebarDictionaryRouteImport
+      parentRoute: typeof AuthenticatedSidebarRouteRoute
+    }
+    '/_authenticated/_sidebar/setting': {
+      id: '/_authenticated/_sidebar/setting'
+      path: '/setting'
+      fullPath: '/setting'
+      preLoaderRoute: typeof AuthenticatedSidebarSettingRouteRouteImport
+      parentRoute: typeof AuthenticatedSidebarRouteRoute
     }
     '/_authenticated/_sidebar/setting/': {
       id: '/_authenticated/_sidebar/setting/'
       path: '/'
       fullPath: '/setting/'
-      preLoaderRoute: typeof AuthenticatedSidebarSettingIndexImport
-      parentRoute: typeof AuthenticatedSidebarSettingRouteImport
+      preLoaderRoute: typeof AuthenticatedSidebarSettingIndexRouteImport
+      parentRoute: typeof AuthenticatedSidebarSettingRouteRoute
+    }
+    '/_authenticated/_sidebar/setting/member': {
+      id: '/_authenticated/_sidebar/setting/member'
+      path: '/member'
+      fullPath: '/setting/member'
+      preLoaderRoute: typeof AuthenticatedSidebarSettingMemberRouteImport
+      parentRoute: typeof AuthenticatedSidebarSettingRouteRoute
     }
   }
 }
-
-// Create and export the route tree
 
 interface AuthenticatedSidebarSettingRouteRouteChildren {
   AuthenticatedSidebarSettingMemberRoute: typeof AuthenticatedSidebarSettingMemberRoute
@@ -293,198 +364,10 @@ const PublicRouteRouteWithChildren = PublicRouteRoute._addFileChildren(
   PublicRouteRouteChildren,
 )
 
-export interface FileRoutesByFullPath {
-  '': typeof AuthenticatedSidebarRouteRouteWithChildren
-  '/': typeof AuthenticatedIndexRoute
-  '/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
-  '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
-  '/mistake': typeof AuthenticatedSidebarMistakeRoute
-  '/profile': typeof AuthenticatedSidebarProfileRoute
-  '/statistic': typeof AuthenticatedSidebarStatisticRoute
-  '/auth/sign-in': typeof PublicAuthSignInRoute
-  '/auth/sign-up': typeof PublicAuthSignUpRoute
-  '/explore': typeof PublicExploreIndexRoute
-  '/setting/member': typeof AuthenticatedSidebarSettingMemberRoute
-  '/setting/': typeof AuthenticatedSidebarSettingIndexRoute
-}
-
-export interface FileRoutesByTo {
-  '': typeof AuthenticatedSidebarRouteRouteWithChildren
-  '/': typeof AuthenticatedIndexRoute
-  '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
-  '/mistake': typeof AuthenticatedSidebarMistakeRoute
-  '/profile': typeof AuthenticatedSidebarProfileRoute
-  '/statistic': typeof AuthenticatedSidebarStatisticRoute
-  '/auth/sign-in': typeof PublicAuthSignInRoute
-  '/auth/sign-up': typeof PublicAuthSignUpRoute
-  '/explore': typeof PublicExploreIndexRoute
-  '/setting/member': typeof AuthenticatedSidebarSettingMemberRoute
-  '/setting': typeof AuthenticatedSidebarSettingIndexRoute
-}
-
-export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/_public': typeof PublicRouteRouteWithChildren
-  '/_authenticated/_sidebar': typeof AuthenticatedSidebarRouteRouteWithChildren
-  '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/_sidebar/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
-  '/_authenticated/_sidebar/dictionary': typeof AuthenticatedSidebarDictionaryRoute
-  '/_authenticated/_sidebar/mistake': typeof AuthenticatedSidebarMistakeRoute
-  '/_authenticated/_sidebar/profile': typeof AuthenticatedSidebarProfileRoute
-  '/_authenticated/_sidebar/statistic': typeof AuthenticatedSidebarStatisticRoute
-  '/_public/auth/sign-in': typeof PublicAuthSignInRoute
-  '/_public/auth/sign-up': typeof PublicAuthSignUpRoute
-  '/_public/explore/': typeof PublicExploreIndexRoute
-  '/_authenticated/_sidebar/setting/member': typeof AuthenticatedSidebarSettingMemberRoute
-  '/_authenticated/_sidebar/setting/': typeof AuthenticatedSidebarSettingIndexRoute
-}
-
-export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | ''
-    | '/'
-    | '/setting'
-    | '/dictionary'
-    | '/mistake'
-    | '/profile'
-    | '/statistic'
-    | '/auth/sign-in'
-    | '/auth/sign-up'
-    | '/explore'
-    | '/setting/member'
-    | '/setting/'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | ''
-    | '/'
-    | '/dictionary'
-    | '/mistake'
-    | '/profile'
-    | '/statistic'
-    | '/auth/sign-in'
-    | '/auth/sign-up'
-    | '/explore'
-    | '/setting/member'
-    | '/setting'
-  id:
-    | '__root__'
-    | '/_authenticated'
-    | '/_public'
-    | '/_authenticated/_sidebar'
-    | '/_authenticated/'
-    | '/_authenticated/_sidebar/setting'
-    | '/_authenticated/_sidebar/dictionary'
-    | '/_authenticated/_sidebar/mistake'
-    | '/_authenticated/_sidebar/profile'
-    | '/_authenticated/_sidebar/statistic'
-    | '/_public/auth/sign-in'
-    | '/_public/auth/sign-up'
-    | '/_public/explore/'
-    | '/_authenticated/_sidebar/setting/member'
-    | '/_authenticated/_sidebar/setting/'
-  fileRoutesById: FileRoutesById
-}
-
-export interface RootRouteChildren {
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  PublicRouteRoute: typeof PublicRouteRouteWithChildren
-}
-
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   PublicRouteRoute: PublicRouteRouteWithChildren,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/_authenticated",
-        "/_public"
-      ]
-    },
-    "/_authenticated": {
-      "filePath": "_authenticated/route.tsx",
-      "children": [
-        "/_authenticated/_sidebar",
-        "/_authenticated/"
-      ]
-    },
-    "/_public": {
-      "filePath": "_public/route.tsx",
-      "children": [
-        "/_public/auth/sign-in",
-        "/_public/auth/sign-up",
-        "/_public/explore/"
-      ]
-    },
-    "/_authenticated/_sidebar": {
-      "filePath": "_authenticated/_sidebar/route.tsx",
-      "parent": "/_authenticated",
-      "children": [
-        "/_authenticated/_sidebar/setting",
-        "/_authenticated/_sidebar/dictionary",
-        "/_authenticated/_sidebar/mistake",
-        "/_authenticated/_sidebar/profile",
-        "/_authenticated/_sidebar/statistic"
-      ]
-    },
-    "/_authenticated/": {
-      "filePath": "_authenticated/index.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/_sidebar/setting": {
-      "filePath": "_authenticated/_sidebar/setting/route.tsx",
-      "parent": "/_authenticated/_sidebar",
-      "children": [
-        "/_authenticated/_sidebar/setting/member",
-        "/_authenticated/_sidebar/setting/"
-      ]
-    },
-    "/_authenticated/_sidebar/dictionary": {
-      "filePath": "_authenticated/_sidebar/dictionary.tsx",
-      "parent": "/_authenticated/_sidebar"
-    },
-    "/_authenticated/_sidebar/mistake": {
-      "filePath": "_authenticated/_sidebar/mistake.tsx",
-      "parent": "/_authenticated/_sidebar"
-    },
-    "/_authenticated/_sidebar/profile": {
-      "filePath": "_authenticated/_sidebar/profile.ts",
-      "parent": "/_authenticated/_sidebar"
-    },
-    "/_authenticated/_sidebar/statistic": {
-      "filePath": "_authenticated/_sidebar/statistic.tsx",
-      "parent": "/_authenticated/_sidebar"
-    },
-    "/_public/auth/sign-in": {
-      "filePath": "_public/auth/sign-in.tsx",
-      "parent": "/_public"
-    },
-    "/_public/auth/sign-up": {
-      "filePath": "_public/auth/sign-up.tsx",
-      "parent": "/_public"
-    },
-    "/_public/explore/": {
-      "filePath": "_public/explore/index.tsx",
-      "parent": "/_public"
-    },
-    "/_authenticated/_sidebar/setting/member": {
-      "filePath": "_authenticated/_sidebar/setting/member.tsx",
-      "parent": "/_authenticated/_sidebar/setting"
-    },
-    "/_authenticated/_sidebar/setting/": {
-      "filePath": "_authenticated/_sidebar/setting/index.tsx",
-      "parent": "/_authenticated/_sidebar/setting"
-    }
-  }
-}
-ROUTE_MANIFEST_END */

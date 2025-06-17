@@ -4,8 +4,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./api/client";
-// import "@radix-ui/themes/styles.css";
-import "./index.css";
+import "./index.scss";
 
 // Render the app
 const rootElement = document.getElementById("root")!;
