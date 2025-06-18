@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
@@ -24,6 +25,7 @@ import ModalDialog from '@mui/joy/ModalDialog';
 import ModalClose from '@mui/joy/ModalClose';
 import FormControl from '@mui/joy/FormControl';
 import FormLabel from '@mui/joy/FormLabel';
+import CircularProgress from '@mui/joy/CircularProgress';
 
 import { ChevronDown, Ellipsis, Plus, Trash2, Edit2 } from 'lucide-react';
 
@@ -49,6 +51,7 @@ const initialCategories = [
 
 const dictionaries = [
   {
+    id: 1,
     title: "CET-6",
     subtitle: "大学英语六级词库",
     words: 2345,
@@ -56,6 +59,7 @@ const dictionaries = [
     categoryId: 2,
   },
   {
+    id: 2,
     title: "牛津上海版高一上",
     subtitle: "牛津上海版高中英语教材词汇",
     words: 163,
@@ -63,6 +67,7 @@ const dictionaries = [
     categoryId: 3,
   },
   {
+    id: 3,
     title: "CET-6",
     subtitle: "大学英语六级词库",
     words: 2345,
@@ -70,6 +75,7 @@ const dictionaries = [
     categoryId: 2,
   },
   {
+    id: 4,
     title: "牛津上海版高一上",
     subtitle: "牛津上海版高中英语教材词汇",
     words: 163,
@@ -77,6 +83,7 @@ const dictionaries = [
     categoryId: 3,
   },
   {
+    id: 5,
     title: "CET-6",
     subtitle: "大学英语六级词库",
     words: 2345,
@@ -84,6 +91,95 @@ const dictionaries = [
     categoryId: 2,
   },
   {
+    id: 6,
+    title: "牛津上海版高一上",
+    subtitle: "牛津上海版高中英语教材词汇",
+    words: 163,
+    color: "is-link",
+    categoryId: 3,
+  },
+  {
+    id: 7,
+    title: "CET-6",
+    subtitle: "大学英语六级词库",
+    words: 2345,
+    color: "is-link",
+    categoryId: 2,
+  },
+  {
+    id: 8,
+    title: "牛津上海版高一上",
+    subtitle: "牛津上海版高中英语教材词汇",
+    words: 163,
+    color: "is-link",
+    categoryId: 3,
+  },
+  {
+    id: 9,
+    title: "CET-6",
+    subtitle: "大学英语六级词库",
+    words: 2345,
+    color: "is-link",
+    categoryId: 2,
+  },
+  {
+    id: 10,
+    title: "牛津上海版高一上",
+    subtitle: "牛津上海版高中英语教材词汇",
+    words: 163,
+    color: "is-link",
+    categoryId: 3,
+  },
+  {
+    id: 11,
+    title: "CET-6",
+    subtitle: "大学英语六级词库",
+    words: 2345,
+    color: "is-link",
+    categoryId: 2,
+  },
+  {
+    id: 12,
+    title: "牛津上海版高一上",
+    subtitle: "牛津上海版高中英语教材词汇",
+    words: 163,
+    color: "is-link",
+    categoryId: 3,
+  },
+  {
+    id: 13,
+    title: "CET-6",
+    subtitle: "大学英语六级词库",
+    words: 2345,
+    color: "is-link",
+    categoryId: 2,
+  },
+  {
+    id: 14,
+    title: "牛津上海版高一上",
+    subtitle: "牛津上海版高中英语教材词汇",
+    words: 163,
+    color: "is-link",
+    categoryId: 3,
+  },
+  {
+    id: 15,
+    title: "CET-6",
+    subtitle: "大学英语六级词库",
+    words: 2345,
+    color: "is-link",
+    categoryId: 2,
+  },
+  {
+    id: 16,
+    title: "牛津上海版高一上",
+    subtitle: "牛津上海版高中英语教材词汇",
+    words: 163,
+    color: "is-link",
+    categoryId: 3,
+  },
+  {
+    id: 17,
     title: "牛津上海版高一上",
     subtitle: "牛津上海版高中英语教材词汇",
     words: 163,
@@ -138,17 +234,157 @@ const DictionaryCard = ({
   </Card>
 );
 
-const options = ['添加分类'];
+
+// Mock API function
+const fetchDictionaries = async ({ pageParam = 0, categoryId = 'all' }) => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const pageSize = 12;
+  const startIndex = pageParam * pageSize;
+  const endIndex = startIndex + pageSize;
+  
+  // Filter by category
+  const filteredData = dictionaries;
+  
+  const pageData = filteredData.slice(startIndex, endIndex);
+  const hasNextPage = endIndex < filteredData.length;
+  
+  return {
+    data: pageData,
+    nextPage: hasNextPage ? pageParam + 1 : undefined,
+    total: filteredData.length,
+  };
+};
+
+// Mock API functions for future backend integration
+const api = {
+  // 获取词典列表
+  getDictionaries: async (params: { 
+    page: number; 
+    pageSize: number; 
+    categoryId?: string;
+    search?: string;
+  }) => {
+    // TODO: Replace with actual API call
+    // return fetch('/api/dictionaries', {
+    //   method: 'GET',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(params)
+    // }).then(res => res.json());
+    
+    return fetchDictionaries({ 
+      pageParam: params.page, 
+      categoryId: params.categoryId || 'all' 
+    });
+  },
+
+  // 创建词典
+  createDictionary: async (data: {
+    title: string;
+    subtitle: string;
+    categoryId: number;
+    words?: string[];
+  }) => {
+    // TODO: Replace with actual API call
+    // return fetch('/api/dictionaries', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(data)
+    // }).then(res => res.json());
+    
+    // Mock response
+    const newDictionary = {
+      id: Date.now(),
+      title: data.title,
+      subtitle: data.subtitle,
+      categoryId: data.categoryId,
+      words: data.words?.length || 0,
+      color: 'is-link',
+    };
+    
+    // Add to local data for now
+    dictionaries.push(newDictionary);
+    
+    return { success: true, data: newDictionary };
+  },
+
+  // 更新词典
+  updateDictionary: async (id: number, data: {
+    title?: string;
+    subtitle?: string;
+    categoryId?: number;
+    words?: string[];
+  }) => {
+    // TODO: Replace with actual API call
+    // return fetch(`/api/dictionaries/${id}`, {
+    //   method: 'PUT',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(data)
+    // }).then(res => res.json());
+    
+    // Mock response
+    const index = dictionaries.findIndex(dict => dict.id === id);
+    if (index !== -1) {
+      const updatedDict = { ...dictionaries[index] };
+      if (data.title) updatedDict.title = data.title;
+      if (data.subtitle) updatedDict.subtitle = data.subtitle;
+      if (data.categoryId) updatedDict.categoryId = data.categoryId;
+      if (data.words) updatedDict.words = data.words.length;
+      
+      dictionaries[index] = updatedDict;
+    }
+    
+    return { success: true, data: dictionaries[index] };
+  },
+
+  // 删除词典
+  deleteDictionary: async (id: number) => {
+    // TODO: Replace with actual API call
+    // return fetch(`/api/dictionaries/${id}`, {
+    //   method: 'DELETE'
+    // }).then(res => res.json());
+    
+    // Mock response
+    const index = dictionaries.findIndex(dict => dict.id === id);
+    if (index !== -1) {
+      dictionaries.splice(index, 1);
+    }
+    
+    return { success: true };
+  },
+
+  // 获取分类列表
+  getCategories: async () => {
+    // TODO: Replace with actual API call
+    // return fetch('/api/categories').then(res => res.json());
+    
+    return { data: initialCategories };
+  },
+
+  // 创建分类
+  createCategory: async (data: { name: string; description: string }) => {
+    // TODO: Replace with actual API call
+    // return fetch('/api/categories', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(data)
+    // }).then(res => res.json());
+    
+    const newCategory = {
+      id: Math.max(...initialCategories.map(c => c.id)) + 1,
+      ...data
+    };
+    
+    initialCategories.push(newCategory);
+    
+    return { success: true, data: newCategory };
+  }
+};
+
 const DictionaryPage = () => {
   const { t } = useTranslation();
-
-  const [activeCategory, setActiveCategory] = useState("高中");
-  const [activeTag, setActiveTag] = useState("牛津上海版");
-  const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const actionRef = useRef<() => void>(null);
-  const anchorRef = useRef<HTMLDivElement>(null);
-  const [selectedIndex, setSelectedIndex] = useState(1);
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [selectedDictionary, setSelectedDictionary] = useState<typeof dictionaries[0] | null>(null);
   const [wordList, setWordList] = useState<string[]>([]);
@@ -169,9 +405,46 @@ const DictionaryPage = () => {
     description: ''
   });
 
+  // TanStack Query for infinite scroll
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+    refetch
+  } = useInfiniteQuery({
+    queryKey: ['dictionaries', selectedCategory],
+    queryFn: ({ pageParam }) => api.getDictionaries({ 
+      page: pageParam, 
+      pageSize: 12, 
+      categoryId: selectedCategory 
+    }),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
+  });
+
+  // Intersection Observer for infinite scroll
+  const observerRef = useRef<IntersectionObserver>(null);
+  const lastElementRef = useCallback((node: HTMLElement | null) => {
+    if (isLoading) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    });
+    if (node) observerRef.current.observe(node);
+  }, [isLoading, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Flatten all pages data
+  const allDictionaries = data?.pages.flatMap(page => page.data) || [];
+
   const handleClick = () => {
     setIsCreateMode(true);
     setSelectedDictionary({
+      id: Date.now(), // Temporary ID for new dictionary
       title: '',
       subtitle: '',
       words: 0,
@@ -182,13 +455,25 @@ const DictionaryPage = () => {
     setOpen(true);
   };
 
-  // const handleMenuItemClick = (
-  //   event: React.MouseEvent<HTMLElement, MouseEvent>,
-  //   index: number,
-  // ) => {
-  //   setSelectedIndex(index);
-  //   setOpen(false);
-  // };
+  const handleAddCategory = async () => {
+    if (newCategoryData.name.trim()) {
+      try {
+        await api.createCategory({
+          name: newCategoryData.name.trim(),
+          description: newCategoryData.description.trim(),
+        });
+        setCategoriesList([...categoriesList, {
+          id: Math.max(...categoriesList.map(c => c.id)) + 1,
+          name: newCategoryData.name.trim(),
+          description: newCategoryData.description.trim(),
+        }]);
+        setNewCategoryData({ name: '', description: '' });
+        setCategoryModalOpen(false);
+      } catch (error) {
+        console.error('Failed to create category:', error);
+      }
+    }
+  };
 
   const handleEditDictionary = (dict: typeof dictionaries[0]) => {
     setIsCreateMode(false);
@@ -197,22 +482,33 @@ const DictionaryPage = () => {
     setOpen(true);
   };
 
-  const handleSaveDictionary = () => {
+  const handleSaveDictionary = async () => {
     if (isCreateMode && selectedDictionary) {
       // 创建新词库
-      const newDictionary = {
-        ...selectedDictionary,
-        words: wordList.length,
-      };
-      setDictionariesList([...dictionariesList, newDictionary]);
+      try {
+        await api.createDictionary({
+          title: selectedDictionary.title,
+          subtitle: selectedDictionary.subtitle,
+          categoryId: selectedDictionary.categoryId,
+          words: wordList,
+        });
+        refetch();
+      } catch (error) {
+        console.error('Failed to create dictionary:', error);
+      }
     } else if (selectedDictionary) {
       // 更新现有词库
-      const updatedDictionaries = dictionariesList.map(dict =>
-        dict === selectedDictionary
-          ? { ...selectedDictionary, words: wordList.length }
-          : dict
-      );
-      setDictionariesList(updatedDictionaries);
+      try {
+        await api.updateDictionary(selectedDictionary.id, {
+          title: selectedDictionary.title,
+          subtitle: selectedDictionary.subtitle,
+          categoryId: selectedDictionary.categoryId,
+          words: wordList,
+        });
+        refetch();
+      } catch (error) {
+        console.error('Failed to update dictionary:', error);
+      }
     }
     setOpen(false);
     setSelectedDictionary(null);
@@ -236,148 +532,115 @@ const DictionaryPage = () => {
     setWordList(wordList.filter((_, i) => i !== index));
   };
 
-  const handleAddCategory = () => {
-    if (newCategoryData.name.trim()) {
-      const newCategory = {
-        id: Math.max(...categoriesList.map(c => c.id)) + 1,
-        name: newCategoryData.name.trim(),
-        description: newCategoryData.description.trim(),
-      };
-      setCategoriesList([...categoriesList, newCategory]);
-      setNewCategoryData({ name: '', description: '' });
-      setCategoryModalOpen(false);
-    }
-  };
-
-  const filteredDictionaries = selectedCategory === 'all' 
-    ? dictionariesList 
-    : dictionariesList.filter(dict => dict.categoryId === parseInt(selectedCategory));
-
   return (
     <Main>
-      <div className="container" style={{ padding: "24px 0" }}>
-        <Header title={t('词库')} description={t('词库描述')} >
-          <ButtonGroup
-            spacing="0.5rem"
-            color="primary"
-          >
-            <Button onClick={handleClick} variant="solid">添加新词库</Button>
-            <Button 
-              variant="outlined" 
-              onClick={() => setCategoryModalOpen(true)}
+      <div style={{
+        height: 'calc(100vh - 100px)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      }}>
+        {/* Fixed Header */}
+        <div style={{ flexShrink: 0 }}>
+          <Header title={t('词库')} description={t('词库描述')} >
+            <ButtonGroup
+              spacing="0.5rem"
+              color="primary"
             >
-              添加分类
-            </Button>
-
-            {/* <IconButton
-              aria-controls={open ? 'split-button-menu' : undefined}
-              aria-expanded={open ? 'true' : undefined}
-              aria-label="select merge strategy"
-              aria-haspopup="menu"
-              onMouseDown={() => {
-                actionRef.current = () => setOpen(!open);
-              }}
-              onKeyDown={() => {
-                actionRef.current = () => setOpen(!open);
-              }}
-              onClick={() => {
-                actionRef.current?.();
-              }}
-            >
-              <ChevronDown size={16} />
-            </IconButton> */}
-          </ButtonGroup>
-          {/* <Menu open={open} onClose={() => setOpen(false)} anchorEl={anchorRef.current}>
-            {options.map((option, index) => (
-              <MenuItem
-                key={option}
-                disabled={index === 2}
-                selected={index === selectedIndex}
-                onClick={(event) => handleMenuItemClick(event, index)}
+              <Button onClick={handleClick} variant="solid">添加新词库</Button>
+              <Button
+                variant="outlined"
+                onClick={() => setCategoryModalOpen(true)}
               >
-                {option}
-              </MenuItem>
-            ))}
-          </Menu> */}
-        </Header>
+                添加分类
+              </Button>
+            </ButtonGroup>
+          </Header>
 
-
-        {/* <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="tabs is-medium" style={{ marginBottom: 0 }}>
-              <ul>
-                {categories.map(cat => (
-                  <li key={cat} className={cat === activeCategory ? "is-active" : ""}>
-                    <a onClick={() => setActiveCategory(cat)}>{cat}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Fixed Search and Filter */}
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            marginTop: 16,
+            padding: '0 24px',
+            flexShrink: 0
+          }}>
+            <Input placeholder="搜索词库..." variant="outlined" />
+            <Select
+              value={selectedCategory}
+              onChange={(_, value) => setSelectedCategory(value || 'all')}
+              sx={{ minWidth: 120 }}
+            >
+              <Option value="all">全部分类</Option>
+              {categoriesList.map(category => (
+                <Option key={category.id} value={category.id.toString()}>
+                  {category.name}
+                </Option>
+              ))}
+            </Select>
           </div>
-          <div className="ml-4" style={{ flexShrink: 0, width: 300 }}>
-            <input
-              className="input is-medium"
-              type="text"
-              placeholder="输入词书名称搜索"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-        </div> */}
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-          <Input placeholder="搜索词库..." variant="outlined" />
-          <Select 
-            value={selectedCategory} 
-            onChange={(_, value) => setSelectedCategory(value || 'all')}
-            sx={{ minWidth: 120 }}
-          >
-            <Option value="all">全部分类</Option>
-            {categoriesList.map(category => (
-              <Option key={category.id} value={category.id.toString()}>
-                {category.name}
-              </Option>
-            ))}
-          </Select>
+          <Divider sx={{ margin: "16px 24px" }} />
         </div>
 
-
-        <Divider sx={{ margin: "16px 0" }} />
-
-
-
-
-        {/* 标签筛选 */}
-        {/* <div className="buttons my-5">
-          {tags.map(tag => (
-            <button
-              key={tag}
-              className={`button is-light ${tag === activeTag ? "is-info" : ""}`}
-              onClick={() => setActiveTag(tag)}
+        {/* Scrollable Grid Area */}
+        <div style={{
+          flex: 1,
+          overflowX: 'hidden',
+          overflowY: 'auto',
+        }}>
+          {isLoading ? (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '200px'
+            }}>
+              <CircularProgress />
+            </div>
+          ) : error ? (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '200px'
+            }}>
+              <Typography color="danger">加载失败，请重试</Typography>
+            </div>
+          ) : (
+            <Grid
+              container
+              spacing={{ xs: 2, md: 3 }}
+              columns={{ xs: 2, md: 3 }}
+              sx={{ flexGrow: 1 }}
             >
-              {tag}
-            </button>
-          ))}
-        </div> */}
-
-        {/* 词典列表，响应式多列 */}
-        <Grid
-          container
-          spacing={{ xs: 2, md: 3 }}
-          columns={{ xs: 2, md: 3 }}
-          sx={{ flexGrow: 1 }}
-        >
-          {filteredDictionaries.map((dict, idx) => (
-            <Grid xs={1} key={idx}>
-              <DictionaryCard
-                title={dict.title}
-                subtitle={dict.subtitle}
-                words={dict.words}
-                onEdit={() => handleEditDictionary(dict)}
-              />
+              {allDictionaries.map((dict, idx) => {
+                const isLastElement = idx === allDictionaries.length - 1;
+                return (
+                  <Grid xs={1} key={idx} ref={isLastElement ? lastElementRef : null}>
+                    <DictionaryCard
+                      title={dict.title}
+                      subtitle={dict.subtitle}
+                      words={dict.words}
+                      onEdit={() => handleEditDictionary(dict)}
+                    />
+                  </Grid>
+                );
+              })}
             </Grid>
-          ))}
-        </Grid>
+          )}
+
+          {/* Loading indicator for next page */}
+          {isFetchingNextPage && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '20px'
+            }}>
+              <CircularProgress size="sm" />
+            </div>
+          )}
+        </div>
 
         <Drawer
           size="md"
