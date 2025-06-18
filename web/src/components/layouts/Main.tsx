@@ -1,28 +1,12 @@
 import { HTMLAttributes } from "react";
-
+import { Box, Container } from '@mui/system';
 interface MainProps extends HTMLAttributes<HTMLElement> {
   fixed?: boolean;
 }
 
-export const Main = ({ fixed, className, ...props }: MainProps) => {
+export const Main = ({ fixed, ...props }: MainProps) => {
   return (
-    <main
-      className={`${className || ''}`}
-      style={{
-        minHeight: "calc(100vh - 10rem)",
-        ...(fixed && {
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        })
-      }}
-      {...props}
-    />
+    <Container fixed={fixed} component='main' {...props} />
   )
 }
 
