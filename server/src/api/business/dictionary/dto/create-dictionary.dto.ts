@@ -1,4 +1,7 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsObject, Length, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsObject, Length, Min, Max, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateWordDto } from '@/api/business/word/dto/create-word.dto';
+
 
 export class CreateDictionaryDto {
   @IsString()
@@ -40,4 +43,10 @@ export class CreateDictionaryDto {
   @IsOptional()
   @IsObject()
   metadata?: Record<string, any>;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateWordDto)
+  words?: CreateWordDto[];
 }

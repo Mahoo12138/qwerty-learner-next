@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
@@ -26,167 +26,31 @@ import ModalClose from '@mui/joy/ModalClose';
 import FormControl from '@mui/joy/FormControl';
 import FormLabel from '@mui/joy/FormLabel';
 import CircularProgress from '@mui/joy/CircularProgress';
+import ListItemDecorator from '@mui/joy/ListItemDecorator';
 
-import { ChevronDown, Ellipsis, Plus, Trash2, Edit2 } from 'lucide-react';
+import { ChevronDown, Ellipsis, Plus, Trash2, Edit2, ChevronRight } from 'lucide-react';
 
 import { Main } from "@/components/layouts/Main";
 import Header from "@/components/SettingHeader";
-
-
-
-// 示例数据
-const categories = ["我的", "大学", "高中", "初中", "小学", "词组", "留学", "其他", "旧版词书"];
-const tags = [
-  "全部", "考纲核心", "人教版", "外研社版", "北师大版", "牛津译林版", "牛津上海版"
-];
-
-// 分类数据
-const initialCategories = [
-  { id: 1, name: "我的", description: "个人创建的词库" },
-  { id: 2, name: "大学", description: "大学英语词库" },
-  { id: 3, name: "高中", description: "高中英语词库" },
-  { id: 4, name: "初中", description: "初中英语词库" },
-  { id: 5, name: "小学", description: "小学英语词库" },
-];
-
-const dictionaries = [
-  {
-    id: 1,
-    title: "CET-6",
-    subtitle: "大学英语六级词库",
-    words: 2345,
-    color: "is-link",
-    categoryId: 2,
-  },
-  {
-    id: 2,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-  {
-    id: 3,
-    title: "CET-6",
-    subtitle: "大学英语六级词库",
-    words: 2345,
-    color: "is-link",
-    categoryId: 2,
-  },
-  {
-    id: 4,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-  {
-    id: 5,
-    title: "CET-6",
-    subtitle: "大学英语六级词库",
-    words: 2345,
-    color: "is-link",
-    categoryId: 2,
-  },
-  {
-    id: 6,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-  {
-    id: 7,
-    title: "CET-6",
-    subtitle: "大学英语六级词库",
-    words: 2345,
-    color: "is-link",
-    categoryId: 2,
-  },
-  {
-    id: 8,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-  {
-    id: 9,
-    title: "CET-6",
-    subtitle: "大学英语六级词库",
-    words: 2345,
-    color: "is-link",
-    categoryId: 2,
-  },
-  {
-    id: 10,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-  {
-    id: 11,
-    title: "CET-6",
-    subtitle: "大学英语六级词库",
-    words: 2345,
-    color: "is-link",
-    categoryId: 2,
-  },
-  {
-    id: 12,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-  {
-    id: 13,
-    title: "CET-6",
-    subtitle: "大学英语六级词库",
-    words: 2345,
-    color: "is-link",
-    categoryId: 2,
-  },
-  {
-    id: 14,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-  {
-    id: 15,
-    title: "CET-6",
-    subtitle: "大学英语六级词库",
-    words: 2345,
-    color: "is-link",
-    categoryId: 2,
-  },
-  {
-    id: 16,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-  {
-    id: 17,
-    title: "牛津上海版高一上",
-    subtitle: "牛津上海版高中英语教材词汇",
-    words: 163,
-    color: "is-link",
-    categoryId: 3,
-  },
-];
+import ListItemButton from '@mui/joy/ListItemButton';
+import {
+  fetchDictionaries,
+  createDictionary,
+  updateDictionary,
+  deleteDictionary,
+  DictionaryResDto,
+  CreateDictionaryDto,
+  UpdateDictionaryDto
+} from '@/api/dictionary';
+import {
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  CategoryResDto,
+  CreateCategoryDto,
+  UpdateCategoryDto
+} from '@/api/category';
 
 
 // 词典卡片组件
@@ -235,177 +99,33 @@ const DictionaryCard = ({
 );
 
 
-// Mock API function
-const fetchDictionaries = async ({ pageParam = 0, categoryId = 'all' }) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const pageSize = 12;
-  const startIndex = pageParam * pageSize;
-  const endIndex = startIndex + pageSize;
-  
-  // Filter by category
-  const filteredData = dictionaries;
-  
-  const pageData = filteredData.slice(startIndex, endIndex);
-  const hasNextPage = endIndex < filteredData.length;
-  
-  return {
-    data: pageData,
-    nextPage: hasNextPage ? pageParam + 1 : undefined,
-    total: filteredData.length,
-  };
-};
 
-// Mock API functions for future backend integration
-const api = {
-  // 获取词典列表
-  getDictionaries: async (params: { 
-    page: number; 
-    pageSize: number; 
-    categoryId?: string;
-    search?: string;
-  }) => {
-    // TODO: Replace with actual API call
-    // return fetch('/api/dictionaries', {
-    //   method: 'GET',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(params)
-    // }).then(res => res.json());
-    
-    return fetchDictionaries({ 
-      pageParam: params.page, 
-      categoryId: params.categoryId || 'all' 
-    });
-  },
 
-  // 创建词典
-  createDictionary: async (data: {
-    title: string;
-    subtitle: string;
-    categoryId: number;
-    words?: string[];
-  }) => {
-    // TODO: Replace with actual API call
-    // return fetch('/api/dictionaries', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(data)
-    // }).then(res => res.json());
-    
-    // Mock response
-    const newDictionary = {
-      id: Date.now(),
-      title: data.title,
-      subtitle: data.subtitle,
-      categoryId: data.categoryId,
-      words: data.words?.length || 0,
-      color: 'is-link',
-    };
-    
-    // Add to local data for now
-    dictionaries.push(newDictionary);
-    
-    return { success: true, data: newDictionary };
-  },
-
-  // 更新词典
-  updateDictionary: async (id: number, data: {
-    title?: string;
-    subtitle?: string;
-    categoryId?: number;
-    words?: string[];
-  }) => {
-    // TODO: Replace with actual API call
-    // return fetch(`/api/dictionaries/${id}`, {
-    //   method: 'PUT',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(data)
-    // }).then(res => res.json());
-    
-    // Mock response
-    const index = dictionaries.findIndex(dict => dict.id === id);
-    if (index !== -1) {
-      const updatedDict = { ...dictionaries[index] };
-      if (data.title) updatedDict.title = data.title;
-      if (data.subtitle) updatedDict.subtitle = data.subtitle;
-      if (data.categoryId) updatedDict.categoryId = data.categoryId;
-      if (data.words) updatedDict.words = data.words.length;
-      
-      dictionaries[index] = updatedDict;
-    }
-    
-    return { success: true, data: dictionaries[index] };
-  },
-
-  // 删除词典
-  deleteDictionary: async (id: number) => {
-    // TODO: Replace with actual API call
-    // return fetch(`/api/dictionaries/${id}`, {
-    //   method: 'DELETE'
-    // }).then(res => res.json());
-    
-    // Mock response
-    const index = dictionaries.findIndex(dict => dict.id === id);
-    if (index !== -1) {
-      dictionaries.splice(index, 1);
-    }
-    
-    return { success: true };
-  },
-
-  // 获取分类列表
-  getCategories: async () => {
-    // TODO: Replace with actual API call
-    // return fetch('/api/categories').then(res => res.json());
-    
-    return { data: initialCategories };
-  },
-
-  // 创建分类
-  createCategory: async (data: { name: string; description: string }) => {
-    // TODO: Replace with actual API call
-    // return fetch('/api/categories', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(data)
-    // }).then(res => res.json());
-    
-    const newCategory = {
-      id: Math.max(...initialCategories.map(c => c.id)) + 1,
-      ...data
-    };
-    
-    initialCategories.push(newCategory);
-    
-    return { success: true, data: newCategory };
-  }
-};
 
 const DictionaryPage = () => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isCreateMode, setIsCreateMode] = useState(false);
-  const [selectedDictionary, setSelectedDictionary] = useState<typeof dictionaries[0] | null>(null);
+  const [selectedDictionary, setSelectedDictionary] = useState<DictionaryResDto | null>(null);
   const [wordList, setWordList] = useState<string[]>([]);
-  const [newWord, setNewWord] = useState('');
   const [wordModalOpen, setWordModalOpen] = useState(false);
-  const [newWordData, setNewWordData] = useState({
-    word: '',
-    meaning: '',
-    example: '',
-    notes: ''
-  });
-  const [dictionariesList, setDictionariesList] = useState(dictionaries);
-  const [categoriesList, setCategoriesList] = useState(initialCategories);
+  const [newWordData, setNewWordData] = useState({ word: '', meaning: '', example: '', notes: '' });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
-  const [newCategoryData, setNewCategoryData] = useState({
-    name: '',
-    description: ''
-  });
+  const [newCategoryData, setNewCategoryData] = useState({ name: '', description: '' });
+  const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryResDto | null>(null);
 
-  // TanStack Query for infinite scroll
+  // 分类列表
+  const { data: categoriesData, refetch: refetchCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategories,
+    select: (res) => res as CategoryResDto[],
+  });
+  const categoriesList = categoriesData || [];
+
+  // 词典分页列表
   const {
     data,
     fetchNextPage,
@@ -416,21 +136,50 @@ const DictionaryPage = () => {
     refetch
   } = useInfiniteQuery({
     queryKey: ['dictionaries', selectedCategory],
-    queryFn: ({ pageParam }) => api.getDictionaries({ 
-      page: pageParam, 
-      pageSize: 12, 
-      categoryId: selectedCategory 
+    queryFn: ({ pageParam = 1 }) => fetchDictionaries({
+      page: pageParam,
+      limit: 12,
+      categoryId: selectedCategory !== 'all' ? selectedCategory : undefined
     }),
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.pagination?.nextPage,
+    initialPageParam: 1,
+  });
+  const allDictionaries: DictionaryResDto[] = data?.pages.flatMap(page => page.data) || [];
+
+  // 新建/编辑/删除词典
+  const createDictionaryMutation = useMutation({
+    mutationFn: (data: CreateDictionaryDto) => createDictionary(data),
+    onSuccess: () => { refetch(); },
+  });
+  const updateDictionaryMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: UpdateDictionaryDto }) => updateDictionary(id, data),
+    onSuccess: () => { refetch(); },
+  });
+  const deleteDictionaryMutation = useMutation({
+    mutationFn: (id: string) => deleteDictionary(id),
+    onSuccess: () => { refetch(); },
+  });
+
+  // 新建/编辑/删除分类
+  const createCategoryMutation = useMutation({
+    mutationFn: (data: CreateCategoryDto) => createCategory(data),
+    onSuccess: () => { refetchCategories(); },
+  });
+  const updateCategoryMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string, data: UpdateCategoryDto }) => updateCategory(id, data),
+    onSuccess: () => { refetchCategories(); },
+  });
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: string) => deleteCategory(id),
+    onSuccess: () => { refetchCategories(); },
   });
 
   // Intersection Observer for infinite scroll
-  const observerRef = useRef<IntersectionObserver>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const lastElementRef = useCallback((node: HTMLElement | null) => {
     if (isLoading) return;
     if (observerRef.current) observerRef.current.disconnect();
-    observerRef.current = new IntersectionObserver(entries => {
+    observerRef.current = new window.IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
@@ -438,81 +187,79 @@ const DictionaryPage = () => {
     if (node) observerRef.current.observe(node);
   }, [isLoading, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Flatten all pages data
-  const allDictionaries = data?.pages.flatMap(page => page.data) || [];
-
   const handleClick = () => {
     setIsCreateMode(true);
     setSelectedDictionary({
-      id: Date.now(), // Temporary ID for new dictionary
-      title: '',
-      subtitle: '',
-      words: 0,
-      color: 'is-link',
-      categoryId: parseInt(selectedCategory) || 1,
+      id: '',
+      name: '',
+      language: '',
+      description: '',
+      wordCount: 0,
+      isPublic: false,
+      isActive: true,
+      difficulty: 5,
+      categoryId: selectedCategory !== 'all' ? selectedCategory : '',
+      words: [],
+      metadata: {},
+      createdAt: '',
+      updatedAt: '',
     });
     setWordList([]);
     setOpen(true);
   };
 
-  const handleAddCategory = async () => {
-    if (newCategoryData.name.trim()) {
-      try {
-        await api.createCategory({
-          name: newCategoryData.name.trim(),
-          description: newCategoryData.description.trim(),
-        });
-        setCategoriesList([...categoriesList, {
-          id: Math.max(...categoriesList.map(c => c.id)) + 1,
-          name: newCategoryData.name.trim(),
-          description: newCategoryData.description.trim(),
-        }]);
-        setNewCategoryData({ name: '', description: '' });
-        setCategoryModalOpen(false);
-      } catch (error) {
-        console.error('Failed to create category:', error);
-      }
-    }
-  };
-
-  const handleEditDictionary = (dict: typeof dictionaries[0]) => {
+  const handleEditDictionary = (dict: DictionaryResDto) => {
     setIsCreateMode(false);
     setSelectedDictionary(dict);
-    setWordList([]); // 这里可以加载实际的单词列表
+    setWordList(dict.words?.map(w => w.word) || []);
     setOpen(true);
   };
 
   const handleSaveDictionary = async () => {
-    if (isCreateMode && selectedDictionary) {
-      // 创建新词库
-      try {
-        await api.createDictionary({
-          title: selectedDictionary.title,
-          subtitle: selectedDictionary.subtitle,
-          categoryId: selectedDictionary.categoryId,
-          words: wordList,
-        });
-        refetch();
-      } catch (error) {
-        console.error('Failed to create dictionary:', error);
-      }
-    } else if (selectedDictionary) {
-      // 更新现有词库
-      try {
-        await api.updateDictionary(selectedDictionary.id, {
-          title: selectedDictionary.title,
-          subtitle: selectedDictionary.subtitle,
-          categoryId: selectedDictionary.categoryId,
-          words: wordList,
-        });
-        refetch();
-      } catch (error) {
-        console.error('Failed to update dictionary:', error);
-      }
+    if (!selectedDictionary) return;
+    const wordData = wordList.map(word => ({ word }));
+    if (isCreateMode) {
+      await createDictionaryMutation.mutateAsync({
+        name: selectedDictionary.name,
+        language: selectedDictionary.language,
+        description: selectedDictionary.description,
+        isPublic: selectedDictionary.isPublic,
+        isActive: selectedDictionary.isActive,
+        difficulty: selectedDictionary.difficulty,
+        category: selectedDictionary.categoryId,
+        metadata: selectedDictionary.metadata,
+        words: wordData,
+      });
+    } else {
+      await updateDictionaryMutation.mutateAsync({
+        id: selectedDictionary.id,
+        data: {
+          name: selectedDictionary.name,
+          language: selectedDictionary.language,
+          description: selectedDictionary.description,
+          isPublic: selectedDictionary.isPublic,
+          isActive: selectedDictionary.isActive,
+          difficulty: selectedDictionary.difficulty,
+          category: selectedDictionary.categoryId,
+          metadata: selectedDictionary.metadata,
+          words: wordData,
+        },
+      });
     }
     setOpen(false);
     setSelectedDictionary(null);
     setIsCreateMode(false);
+  };
+
+  const handleAddCategory = async () => {
+    if (newCategoryData.name.trim()) {
+      await createCategoryMutation.mutateAsync({
+        name: newCategoryData.name.trim(),
+        description: newCategoryData.description.trim(),
+      });
+      setNewCategoryData({ name: '', description: '' });
+      setCategoryModalOpen(false);
+    }
   };
 
   const handleAddWord = () => {
@@ -550,7 +297,7 @@ const DictionaryPage = () => {
               <Button onClick={handleClick} variant="solid">添加新词库</Button>
               <Button
                 variant="outlined"
-                onClick={() => setCategoryModalOpen(true)}
+                onClick={() => setCategoryDrawerOpen(true)}
               >
                 添加分类
               </Button>
@@ -619,9 +366,9 @@ const DictionaryPage = () => {
                 return (
                   <Grid xs={1} key={idx} ref={isLastElement ? lastElementRef : null}>
                     <DictionaryCard
-                      title={dict.title}
-                      subtitle={dict.subtitle}
-                      words={dict.words}
+                      title={dict.name}
+                      subtitle={dict.description}
+                      words={dict.wordCount}
                       onEdit={() => handleEditDictionary(dict)}
                     />
                   </Grid>
@@ -679,8 +426,8 @@ const DictionaryPage = () => {
             <FormControl>
               <FormLabel>词库名称</FormLabel>
               <Input
-                value={selectedDictionary?.title}
-                onChange={(e) => setSelectedDictionary(prev => prev ? { ...prev, title: e.target.value } : null)}
+                value={selectedDictionary?.name}
+                onChange={(e) => setSelectedDictionary(prev => prev ? { ...prev, name: e.target.value } : null)}
               />
             </FormControl>
 
@@ -688,8 +435,8 @@ const DictionaryPage = () => {
               <FormLabel>词库介绍</FormLabel>
               <Textarea
                 minRows={2}
-                value={selectedDictionary?.subtitle}
-                onChange={(e) => setSelectedDictionary(prev => prev ? { ...prev, subtitle: e.target.value } : null)}
+                value={selectedDictionary?.description}
+                onChange={(e) => setSelectedDictionary(prev => prev ? { ...prev, description: e.target.value } : null)}
               />
             </FormControl>
 
@@ -801,6 +548,73 @@ const DictionaryPage = () => {
           </ModalDialog>
         </Modal>
 
+        {/* 分类管理 Drawer */}
+        <Drawer
+          size="md"
+          variant="plain"
+          open={categoryDrawerOpen}
+          onClose={() => setCategoryDrawerOpen(false)}
+          slotProps={{
+            content: {
+              sx: {
+                bgcolor: 'transparent',
+                p: { md: 3, sm: 2, xs: 1 },
+                boxShadow: 'none',
+              },
+            },
+          }}
+        >
+          <Sheet
+            sx={{
+              borderRadius: 'md',
+              p: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              height: '100%',
+              overflow: 'auto',
+            }}
+          >
+            <Typography level="title-lg" component="h2">
+              分类管理
+            </Typography>
+            <List>
+              {[...categoriesList].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((cat) => (
+                <ListItem
+                  key={cat.id}
+                  onClick={() => {
+                    setEditingCategory(cat);
+                    setCategoryModalOpen(true);
+                  }}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  <ListItemButton>
+                    <ListItemDecorator>
+                      <span role="img" aria-label="category">📁</span>
+                    </ListItemDecorator>
+                    <ListItemContent>
+                      <Typography level="title-md">{cat.name}</Typography>
+                      <Typography level="body-sm" color="neutral">{cat.description}</Typography>
+                    </ListItemContent>
+                    <ChevronRight />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+            <div style={{ marginTop: 'auto', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <Button
+                onClick={() => {
+                  setEditingCategory(null);
+                  setCategoryModalOpen(true);
+                }}
+                startDecorator={<Plus size={16} />}
+              >
+                添加
+              </Button>
+            </div>
+          </Sheet>
+        </Drawer>
+
         {/* 添加分类的 Modal */}
         <Modal open={categoryModalOpen} onClose={() => setCategoryModalOpen(false)}>
           <ModalDialog
@@ -825,8 +639,14 @@ const DictionaryPage = () => {
               <FormControl sx={{ mt: 2 }}>
                 <FormLabel>分类名称</FormLabel>
                 <Input
-                  value={newCategoryData.name}
-                  onChange={(e) => setNewCategoryData(prev => ({ ...prev, name: e.target.value }))}
+                  value={editingCategory ? editingCategory.name : newCategoryData.name}
+                  onChange={e => {
+                    if (editingCategory) {
+                      setEditingCategory({ ...editingCategory, name: e.target.value });
+                    } else {
+                      setNewCategoryData(prev => ({ ...prev, name: e.target.value }));
+                    }
+                  }}
                   required
                 />
               </FormControl>
@@ -834,8 +654,14 @@ const DictionaryPage = () => {
                 <FormLabel>分类描述</FormLabel>
                 <Textarea
                   minRows={2}
-                  value={newCategoryData.description}
-                  onChange={(e) => setNewCategoryData(prev => ({ ...prev, description: e.target.value }))}
+                  value={editingCategory ? editingCategory.description : newCategoryData.description}
+                  onChange={e => {
+                    if (editingCategory) {
+                      setEditingCategory({ ...editingCategory, description: e.target.value });
+                    } else {
+                      setNewCategoryData(prev => ({ ...prev, description: e.target.value }));
+                    }
+                  }}
                 />
               </FormControl>
               <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -846,8 +672,10 @@ const DictionaryPage = () => {
                 >
                   取消
                 </Button>
-                <Button type="submit">
-                  添加
+                <Button
+                  type="submit"
+                >
+                  {editingCategory ? '保存' : '添加'}
                 </Button>
               </div>
             </form>
