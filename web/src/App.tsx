@@ -81,17 +81,17 @@ const App: React.FC = () => {
       : document.documentElement.classList.remove("dark");
   }, [appearance]);
 
-  // useEffect(() => {
-  //   const currentLocale = locale;
-  //   // This will trigger re-rendering of the whole app.
-  //   i18n.changeLanguage(currentLocale);
-  //   document.documentElement.setAttribute("lang", currentLocale);
-  //   if (["ar", "fa"].includes(currentLocale)) {
-  //     document.documentElement.setAttribute("dir", "rtl");
-  //   } else {
-  //     document.documentElement.setAttribute("dir", "ltr");
-  //   }
-  // }, [locale]);
+  useEffect(() => {
+    const currentLocale = locale;
+    // This will trigger re-rendering of the whole app.
+    i18n.changeLanguage(currentLocale);
+    document.documentElement.setAttribute("lang", currentLocale);
+    if (["ar", "fa"].includes(currentLocale)) {
+      document.documentElement.setAttribute("dir", "rtl");
+    } else {
+      document.documentElement.setAttribute("dir", "ltr");
+    }
+  }, [locale]);
 
   if (isAppInit) {
     return <Loading />;

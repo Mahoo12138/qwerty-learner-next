@@ -1,13 +1,8 @@
 import { SunIcon, MoonIcon, SmileIcon } from "lucide-react";
 import { FC } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import Select from '@mui/joy/Select';
+import Option from '@mui/joy/Option';
+import styled from '@emotion/styled';
 import { useTranslate } from "@/utils/i18n";
 
 interface Props {
@@ -18,51 +13,43 @@ interface Props {
 
 const appearanceList = ["system", "light", "dark"] as const;
 
+const iconStyle = { width: 20, height: 'auto', marginRight: 8, verticalAlign: 'middle' };
+
 const AppearanceSelect: FC<Props> = (props: Props) => {
   const { onChange, value, className } = props;
   const t = useTranslate();
 
   const getPrefixIcon = (appearance: Appearance) => {
-    const className = "w-4 h-auto";
     if (appearance === "light") {
-      return <SunIcon className={className} />;
+      return <SunIcon style={iconStyle} />;
     } else if (appearance === "dark") {
-      return <MoonIcon className={className} />;
+      return <MoonIcon style={iconStyle} />;
     } else {
-      return <SmileIcon className={className} />;
+      return <SmileIcon style={iconStyle} />;
     }
   };
 
-  const handleSelectChange = async (appearance: Appearance) => {
-    onChange(appearance);
+  const handleSelectChange = (_: any, appearance: Appearance | null) => {
+    if (appearance) {
+      onChange(appearance);
+    }
   };
 
   return (
     <Select
-      onValueChange={(appearance) => {
-        if (appearance) {
-          handleSelectChange(appearance as Appearance);
-        }
-      }}
       value={value}
+      onChange={handleSelectChange}
+      sx={{ minWidth: 180 }}
+      className={className}
+      startDecorator={getPrefixIcon(value)}
+      placeholder="Appearance"
     >
-      <SelectTrigger className="w-[180px] text-foreground">
-        {getPrefixIcon(value)}
-        <SelectValue placeholder="Appearance" />
-      </SelectTrigger>
-      <SelectContent className='bg-background'>
-        {appearanceList.map((appearance) => {
-          return (
-            <SelectItem
-              key={appearance}
-              value={appearance}
-              className="whitespace-nowrap hover:bg-accent hover:text-accent-foreground"
-            >
-              {t(`setting.appearance-option.${appearance}`)}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
+      {appearanceList.map((appearance) => (
+        <Option key={appearance} value={appearance}>
+          {getPrefixIcon(appearance)}
+          {t(`setting.appearance-option.${appearance}`)}
+        </Option>
+      ))}
     </Select>
   );
 };
