@@ -2,22 +2,15 @@ import { fetcher } from './client';
 
 // 类型定义
 export interface WordResDto {
-  id: string;
+  id?: string;
   word: string;
   definition: string;
-  translations: string[];
-  examples: string[];
+  examples?: string[];
   pronunciation: string;
-  phoneticNotation: string;
-  audioUrl: string;
-  partOfSpeech: string;
-  synonyms: string[];
-  antonyms: string[];
-  difficulty: number;
-  frequency: number;
-  metadata: Record<string, any>;
-  createdAt: string;
-  updatedAt: string;
+  audioUrl?: string;
+  metadata?: Record<string, any>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface DictionaryResDto {
@@ -93,4 +86,8 @@ export const updateDictionary = (id: string, data: UpdateDictionaryDto) =>
 export const deleteDictionary = (id: string) =>
   fetcher(`/api/v1/dictionary/${id}`, {
     method: 'DELETE',
-  }); 
+  });
+
+// 分页获取某词典下的单词
+export const fetchWordsByDictionary = (dictionaryId: string, params: { page?: number; limit?: number }) =>
+  fetcher(`/api/v1/word/dictionary/${dictionaryId}?${new URLSearchParams(params as any)}`); 

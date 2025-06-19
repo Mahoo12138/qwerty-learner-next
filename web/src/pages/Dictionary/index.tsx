@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
@@ -40,7 +41,9 @@ import {
   deleteDictionary,
   DictionaryResDto,
   CreateDictionaryDto,
-  UpdateDictionaryDto
+  UpdateDictionaryDto,
+  fetchWordsByDictionary,
+  WordResDto,
 } from '@/api/dictionary';
 import {
   fetchCategories,
@@ -51,6 +54,10 @@ import {
   CreateCategoryDto,
   UpdateCategoryDto
 } from '@/api/category';
+import {
+  createWord,
+  deleteWord,
+} from '@/api/word';
 
 
 // 词典卡片组件
@@ -104,13 +111,12 @@ const DictionaryCard = ({
 
 const DictionaryPage = () => {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isCreateMode, setIsCreateMode] = useState(false);
   const [selectedDictionary, setSelectedDictionary] = useState<DictionaryResDto | null>(null);
-  const [wordList, setWordList] = useState<string[]>([]);
+  const [wordList, setWordList] = useState<WordResDto[]>([]);
   const [wordModalOpen, setWordModalOpen] = useState(false);
-  const [newWordData, setNewWordData] = useState({ word: '', meaning: '', example: '', notes: '' });
+  const [newWordData, setNewWordData] = useState<WordResDto>({ word: '', definition: '', pronunciation: '', examples: [] });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [newCategoryData, setNewCategoryData] = useState({ name: '', description: '' });
@@ -174,6 +180,16 @@ const DictionaryPage = () => {
     onSuccess: () => { refetchCategories(); },
   });
 
+  // 新增/删除单词 mutation
+  const createWordMutation = useMutation({
+    mutationFn: createWord,
+    onSuccess: () => { refetchWordList(); },
+  });
+  const deleteWordMutation = useMutation({
+    mutationFn: deleteWord,
+    onSuccess: () => { refetchWordList(); },
+  });
+
   // Intersection Observer for infinite scroll
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastElementRef = useCallback((node: HTMLElement | null) => {
@@ -211,13 +227,12 @@ const DictionaryPage = () => {
   const handleEditDictionary = (dict: DictionaryResDto) => {
     setIsCreateMode(false);
     setSelectedDictionary(dict);
-    setWordList(dict.words?.map(w => w.word) || []);
+    setWordList(dict.words || []);
     setOpen(true);
   };
 
   const handleSaveDictionary = async () => {
     if (!selectedDictionary) return;
-    const wordData = wordList.map(word => ({ word }));
     if (isCreateMode) {
       await createDictionaryMutation.mutateAsync({
         name: selectedDictionary.name,
@@ -228,7 +243,6 @@ const DictionaryPage = () => {
         difficulty: selectedDictionary.difficulty,
         category: selectedDictionary.categoryId,
         metadata: selectedDictionary.metadata,
-        words: wordData,
       });
     } else {
       await updateDictionaryMutation.mutateAsync({
@@ -242,7 +256,6 @@ const DictionaryPage = () => {
           difficulty: selectedDictionary.difficulty,
           category: selectedDictionary.categoryId,
           metadata: selectedDictionary.metadata,
-          words: wordData,
         },
       });
     }
@@ -262,22 +275,61 @@ const DictionaryPage = () => {
     }
   };
 
-  const handleAddWord = () => {
-    if (newWordData.word.trim()) {
-      setWordList([...wordList, newWordData.word.trim()]);
-      setNewWordData({
-        word: '',
-        meaning: '',
-        example: '',
-        notes: ''
-      });
-      setWordModalOpen(false);
-    }
+  const handleAddWord = async () => {
+    if (!newWordData.word.trim() || !selectedDictionary?.id) return;
+    await createWordMutation.mutateAsync({
+      ...newWordData,
+      dictionaryId: selectedDictionary.id,
+    });
+    setNewWordData({ word: '', definition: '', pronunciation: '', examples: [] });
+    setWordModalOpen(false);
   };
 
-  const handleDeleteWord = (index: number) => {
-    setWordList(wordList.filter((_, i) => i !== index));
+  const handleDeleteWord = async (word: WordResDto) => {
+    if (!word.id) return;
+    await deleteWordMutation.mutateAsync(word.id);
   };
+
+  const PAGE_SIZE = 100;
+
+  const {
+    data: wordData,
+    fetchNextPage: fetchWordNextPage,
+    hasNextPage: hasWordNextPage,
+    isFetchingNextPage: isWordFetchingNextPage,
+    refetch: refetchWordList,
+  } = useInfiniteQuery({
+    queryKey: ['words', selectedDictionary?.id],
+    queryFn: ({ pageParam = 1 }) =>
+      selectedDictionary?.id ? fetchWordsByDictionary(selectedDictionary.id, { page: pageParam, limit: PAGE_SIZE }) : Promise.resolve({ data: [], pagination: {} }),
+    getNextPageParam: (lastPage) => (lastPage as any).pagination?.nextPage,
+    initialPageParam: 1,
+    enabled: !!selectedDictionary?.id,
+  });
+
+  const allWords = (wordData?.pages.flatMap(page => (page as any).data) || []) as any[];
+
+  // 计算实际展示的单词列表
+  const displayedWords = isCreateMode
+    ? wordList
+    : [...allWords, ...wordList];
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: displayedWords.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48,
+    overscan: 10,
+  });
+
+  useEffect(() => {
+    const [lastItem] = [...rowVirtualizer.getVirtualItems()].slice(-1);
+    if (lastItem && lastItem.index >= allWords.length - 1 && hasWordNextPage && !isWordFetchingNextPage) {
+      fetchWordNextPage();
+    }
+  }, [rowVirtualizer.getVirtualItems(), hasWordNextPage, isWordFetchingNextPage, fetchWordNextPage, allWords.length]);
+
+
 
   return (
     <Main>
@@ -450,20 +502,41 @@ const DictionaryPage = () => {
               添加单词
             </Button>
 
-            <List>
-              {wordList.map((word, index) => (
-                <ListItem key={index}>
-                  <ListItemContent>{word}</ListItemContent>
-                  <IconButton
-                    variant="plain"
-                    color="neutral"
-                    onClick={() => handleDeleteWord(index)}
-                  >
-                    <Trash2 size={16} />
-                  </IconButton>
-                </ListItem>
-              ))}
-            </List>
+            <div ref={parentRef} style={{ height: 400, overflow: 'auto' }}>
+              <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
+                {rowVirtualizer.getVirtualItems().map(virtualRow => {
+                  const wordObj = displayedWords[virtualRow.index];
+                  return (
+                    <div
+                      key={wordObj.id || wordObj.word}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: virtualRow.size,
+                        transform: `translateY(${virtualRow.start}px)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      {wordObj.word}
+                      {wordObj.id && (
+                        <IconButton
+                          variant="plain"
+                          color="neutral"
+                          onClick={() => handleDeleteWord(wordObj)}
+                        >
+                          <Trash2 size={16} />
+                        </IconButton>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {isWordFetchingNextPage && <div>加载中...</div>}
+            </div>
 
             <div style={{ marginTop: 'auto', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <Button
@@ -512,24 +585,24 @@ const DictionaryPage = () => {
                 <FormLabel>释义</FormLabel>
                 <Textarea
                   minRows={2}
-                  value={newWordData.meaning}
-                  onChange={(e) => setNewWordData(prev => ({ ...prev, meaning: e.target.value }))}
+                  value={newWordData.definition}
+                  onChange={(e) => setNewWordData(prev => ({ ...prev, definition: e.target.value }))}
                 />
               </FormControl>
               <FormControl sx={{ mt: 2 }}>
                 <FormLabel>例句</FormLabel>
                 <Textarea
                   minRows={2}
-                  value={newWordData.example}
-                  onChange={(e) => setNewWordData(prev => ({ ...prev, example: e.target.value }))}
+                  value={newWordData.examples?.join('\n') || ''}
+                  onChange={(e) => setNewWordData(prev => ({ ...prev, examples: e.target.value.split('\n').filter(Boolean) }))}
                 />
               </FormControl>
               <FormControl sx={{ mt: 2 }}>
                 <FormLabel>备注</FormLabel>
                 <Textarea
                   minRows={2}
-                  value={newWordData.notes}
-                  onChange={(e) => setNewWordData(prev => ({ ...prev, notes: e.target.value }))}
+                  value={newWordData.metadata?.remark}
+                  onChange={(e) => setNewWordData(prev => ({ ...prev, metadata: { ...prev.metadata || {}, remark: e.target.value } }))}
                 />
               </FormControl>
               <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>

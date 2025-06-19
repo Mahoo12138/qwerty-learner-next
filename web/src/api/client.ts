@@ -21,6 +21,25 @@ const processQueue = (error: any | null) => {
   failedQueue = [];
 };
 
+const responseHandler = async (response: Response) => {
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+  // 1. HTTP 层错误
+  if (!response.ok) {
+    throw new Error((data && data.message) || response.statusText);
+  }
+
+  // 2. 业务层错误
+  if (data && data.success === false) {
+    throw new Error(data.message || '操作失败');
+  }
+  return data.data;
+}
+
 export const fetcher = async (
   url: string,
   options?: RequestInit
@@ -96,12 +115,7 @@ export const fetcher = async (
         if (newAccessToken) {
           headers.set("Authorization", `Bearer ${newAccessToken}`);
         }
-        return fetch(url, { ...options, headers }).then((res) => {
-          if (!res.ok) {
-            throw new Error(res.statusText);
-          }
-          return res.json();
-        });
+        return fetch(url, { ...options, headers }).then(responseHandler);
       } catch (refreshError) {
         processQueue(refreshError); // Reject all pending requests
         authStore.logout(); // Refresh failed, logout user
@@ -120,12 +134,7 @@ export const fetcher = async (
         if (newAccessToken) {
           headers.set("Authorization", `Bearer ${newAccessToken}`);
         }
-        return fetch(url, { ...options, headers }).then((res) => {
-          if (!res.ok) {
-            throw new Error(res.statusText);
-          }
-          return res.json();
-        });
+        return fetch(url, { ...options, headers }).then(responseHandler);
       });
     }
   }
@@ -134,7 +143,8 @@ export const fetcher = async (
     throw new Error(response.statusText);
   }
 
-  return response.json();
+  const data = await response.json();
+  return data.data
 };
 
 const defaultQueryFn: QueryFunction = async ({ queryKey }) => {
