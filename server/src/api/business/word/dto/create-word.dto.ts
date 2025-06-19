@@ -63,5 +63,6 @@ export class CreateWordDto {
   metadata?: Record<string, any>;
 
   @IsUUID()
-  dictionaryId: Uuid;
-} 
+  @IsOptional()
+  dictionaryId?: Uuid;
+}

@@ -56,11 +56,12 @@ export class WordController {
   }
 
   @Get('dictionary/:dictionaryId')
-  @ApiOperation({ summary: 'Find words by dictionary' })
+  @ApiOperation({ summary: 'Find words by dictionary with pagination' })
   async findByDictionary(
     @Param('dictionaryId') dictionaryId: Uuid,
-  ): Promise<WordEntity[]> {
-    return await this.wordService.findByDictionary(dictionaryId);
+    @Query() reqDto: ListWordReqDto,
+  ): Promise<OffsetPaginatedDto<WordResDto>> {
+    return await this.wordService.findByDictionary(dictionaryId, reqDto);
   }
 
   @Get('difficulty/:difficulty')
