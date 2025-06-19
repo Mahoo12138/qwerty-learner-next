@@ -1,0 +1,96 @@
+import { fetcher } from './client';
+
+// 类型定义
+export interface WordResDto {
+  id: string;
+  word: string;
+  definition: string;
+  translations: string[];
+  examples: string[];
+  pronunciation: string;
+  phoneticNotation: string;
+  audioUrl: string;
+  partOfSpeech: string;
+  synonyms: string[];
+  antonyms: string[];
+  difficulty: number;
+  frequency: number;
+  metadata: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DictionaryResDto {
+  id: string;
+  name: string;
+  language: string;
+  description: string;
+  wordCount: number;
+  categoryId: string;
+  isActive: boolean;
+  isPublic: boolean;
+  difficulty: number;
+  metadata: Record<string, any>;
+  words: WordResDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OffsetPagination {
+  limit: number;
+  currentPage: number;
+  nextPage?: number;
+  previousPage?: number;
+  totalRecords: number;
+  totalPages: number;
+}
+
+export interface OffsetPaginatedDto<T> {
+  data: T[];
+  pagination: OffsetPagination;
+}
+
+export interface DictionaryQueryParams {
+  page?: number;
+  limit?: number;
+  categoryId?: string;
+  search?: string;
+}
+
+export interface CreateDictionaryDto {
+  name: string;
+  language: string;
+  description?: string;
+  isPublic?: boolean;
+  wordCount?: number;
+  category?: string;
+  isActive?: boolean;
+  difficulty?: number;
+  metadata?: Record<string, any>;
+  words?: Partial<WordResDto>[];
+}
+
+export interface UpdateDictionaryDto extends Partial<CreateDictionaryDto> {}
+
+// API 封装
+export const fetchDictionaries = (params: DictionaryQueryParams) =>
+  fetcher(`/api/v1/dictionary/public?${new URLSearchParams(params as any)}`);
+
+export const createDictionary = (data: CreateDictionaryDto) =>
+  fetcher('/api/v1/dictionary', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+export const updateDictionary = (id: string, data: UpdateDictionaryDto) =>
+  fetcher(`/api/v1/dictionary/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+export const deleteDictionary = (id: string) =>
+  fetcher(`/api/v1/dictionary/${id}`, {
+    method: 'DELETE',
+  }); 
