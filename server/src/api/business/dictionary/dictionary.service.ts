@@ -11,6 +11,7 @@ import { DictionaryResDto } from './dto/dictionary.res.dto';
 import { ListDictionaryReqDto } from './dto/list-dictionary.req.dto';
 import { UpdateDictionaryDto } from './dto/update-dictionary.dto';
 import { DictionaryEntity } from './entities/dictionary.entity';
+import { CategoryEntity } from '../category/entities/category.entity';
 
 @Injectable()
 export class DictionaryService {
@@ -20,13 +21,15 @@ export class DictionaryService {
     @InjectRepository(WordEntity)
     private wordRepository: Repository<WordEntity>,
     private dataSource: DataSource,
-  ) {}
+    @InjectRepository(CategoryEntity)
+    private categoryRepository: Repository<CategoryEntity>,
+  ) { }
 
   async create(
     createDictionaryDto: CreateDictionaryDto,
     userId: Uuid,
   ): Promise<DictionaryEntity> {
-    const { name, language, isPublic, words, category, ...otherFields } =
+    const { name, isPublic, words, categoryId, ...otherFields } =
       createDictionaryDto;
 
     // 使用事务来确保数据一致性
@@ -38,10 +41,9 @@ export class DictionaryService {
       // 创建词典
       const newDict = new DictionaryEntity({
         name,
-        language,
         isPublic,
+        categoryId,
         wordCount: words?.length || 0,
-        categoryId: category ? undefined : undefined, // 暂时不处理分类关联
         ...otherFields,
         createdBy: userId,
         updatedBy: userId,
@@ -82,15 +84,15 @@ export class DictionaryService {
   async findAll(reqDto: ListDictionaryReqDto) {
     const query = this.dictionaryRepository
       .createQueryBuilder('dictionary')
-      .leftJoinAndSelect('dictionary.words', 'words')
+      // .leftJoinAndSelect('dictionary.words', 'words')
       .leftJoinAndSelect('dictionary.category', 'category')
       .orderBy('dictionary.createdAt', 'DESC');
-    const [words, metaDto] = await paginate<DictionaryEntity>(query, reqDto, {
+    const [dicts, metaDto] = await paginate<DictionaryEntity>(query, reqDto, {
       skipCount: false,
       takeAll: false,
     });
     return new OffsetPaginatedDto(
-      plainToInstance(DictionaryResDto, words),
+      plainToInstance(DictionaryResDto, dicts),
       metaDto,
     );
   }
@@ -111,13 +113,22 @@ export class DictionaryService {
     updateDictionaryDto: UpdateDictionaryDto,
   ): Promise<DictionaryEntity> {
     const dictionary = await this.findOne(id);
-    if (updateDictionaryDto.words) {
-      updateDictionaryDto.words.forEach((word) => {
-        word.dictionaryId = dictionary.id;
-      });
-      updateDictionaryDto.wordCount = updateDictionaryDto.words.length;
+
+    // 处理 categoryId
+    if (updateDictionaryDto.categoryId) {
+      const category = await this.categoryRepository.findOneBy({ id: updateDictionaryDto.categoryId });
+      if (!category) throw new NotFoundException('分类不存在');
+      dictionary.category = category;
+      dictionary.categoryId = updateDictionaryDto.categoryId;
+    } else {
+      // 允许词典“无分类”
+      dictionary.category = null;
+      dictionary.categoryId = null;
     }
-    Object.assign(dictionary, updateDictionaryDto); // Object.assign 会处理 isPublic 字段
+
+    // 其它字段直接赋值
+    Object.assign(dictionary, updateDictionaryDto);
+
     return await this.dictionaryRepository.save(dictionary);
   }
 
@@ -126,10 +137,6 @@ export class DictionaryService {
     if (result.affected === 0) {
       throw new NotFoundException(`Dictionary with ID ${id} not found`);
     }
-  }
-
-  async findByLanguage(language: string): Promise<DictionaryEntity[]> {
-    return await this.dictionaryRepository.find({ where: { language } });
   }
 
   async findByCategory(categoryId: Uuid): Promise<DictionaryEntity[]> {
