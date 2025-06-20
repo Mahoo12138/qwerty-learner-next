@@ -28,6 +28,7 @@ import FormControl from '@mui/joy/FormControl';
 import FormLabel from '@mui/joy/FormLabel';
 import CircularProgress from '@mui/joy/CircularProgress';
 import ListItemDecorator from '@mui/joy/ListItemDecorator';
+import Switch from '@mui/joy/Switch';
 
 import { ChevronDown, Ellipsis, Plus, Trash2, Edit2, ChevronRight } from 'lucide-react';
 
@@ -59,6 +60,10 @@ import {
   deleteWord,
 } from '@/api/word';
 
+// 类型扩展
+interface DictionaryForm extends DictionaryResDto {
+  tags?: string[];
+}
 
 // 词典卡片组件
 const DictionaryCard = ({
@@ -105,15 +110,11 @@ const DictionaryCard = ({
   </Card>
 );
 
-
-
-
-
 const DictionaryPage = () => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [isCreateMode, setIsCreateMode] = useState(false);
-  const [selectedDictionary, setSelectedDictionary] = useState<DictionaryResDto | null>(null);
+  const [selectedDictionary, setSelectedDictionary] = useState<DictionaryForm | null>(null);
   const [wordList, setWordList] = useState<WordResDto[]>([]);
   const [wordModalOpen, setWordModalOpen] = useState(false);
   const [newWordData, setNewWordData] = useState<WordResDto>({ word: '', definition: '', pronunciation: '', examples: [] });
@@ -208,12 +209,10 @@ const DictionaryPage = () => {
     setSelectedDictionary({
       id: '',
       name: '',
-      language: '',
       description: '',
       wordCount: 0,
       isPublic: false,
       isActive: true,
-      difficulty: 5,
       categoryId: selectedCategory !== 'all' ? selectedCategory : '',
       words: [],
       metadata: {},
@@ -236,12 +235,10 @@ const DictionaryPage = () => {
     if (isCreateMode) {
       await createDictionaryMutation.mutateAsync({
         name: selectedDictionary.name,
-        language: selectedDictionary.language,
         description: selectedDictionary.description,
         isPublic: selectedDictionary.isPublic,
         isActive: selectedDictionary.isActive,
-        difficulty: selectedDictionary.difficulty,
-        category: selectedDictionary.categoryId,
+        categoryId: selectedDictionary.categoryId,
         metadata: selectedDictionary.metadata,
       });
     } else {
@@ -249,12 +246,10 @@ const DictionaryPage = () => {
         id: selectedDictionary.id,
         data: {
           name: selectedDictionary.name,
-          language: selectedDictionary.language,
           description: selectedDictionary.description,
           isPublic: selectedDictionary.isPublic,
           isActive: selectedDictionary.isActive,
-          difficulty: selectedDictionary.difficulty,
-          category: selectedDictionary.categoryId,
+          categoryId: selectedDictionary.categoryId,
           metadata: selectedDictionary.metadata,
         },
       });
@@ -265,14 +260,25 @@ const DictionaryPage = () => {
   };
 
   const handleAddCategory = async () => {
-    if (newCategoryData.name.trim()) {
+    if (editingCategory) {
+      // 编辑模式
+      await updateCategoryMutation.mutateAsync({
+        id: editingCategory.id,
+        data: {
+          name: editingCategory.name.trim(),
+          description: editingCategory.description?.trim() || '',
+        },
+      });
+      setEditingCategory(null);
+    } else if (newCategoryData.name.trim()) {
+      // 新建模式
       await createCategoryMutation.mutateAsync({
         name: newCategoryData.name.trim(),
         description: newCategoryData.description.trim(),
       });
       setNewCategoryData({ name: '', description: '' });
-      setCategoryModalOpen(false);
     }
+    setCategoryModalOpen(false);
   };
 
   const handleAddWord = async () => {
@@ -328,8 +334,6 @@ const DictionaryPage = () => {
       fetchWordNextPage();
     }
   }, [rowVirtualizer.getVirtualItems(), hasWordNextPage, isWordFetchingNextPage, fetchWordNextPage, allWords.length]);
-
-
 
   return (
     <Main>
@@ -489,6 +493,43 @@ const DictionaryPage = () => {
                 minRows={2}
                 value={selectedDictionary?.description}
                 onChange={(e) => setSelectedDictionary(prev => prev ? { ...prev, description: e.target.value } : null)}
+              />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>分类</FormLabel>
+              <Select
+                value={selectedDictionary?.categoryId || ''}
+                onChange={(_, value) => setSelectedDictionary(prev => prev ? { ...prev, categoryId: value || '' } : null)}
+              >
+                {categoriesList.map(cat => (
+                  <Option key={cat.id} value={cat.id}>{cat.name}</Option>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>标签（逗号分隔）</FormLabel>
+              <Input
+                value={selectedDictionary?.tags?.join(',') || ''}
+                onChange={e => setSelectedDictionary(prev => prev ? { ...prev, tags: e.target.value.split(',').map(s => s.trim()).filter(Boolean) } : null)}
+                placeholder="如：英语,四级,高频"
+              />
+            </FormControl>
+
+            <FormControl orientation="horizontal">
+              <FormLabel>是否公开</FormLabel>
+              <Switch
+                checked={!!selectedDictionary?.isPublic}
+                onChange={e => setSelectedDictionary(prev => prev ? { ...prev, isPublic: e.target.checked } : null)}
+              />
+            </FormControl>
+
+            <FormControl orientation="horizontal">
+              <FormLabel>是否启用</FormLabel>
+              <Switch
+                checked={!!selectedDictionary?.isActive}
+                onChange={e => setSelectedDictionary(prev => prev ? { ...prev, isActive: e.target.checked } : null)}
               />
             </FormControl>
 
