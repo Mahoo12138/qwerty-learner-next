@@ -98,7 +98,12 @@ export const fetcher = async (
 
   const response = await fetch(url, { ...options, headers });
 
-  if (response.status === 401 && refreshToken && !isRefreshing) {
+  if (response.status === 401) {
+    if (!refreshToken) {
+      // 没有 refreshToken，直接登出并跳转
+      authStore.logout();
+      throw new Error('登录已失效，请重新登录');
+    }
     if (!isRefreshing) {
       isRefreshing = true;
       authStore.startLoading(); // Set loading state for auth store

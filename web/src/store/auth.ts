@@ -1,4 +1,6 @@
+import { } from '@tanstack/react-router';
 import { create } from 'zustand';
+import { router } from '@/App';
 
 // 定义 Token 信息的类型，与后端返回一致
 interface TokenInfo {
@@ -124,8 +126,8 @@ export const useAuthStore = create<AuthState>((set) => {
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('tokenExpires');
       localStorage.removeItem('userInfo');
-      // 可以在这里触发路由跳转到登录页
-      // router.navigate({ to: '/auth/sign-in' }); // 需要导入 router
+      // 清除路由状态并重定向到登录页面
+      router.navigate({ to: '/auth/sign-in' });
     },
 
     startLoading: () => set({ isLoading: true, error: null }),

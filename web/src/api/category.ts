@@ -13,8 +13,10 @@ export interface CategoryResDto {
 export interface CreateCategoryDto {
   name: string;
   isActive?: boolean;
+  isPublic?: boolean;
   order?: number;
   description?: string;
+  categoryId?: string;
 }
 
 export interface UpdateCategoryDto extends Partial<CreateCategoryDto> {}

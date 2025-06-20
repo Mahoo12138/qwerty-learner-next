@@ -19,7 +19,7 @@ declare module "@tanstack/react-router" {
   }
 }
 
-const router = createRouter({
+export const router = createRouter({
   routeTree,
   context: { token: null, host: null },
 });
@@ -44,7 +44,8 @@ const App: React.FC = () => {
         // 如果请求失败，抛出错误
         throw new Error("Failed to fetch status");
       }
-      return response.json();
+      const data = await response.json();
+      return data.data as StatusData;
     },
     staleTime: Infinity, // 数据永不过期
     refetchOnWindowFocus: false, // 窗口聚焦时不重新请求
@@ -62,6 +63,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    console.log('data', data);
     if (isLoading) {
       setIsAppInit(true);
     } else if (error) {

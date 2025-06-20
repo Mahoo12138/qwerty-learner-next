@@ -16,13 +16,11 @@ export interface WordResDto {
 export interface DictionaryResDto {
   id: string;
   name: string;
-  language: string;
   description: string;
   wordCount: number;
   categoryId: string;
   isActive: boolean;
   isPublic: boolean;
-  difficulty: number;
   metadata: Record<string, any>;
   words: WordResDto[];
   createdAt: string;
@@ -52,13 +50,11 @@ export interface DictionaryQueryParams {
 
 export interface CreateDictionaryDto {
   name: string;
-  language: string;
   description?: string;
   isPublic?: boolean;
   wordCount?: number;
-  category?: string;
+  categoryId?: string;
   isActive?: boolean;
-  difficulty?: number;
   metadata?: Record<string, any>;
   words?: Partial<WordResDto>[];
 }
@@ -67,7 +63,7 @@ export interface UpdateDictionaryDto extends Partial<CreateDictionaryDto> {}
 
 // API 封装
 export const fetchDictionaries = (params: DictionaryQueryParams) =>
-  fetcher(`/api/v1/dictionary/public?${new URLSearchParams(params as any)}`);
+  fetcher(`/api/v1/dictionary?${new URLSearchParams(params as any)}`);
 
 export const createDictionary = (data: CreateDictionaryDto) =>
   fetcher('/api/v1/dictionary', {
