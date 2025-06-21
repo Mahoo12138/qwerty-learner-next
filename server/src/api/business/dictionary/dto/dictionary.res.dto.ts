@@ -61,9 +61,6 @@ export class DictionaryResDto {
   name: string;
 
   @Expose()
-  language: string;
-
-  @Expose()
   description: string;
 
   @Expose()
@@ -79,18 +76,14 @@ export class DictionaryResDto {
   isPublic: boolean;
 
   @Expose()
-  difficulty: number;
+  tags: string[];
 
   @Expose()
   metadata: Record<string, any>;
-
-  @Expose()
-  @Type(() => WordResDto)
-  words: WordResDto[];
 
   @Expose()
   createdAt: Date;
 
   @Expose()
   updatedAt: Date;
-} 
+}

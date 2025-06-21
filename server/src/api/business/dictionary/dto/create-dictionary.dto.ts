@@ -32,6 +32,10 @@ export class CreateDictionaryDto {
   @IsBoolean()
   isActive?: boolean;
 
+  @IsOptional()
+  @IsArray()
+  tags: string[]
+
 
   @IsOptional()
   @IsObject()
