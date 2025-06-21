@@ -15,9 +15,10 @@ import { Logger } from 'nestjs-pino';
 import { AuthService } from './api/system/auth/auth.service';
 import { AppModule } from './app.module';
 import { type AllConfigType } from './config/config.type';
-import { GlobalExceptionFilter } from './filters/global-exception.filter';
-import { AuthGuard } from './guards/auth.guard';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { AuthGuard } from './common/guards/auth.guard';
 import setupSwagger from './utils/setup-swagger';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -71,6 +72,7 @@ async function bootstrap() {
 
   app.useGlobalGuards(new AuthGuard(reflector, app.get(AuthService)));
   app.useGlobalFilters(new GlobalExceptionFilter(configService));
+  app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

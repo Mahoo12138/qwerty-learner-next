@@ -71,16 +71,9 @@ export class DictionaryController {
     return await this.dictionaryService.remove(id);
   }
 
-  @Get('language/:language')
-  async findByLanguage(
-    @Param('language') language: string,
-  ): Promise<DictionaryEntity[]> {
-    return await this.dictionaryService.findByLanguage(language);
-  }
-
-  @Get('category/:category')
+  @Get('category/:categoryId')
   async findByCategory(
-    @Param('category') category: string,
+    @Param('categoryId') category: Uuid,
   ): Promise<DictionaryEntity[]> {
     return await this.dictionaryService.findByCategory(category);
   }

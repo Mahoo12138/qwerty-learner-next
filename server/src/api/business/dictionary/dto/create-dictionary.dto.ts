@@ -1,13 +1,14 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsObject, Length, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsBoolean, IsObject, Length, Min, Max, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { CreateWordDto } from '@/api/business/word/dto/create-word.dto';
+import { Uuid } from '@/common/types/common.type';
+
 
 export class CreateDictionaryDto {
   @IsString()
   @Length(1, 100)
   name: string;
 
-  @IsString()
-  @Length(1, 50)
-  language: string;
 
   @IsOptional()
   @IsString()
@@ -25,19 +26,24 @@ export class CreateDictionaryDto {
   @IsOptional()
   @IsString()
   @Length(1, 50)
-  category?: string;
+  categoryId?: Uuid;
 
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 
   @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(10)
-  difficulty?: number;
+  @IsArray()
+  tags: string[]
+
 
   @IsOptional()
   @IsObject()
   metadata?: Record<string, any>;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateWordDto)
+  words?: CreateWordDto[];
 }

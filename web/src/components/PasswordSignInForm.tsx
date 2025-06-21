@@ -1,15 +1,12 @@
 import { LoaderIcon } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 import useLoading from "@/hooks/useLoading";
 import useNavigateTo from "@/hooks/useNavigateTo";
 // import { workspaceStore } from "@/store/v2";
 import { useTranslate } from "@/utils/i18n";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Checkbox } from "./ui/checkbox";
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth';
+import { Button, Checkbox, Input, Box, Stack, Typography } from '@mui/joy';
 
 const PasswordSignInForm = () => {
   const t = useTranslate();
@@ -19,7 +16,6 @@ const PasswordSignInForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
-
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
@@ -33,15 +29,15 @@ const PasswordSignInForm = () => {
       if (!response.ok) {
         throw new Error('Login failed');
       }
-      return response.json();
+      const data = await response.json();
+      return data.data;
     },
     onSuccess: (data) => {
-      console.log("token", data)
       setToken(data)
       navigateTo("/");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to sign in.");
+      // toast.error(error.message || "Failed to sign in.");
     },
   });
 
@@ -77,22 +73,21 @@ const PasswordSignInForm = () => {
       actionBtnLoadingState.setLoading();
       await loginMutation.mutateAsync({ email, password });
     } catch (error: any) {
-      console.error(error);
+      // toast.error(error.message || "Failed to sign in.");
     } finally {
       actionBtnLoadingState.setFinish();
     }
   };
 
   return (
-    <form className="w-full mt-2" onSubmit={handleFormSubmit}>
-      <div className="flex flex-col justify-start items-start w-full gap-4">
-        <div className="w-full flex flex-col justify-start items-start">
-          <span className="leading-8 text-gray-600">
+    <Box component="form" sx={{ width: '100%', mt: 2 }} onSubmit={handleFormSubmit}>
+      <Stack spacing={2} alignItems="flex-start" width="100%">
+        <Box width="100%">
+          <Typography level="body-sm" sx={{ lineHeight: 2, color: 'text.tertiary' }}>
             {t("common.email")}
-          </span>
+          </Typography>
           <Input
-            className="w-full bg-white dark:bg-black"
-            size={24}
+            fullWidth
             type="email"
             readOnly={actionBtnLoadingState.isLoading}
             placeholder={t("common.email")}
@@ -102,15 +97,15 @@ const PasswordSignInForm = () => {
             spellCheck={false}
             onChange={handleUsernameInputChanged}
             required
+            sx={{ bgcolor: 'background.body' }}
           />
-        </div>
-        <div className="w-full flex flex-col justify-start items-start">
-          <span className="leading-8 text-gray-600">
+        </Box>
+        <Box width="100%">
+          <Typography level="body-sm" sx={{ lineHeight: 2, color: 'text.tertiary' }}>
             {t("common.password")}
-          </span>
+          </Typography>
           <Input
-            className="w-full bg-white dark:bg-black"
-            size={24}
+            fullWidth
             type="password"
             readOnly={actionBtnLoadingState.isLoading}
             placeholder={t("common.password")}
@@ -120,37 +115,31 @@ const PasswordSignInForm = () => {
             spellCheck={false}
             onChange={handlePasswordInputChanged}
             required
+            sx={{ bgcolor: 'background.body' }}
           />
-        </div>
-      </div>
-      <div className="flex flex-row justify-start items-center w-full mt-6 gap-2">
+        </Box>
+      </Stack>
+      <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'start', alignItems: 'center', width: '100%', mt: 3, gap: 2 }}>
         <Checkbox
+          label={t("common.remember-me")}
           checked={remember}
-          onCheckedChange={(e) => setRemember(!!e.valueOf())}
+          onChange={(e) => setRemember(!!e.target.checked)}
         />
-        <label
-          htmlFor="terms"
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          {t("common.remember-me")}
-        </label>
-      </div>
-      <div className="flex flex-row justify-end items-center w-full mt-6">
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'end', alignItems: 'center', width: '100%', mt: 6 }}>
         <Button
           type="submit"
           color="primary"
           size="lg"
-          className='w-full'
+          fullWidth
           disabled={actionBtnLoadingState.isLoading}
           onClick={handleSignInButtonClick}
+          startDecorator={actionBtnLoadingState.isLoading ? <LoaderIcon style={{ width: 20, height: 'auto', marginRight: 8, animation: 'spin 1s linear infinite', opacity: 0.6 }} /> : undefined}
         >
           {t("common.sign-in")}
-          {actionBtnLoadingState.isLoading && (
-            <LoaderIcon className="w-5 h-auto ml-2 animate-spin opacity-60" />
-          )}
         </Button>
-      </div>
-    </form>
+      </Box>
+    </Box>
   );
 };
 

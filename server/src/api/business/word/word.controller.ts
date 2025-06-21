@@ -56,20 +56,14 @@ export class WordController {
   }
 
   @Get('dictionary/:dictionaryId')
-  @ApiOperation({ summary: 'Find words by dictionary' })
+  @ApiOperation({ summary: 'Find words by dictionary with pagination' })
   async findByDictionary(
     @Param('dictionaryId') dictionaryId: Uuid,
-  ): Promise<WordEntity[]> {
-    return await this.wordService.findByDictionary(dictionaryId);
+    @Query() reqDto: ListWordReqDto,
+  ): Promise<OffsetPaginatedDto<WordResDto>> {
+    return await this.wordService.findByDictionary(dictionaryId, reqDto);
   }
 
-  @Get('difficulty/:difficulty')
-  @ApiOperation({ summary: 'Find words by difficulty' })
-  async findByDifficulty(
-    @Param('difficulty') difficulty: string,
-  ): Promise<WordEntity[]> {
-    return await this.wordService.findByDifficulty(+difficulty);
-  }
 
   @Get('public/dictionary/:dictionaryId') // 新增的公开接口路径
   @ApiPublic() // 标记为公开接口

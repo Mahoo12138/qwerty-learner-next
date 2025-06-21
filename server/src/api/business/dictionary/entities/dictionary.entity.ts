@@ -1,12 +1,9 @@
-import { TagEntity } from '@/api/business/tag/entities/tag.entity';
 import { Uuid } from '@/common/types/common.type';
 import { AbstractEntity } from '@/database/entities/abstract.entity';
 import {
   Column,
   Entity,
   JoinColumn,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -30,8 +27,6 @@ export class DictionaryEntity extends AbstractEntity {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 50 })
-  language: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
@@ -46,18 +41,14 @@ export class DictionaryEntity extends AbstractEntity {
   @Column({ nullable: true })
   categoryId: Uuid;
 
-  @ManyToMany(() => TagEntity, (tag) => tag.dictionaries, { cascade: true })
-  @JoinTable()
-  tags: Relation<TagEntity>[];
+  @Column({ type: 'json', nullable: true })
+  tags: string[];
 
   @Column({ default: true })
   isActive: boolean;
 
   @Column({ default: false, comment: '是否公开' })
   isPublic: boolean;
-
-  @Column({ nullable: true })
-  difficulty: number;
 
   @Column({ type: 'json', nullable: true })
   metadata: Record<string, any>;

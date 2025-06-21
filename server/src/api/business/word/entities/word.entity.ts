@@ -1,3 +1,5 @@
+import { Uuid } from '@/common/types/common.type';
+import { AbstractEntity } from '@/database/entities/abstract.entity';
 import {
   Column,
   Entity,
@@ -7,8 +9,6 @@ import {
   Relation,
 } from 'typeorm';
 import { DictionaryEntity } from '../../dictionary/entities/dictionary.entity';
-import { Uuid } from '@/common/types/common.type';
-import { AbstractEntity } from '@/database/entities/abstract.entity';
 
 @Entity('word')
 export class WordEntity extends AbstractEntity {
@@ -24,40 +24,19 @@ export class WordEntity extends AbstractEntity {
   @Column({ length: 100 })
   word: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', nullable: true, comment: '释义' })
   definition: string;
 
-  @Column({ type: 'text', array: true, nullable: true })
-  translations: string[];
-
-  @Column({ type: 'text', array: true, nullable: true })
+  @Column({ type: 'text', array: true, nullable: true, comment: '例句' })
   examples: string[];
 
-  @Column({ type: 'text', nullable: true })
-  pronunciation: string;
-
   @Column({ type: 'text', nullable: true, comment: '音标' })
-  phoneticNotation: string;
+  pronunciation: string;
 
   @Column({ type: 'text', nullable: true })
   audioUrl: string;
 
-  @Column({ length: 50, nullable: true, comment: '词性' })
-  partOfSpeech: string;
-
-  @Column({ type: 'text', array: true, nullable: true })
-  synonyms: string[];
-
-  @Column({ type: 'text', array: true, nullable: true })
-  antonyms: string[];
-
-  @Column({ nullable: true })
-  difficulty: number; // 1-10
-
-  @Column({ default: 0, comment: '词频' })
-  frequency: number;
-
-  @Column({ type: 'json', nullable: true, comment: '词元数据' })
+  @Column({ type: 'json', nullable: true, comment: '元数据' })
   metadata: Record<string, any>; // 额外元数据，如词源、记忆技巧等
 
   @Column({ type: 'uuid' })

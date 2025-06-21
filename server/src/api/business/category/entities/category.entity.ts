@@ -8,8 +8,11 @@ export class CategoryEntity extends AbstractEntity {
     super();
     Object.assign(this, data);
   }
-  @PrimaryGeneratedColumn('uuid')
-  id: Uuid;
+  
+  @PrimaryGeneratedColumn('uuid', {
+    primaryKeyConstraintName: 'PK_category_id',
+  })
+  id!: Uuid;
 
   @Column({ length: 50, unique: true })
   name: string;

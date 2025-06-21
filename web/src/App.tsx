@@ -3,14 +3,13 @@ import { useGlobalStore } from "./store/global";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { useTranslation } from "react-i18next";
-import { QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { StatusData } from "./typings/status";
 
 import Loading from "./components/Loading";
 
 import { routeTree } from "./routeTree.gen";
-import { queryClient } from "./api/client";
 import { useAuthStore } from "./store/auth";
 import { IsDesktop } from "./utils";
 
@@ -20,7 +19,7 @@ declare module "@tanstack/react-router" {
   }
 }
 
-const router = createRouter({
+export const router = createRouter({
   routeTree,
   context: { token: null, host: null },
 });
@@ -45,7 +44,8 @@ const App: React.FC = () => {
         // 如果请求失败，抛出错误
         throw new Error("Failed to fetch status");
       }
-      return response.json();
+      const data = await response.json();
+      return data.data as StatusData;
     },
     staleTime: Infinity, // 数据永不过期
     refetchOnWindowFocus: false, // 窗口聚焦时不重新请求
@@ -63,6 +63,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    console.log('data', data);
     if (isLoading) {
       setIsAppInit(true);
     } else if (error) {
@@ -81,17 +82,17 @@ const App: React.FC = () => {
       : document.documentElement.classList.remove("dark");
   }, [appearance]);
 
-  // useEffect(() => {
-  //   const currentLocale = locale;
-  //   // This will trigger re-rendering of the whole app.
-  //   i18n.changeLanguage(currentLocale);
-  //   document.documentElement.setAttribute("lang", currentLocale);
-  //   if (["ar", "fa"].includes(currentLocale)) {
-  //     document.documentElement.setAttribute("dir", "rtl");
-  //   } else {
-  //     document.documentElement.setAttribute("dir", "ltr");
-  //   }
-  // }, [locale]);
+  useEffect(() => {
+    const currentLocale = locale;
+    // This will trigger re-rendering of the whole app.
+    i18n.changeLanguage(currentLocale);
+    document.documentElement.setAttribute("lang", currentLocale);
+    if (["ar", "fa"].includes(currentLocale)) {
+      document.documentElement.setAttribute("dir", "rtl");
+    } else {
+      document.documentElement.setAttribute("dir", "ltr");
+    }
+  }, [locale]);
 
   if (isAppInit) {
     return <Loading />;

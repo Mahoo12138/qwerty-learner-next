@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
 import { LoaderIcon } from "lucide-react";
 import { useState } from "react";
 import AuthFooter from "@/components/AuthFooter";
@@ -9,6 +6,7 @@ import useNavigateTo from "@/hooks/useNavigateTo";
 import { useTranslate } from "@/utils/i18n";
 import { useGlobalStore } from '@/store/global';
 import { Link } from '@tanstack/react-router';
+import { Button, Input, Box, Stack, Typography } from "@mui/joy";
 
 const SignUp = () => {
   const t = useTranslate();
@@ -38,7 +36,6 @@ const SignUp = () => {
   };
 
   const handleSignUpButtonClick = async () => {
-    console.log("email", email);
     if (email === "" || password === "") {
       return;
     }
@@ -51,40 +48,48 @@ const SignUp = () => {
       // await initialUserStore();
       navigateTo("/");
     } catch (error: any) {
-      console.error(error);
       // toast.error((error as ClientError).details || "Sign up failed");
     }
     actionBtnLoadingState.setFinish();
   };
 
   return (
-    <div className="py-4 sm:py-8 w-80 max-w-full min-h-[100svh] mx-auto flex flex-col justify-start items-center">
-      <div className="w-full py-4 grow flex flex-col justify-center items-center">
-        <div className="w-full flex flex-row justify-center items-center mb-6">
+    <Box
+      sx={{
+        py: { xs: 4, sm: 8 },
+        width: 320,
+        maxWidth: '100%',
+        minHeight: '100svh',
+        mx: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'start',
+        alignItems: 'center',
+      }}
+    >
+      <Box sx={{ width: '100%', py: 4, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', mb: 6 }}>
           <img
-            className="h-14 w-auto"
-            // src={workspaceGeneralSetting.customProfile?.logoUrl || "/logo.webp"}
+            style={{ height: 56, width: 'auto' }}
             src={"/logo.webp"}
             alt=""
           />
-          <p className="pb-2 ml-2 text-5xl text-black opacity-80 dark:text-gray-200">
-            {/* {workspaceGeneralSetting.customProfile?.title || "Qwerty"} */}
+          <Typography level="h1" sx={{ pb: 2, ml: 2, fontSize: 40, color: 'text.primary', opacity: 0.8 }}>
             {"Qwerty"}
-          </p>
-        </div>
+          </Typography>
+        </Box>
         <>
-          <p className="w-full text-2xl mt-2 dark:text-gray-500">
+          <Typography level="h2" sx={{ width: '100%', fontSize: 24, mt: 2, color: 'text.secondary' }}>
             {t("auth.create-your-account")}
-          </p>
-          <form className="w-full mt-2" onSubmit={handleFormSubmit}>
-            <div className="flex flex-col justify-start items-start w-full gap-4">
-              <div className="w-full flex flex-col justify-start items-start">
-                <span className="leading-8 text-gray-600">
+          </Typography>
+          <Box component="form" sx={{ width: '100%', mt: 2 }} onSubmit={handleFormSubmit}>
+            <Stack spacing={2} alignItems="flex-start" width="100%">
+              <Box width="100%">
+                <Typography level="body-sm" sx={{ lineHeight: 2, color: 'text.tertiary' }}>
                   {t("common.email")}
-                </span>
+                </Typography>
                 <Input
-                  className="w-full bg-white dark:bg-black"
-                  // size={}
+                  fullWidth
                   type="email"
                   readOnly={actionBtnLoadingState.isLoading}
                   placeholder={t("common.email")}
@@ -94,15 +99,15 @@ const SignUp = () => {
                   spellCheck={false}
                   onChange={handleEmailInputChanged}
                   required
+                  sx={{ bgcolor: 'background.body' }}
                 />
-              </div>
-              <div className="w-full flex flex-col justify-start items-start">
-                <span className="leading-8 text-gray-600">
+              </Box>
+              <Box width="100%">
+                <Typography level="body-sm" sx={{ lineHeight: 2, color: 'text.tertiary' }}>
                   {t("common.password")}
-                </span>
+                </Typography>
                 <Input
-                  className="w-full bg-white dark:bg-black"
-                  // size="lg"
+                  fullWidth
                   type="password"
                   readOnly={actionBtnLoadingState.isLoading}
                   placeholder={t("common.password")}
@@ -112,45 +117,44 @@ const SignUp = () => {
                   spellCheck={false}
                   onChange={handlePasswordInputChanged}
                   required
+                  sx={{ bgcolor: 'background.body' }}
                 />
-              </div>
-            </div>
-            <div className="flex flex-row justify-end items-center w-full mt-6">
+              </Box>
+            </Stack>
+            <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'end', alignItems: 'center', width: '100%', mt: 6 }}>
               <Button
                 type="submit"
                 color="primary"
                 size="lg"
-                className="w-full"
+                fullWidth
                 disabled={actionBtnLoadingState.isLoading}
                 onClick={handleSignUpButtonClick}
+                startDecorator={actionBtnLoadingState.isLoading ? <LoaderIcon style={{ width: 20, height: 'auto', marginRight: 8, animation: 'spin 1s linear infinite', opacity: 0.6 }} /> : undefined}
               >
                 {t("common.sign-up")}
-                {actionBtnLoadingState.isLoading && (
-                  <LoaderIcon className="w-5 h-auto ml-2 animate-spin opacity-60" />
-                )}
               </Button>
-            </div>
-          </form>
+            </Box>
+          </Box>
         </>
         {!statusData?.host ? (
-          <p className="w-full mt-4 text-sm font-medium dark:text-gray-500">
+          <Typography level="body-sm" sx={{ width: '100%', mt: 4, color: 'text.tertiary', fontWeight: 500 }}>
             {t("auth.host-tip")}
-          </p>
+          </Typography>
         ) : (
-          <p className="w-full mt-4 text-sm">
-            <span className="dark:text-gray-500">{t("auth.sign-in-tip")}</span>
+          <Typography level="body-sm" sx={{ width: '100%', mt: 4 }}>
+            <span style={{ color: 'var(--joy-palette-text-tertiary)' }}>{t("auth.sign-in-tip")}</span>
             <Link
               to="/auth/sign-in"
-              className="cursor-pointer ml-2 text-blue-600 hover:underline"
+              style={{ cursor: 'pointer', marginLeft: 8, color: '#2563eb', textDecoration: 'underline' }}
               viewTransition
             >
               {t("common.sign-in")}
             </Link>
-          </p>
+          </Typography>
         )}
-      </div>
+      </Box>
       <AuthFooter />
-    </div>
+    </Box>
   );
 };
 

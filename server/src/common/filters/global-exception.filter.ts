@@ -3,7 +3,7 @@ import { ErrorDto } from '@/common/dto/error.dto';
 import { AllConfigType } from '@/config/config.type';
 import { constraintErrors } from '@/constants/constraint-errors';
 import { ErrorCode } from '@/constants/error-code.constant';
-import { ValidationException } from '@/exceptions/validation.exception';
+import { ValidationException } from '@/common/exceptions/validation.exception';
 import { I18nTranslations } from '@/generated/i18n.generated';
 import {
   type ArgumentsHost,

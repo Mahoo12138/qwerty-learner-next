@@ -7,7 +7,7 @@ import { SYSTEM_USER_ID } from '@/constants/app.constant';
 import { CacheKey } from '@/constants/cache.constant';
 import { ErrorCode } from '@/constants/error-code.constant';
 import { JobName, QueueName } from '@/constants/job.constant';
-import { ValidationException } from '@/exceptions/validation.exception';
+import { ValidationException } from '@/common/exceptions/validation.exception';
 import { createCacheKey } from '@/utils/cache.util';
 import { verifyPassword } from '@/utils/password.util';
 import { InjectQueue } from '@nestjs/bullmq';

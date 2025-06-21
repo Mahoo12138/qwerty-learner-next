@@ -76,16 +76,20 @@ export class WordService {
   async remove(id: Uuid): Promise<void> {
     const word = await this.findOne(id);
     await this.wordRepository.remove(word);
-
     // 更新字典的单词数量
     await this.dictionaryService.updateWordCount(word.dictionaryId, -1);
   }
 
-  async findByDictionary(dictionaryId: Uuid): Promise<WordEntity[]> {
-    return await this.wordRepository.find({
-      where: { dictionaryId },
-      relations: ['dictionary'],
+  async findByDictionary(dictionaryId: Uuid, reqDto: ListWordReqDto): Promise<OffsetPaginatedDto<WordResDto>> {
+    const query = this.wordRepository
+      .createQueryBuilder('word')
+      .where('word.dictionaryId = :dictionaryId', { dictionaryId })
+      .orderBy('word.createdAt', 'DESC');
+    const [words, metaDto] = await paginate<WordEntity>(query, reqDto, {
+      skipCount: false,
+      takeAll: false,
     });
+    return new OffsetPaginatedDto(plainToInstance(WordResDto, words), metaDto);
   }
 
   async searchWords(query: string): Promise<WordEntity[]> {
@@ -95,13 +99,6 @@ export class WordService {
       .orWhere('word.definition ILIKE :query', { query: `%${query}%` })
       .leftJoinAndSelect('word.dictionary', 'dictionary')
       .getMany();
-  }
-
-  async findByDifficulty(difficulty: number): Promise<WordEntity[]> {
-    return await this.wordRepository.find({
-      where: { difficulty },
-      relations: ['dictionary'],
-    });
   }
 
   /**

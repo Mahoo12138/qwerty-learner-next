@@ -1,16 +1,7 @@
-
-
 import { FC } from "react";
 import { GlobeIcon } from 'lucide-react';
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import Select from '@mui/joy/Select';
+import Option from '@mui/joy/Option';
 import { locales } from "@/i18n";
 
 interface Props {
@@ -19,43 +10,39 @@ interface Props {
   onChange: (locale: Locale) => void;
 }
 
-const LocaleSelect: FC<Props> = (props: Props) => {
-  const { onChange, value, className } = props;
+// 如需自定义样式，可用 emotion/styled
+// const StyledSelect = styled(Select)`
+//   min-width: 180px;
+// `;
 
-  const handleSelectChange = async (locale: Locale) => {
-    onChange(locale);
+const LocaleSelect: FC<Props> = ({ onChange, value, className }) => {
+  const handleSelectChange = (_: any, newValue: Locale | null) => {
+    if (newValue) onChange(newValue);
   };
 
   return (
     <Select
-      onValueChange={(value) => handleSelectChange(value as Locale)}
       value={value}
+      onChange={handleSelectChange}
+      startDecorator={
+          <GlobeIcon fontSize="small" />
+      }
+      sx={{ minWidth: 180 }}
+      className={className}
+      placeholder="Language"
     >
-      <SelectTrigger className="w-[180px]">
-      <GlobeIcon className="w-4 h-auto" />
-        <SelectValue placeholder="Language" />
-      </SelectTrigger>
-      <SelectContent
-        className={`!min-w-[10rem] w-auto whitespace-nowrap ${className ?? ""}`}
-      >
-        {locales.map((locale) => {
-          const languageName = new Intl.DisplayNames([locale], {
-            type: "language",
-          }).of(locale);
-          if (languageName) {
-            return (
-              <SelectItem key={locale} value={locale}>
-                 {languageName.charAt(0).toUpperCase() + languageName.slice(1)}
-              </SelectItem>
-            );
-          }
-          return (
-            <SelectItem key={locale} value={locale}>
-              {locale}
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
+      {locales.map((locale) => {
+        const languageName = new Intl.DisplayNames([locale], {
+          type: "language",
+        }).of(locale);
+        return (
+          <Option key={locale} value={locale}>
+            {languageName
+              ? languageName.charAt(0).toUpperCase() + languageName.slice(1)
+              : locale}
+          </Option>
+        );
+      })}
     </Select>
   );
 };
