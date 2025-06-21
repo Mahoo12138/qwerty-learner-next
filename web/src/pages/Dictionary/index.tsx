@@ -247,6 +247,7 @@ const DictionaryPage = () => {
         isActive: selectedDictionary.isActive,
         categoryId: selectedDictionary.categoryId,
         metadata: selectedDictionary.metadata,
+        tags: selectedDictionary.tags,
       });
     } else {
       await updateDictionaryMutation.mutateAsync({
@@ -258,6 +259,7 @@ const DictionaryPage = () => {
           isActive: selectedDictionary.isActive,
           categoryId: selectedDictionary.categoryId,
           metadata: selectedDictionary.metadata,
+          tags: selectedDictionary.tags,
         },
       });
     }
@@ -351,9 +353,9 @@ const DictionaryPage = () => {
       setSelectedDictionary(prev =>
         prev
           ? {
-              ...prev,
-              tags: [...(prev.tags || []), newTag],
-            }
+            ...prev,
+            tags: [...(prev.tags || []), newTag],
+          }
           : null
       );
     }
@@ -367,6 +369,10 @@ const DictionaryPage = () => {
       setModalTags([...modalTags, newTag]);
     }
     setModalTagInput('');
+  };
+
+  const handleModalRemoveTag = (tagToRemove: string) => {
+    setModalTags(modalTags.filter(tag => tag !== tagToRemove));
   };
 
   return (
@@ -875,75 +881,67 @@ const DictionaryPage = () => {
         </Modal>
 
         <Modal open={tagModalOpen} onClose={() => setTagModalOpen(false)}>
-          <ModalDialog>
+          <ModalDialog
+            sx={{
+              width: '90%',
+              maxWidth: 500,
+              maxHeight: '80vh',
+              overflowY: 'auto'
+            }}
+          >
             <ModalClose />
             <Typography level="title-lg">管理标签</Typography>
             <Box sx={{ mt: 2 }}>
+              <Input
+                value={modalTagInput}
+                onChange={e => setModalTagInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && modalTagInput.trim()) {
+                    e.preventDefault();
+                    handleModalAddTag();
+                  }
+                }}
+                placeholder="输入新标签后按回车"
+                autoFocus
+              />
               <Box
                 sx={{
                   display: 'flex',
                   flexWrap: 'wrap',
                   gap: 1,
-                  alignItems: 'center',
+                  p: 1,
+                  mt: 2,
                   minHeight: 40,
-                  border: '1px solid var(--Input-outlinedBorder, #d0d7de)',
-                  borderRadius: '8px',
-                  px: 1,
-                  py: 0.5,
-                  bgcolor: 'background.body',
-                  mb: 2,
+                  borderRadius: 'sm',
+                  bgcolor: 'background.level1',
                 }}
               >
                 {modalTags.map(tag => (
                   <Chip
                     key={tag}
-                    variant="soft"
                     color="primary"
-                    endDecorator={
-                      <ChipDelete
-                        onClick={e => {
-                          e.stopPropagation();
-                          setModalTags(modalTags.filter(t => t !== tag));
-                        }}
-                      />
-                    }
-                    sx={{ m: 0, fontSize: 14, height: 28 }}
+                    variant="soft"
+                    endDecorator={<ChipDelete onDelete={() => handleModalRemoveTag(tag)} />}
                   >
                     {tag}
                   </Chip>
                 ))}
-                <Input
-                  value={modalTagInput}
-                  onChange={e => setModalTagInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && modalTagInput.trim()) {
-                      e.preventDefault();
-                      handleModalAddTag();
-                    }
-                  }}
-                  placeholder="输入标签"
-                  autoFocus
-                  sx={{
-                    minWidth: 60,
-                    flex: 1,
-                    border: 'none',
-                    boxShadow: 'none',
-                    outline: 'none',
-                    bgcolor: 'transparent',
-                    p: 0,
-                    fontSize: 14,
-                  }}
-                />
               </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                <Button variant="plain" color="neutral" onClick={() => setTagModalOpen(false)}>取消</Button>
-                <Button
-                  onClick={() => {
-                    setSelectedDictionary(prev => prev ? { ...prev, tags: modalTags } : null);
-                    setTagModalOpen(false);
-                  }}
-                >确定</Button>
-              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+              <Button variant="plain" color="neutral" onClick={() => setTagModalOpen(false)}>
+                取消
+              </Button>
+              <Button
+                onClick={() => {
+                  setSelectedDictionary(prev =>
+                    prev ? { ...prev, tags: modalTags } : null
+                  );
+                  setTagModalOpen(false);
+                }}
+              >
+                确定
+              </Button>
             </Box>
           </ModalDialog>
         </Modal>

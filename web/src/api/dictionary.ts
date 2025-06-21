@@ -22,6 +22,7 @@ export interface DictionaryResDto {
   isActive: boolean;
   isPublic: boolean;
   metadata: Record<string, any>;
+  tags?: string[];
   words: WordResDto[];
   createdAt: string;
   updatedAt: string;
@@ -57,6 +58,7 @@ export interface CreateDictionaryDto {
   isActive?: boolean;
   metadata?: Record<string, any>;
   words?: Partial<WordResDto>[];
+  tags?: string[];
 }
 
 export interface UpdateDictionaryDto extends Partial<CreateDictionaryDto> {}
