@@ -1,5 +1,5 @@
-import { SessionEntity } from '@/api/system/user/entities/session.entity';
 import { UserEntity, UserRole } from '@/api/system/user/entities/user.entity';
+import { TokenEntity, TokenType } from '@/api/system/user/entities/token.entity';
 import { IEmailJob, IVerifyEmailJob } from '@/common/interfaces/job.interface';
 import { Branded } from '@/common/types/types';
 import { AllConfigType } from '@/config/config.type';
@@ -12,7 +12,7 @@ import { createCacheKey } from '@/utils/cache.util';
 import { verifyPassword } from '@/utils/password.util';
 import { InjectQueue } from '@nestjs/bullmq';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -29,9 +29,13 @@ import { RefreshReqDto } from './dto/refresh.req.dto';
 import { RefreshResDto } from './dto/refresh.res.dto';
 import { SigninReqDto } from './dto/signin.req.dto';
 import { SigninResDto } from './dto/signin.res.dto';
+import { CreateApiTokenReqDto } from './dto/create-api-token.req.dto';
+import { CreateApiTokenResDto } from './dto/create-api-token.res.dto';
+import { ListApiTokensResDto, ApiTokenItemDto } from './dto/list-api-tokens.res.dto';
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { JwtRefreshPayloadType } from './types/jwt-refresh-payload.type';
 import { UserService } from '../user/user.service';
+import { Uuid } from '@/common/types/common.type';
 
 type Token = Branded<
   {
@@ -50,6 +54,8 @@ export class AuthService {
     private readonly userService: UserService,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(TokenEntity)
+    private readonly tokenRepository: Repository<TokenEntity>,
     @InjectQueue(QueueName.EMAIL)
     private readonly emailQueue: Queue<IEmailJob, any, string>,
     @Inject(CACHE_MANAGER)
@@ -59,9 +65,13 @@ export class AuthService {
   /**
    * Sign in user
    * @param dto LoginReqDto
+   * @param userAgent Optional user agent string
    * @returns LoginResDto
    */
-  async login(dto: LoginReqDto): Promise<LoginResDto> {
+  async login(
+    dto: LoginReqDto,
+    userAgent?: string,
+  ): Promise<LoginResDto> {
     const { email, password } = dto;
     const user = await this.userRepository.findOne({
       where: { email },
@@ -80,23 +90,26 @@ export class AuthService {
       .update(randomStringGenerator())
       .digest('hex');
 
-    const session = new SessionEntity({
+    const token = new TokenEntity({
+      type: TokenType.SESSION,
       hash,
+      name: userAgent,
       userId: user.id,
       createdBy: SYSTEM_USER_ID,
       updatedBy: SYSTEM_USER_ID,
     });
-    await session.save();
+    await token.save();
 
-    const token = await this.createToken({
+    const jwtToken = await this.createToken({
       id: user.id,
-      sessionId: session.id,
+      sessionId: token.id,
       hash,
+      type: 'session',
     });
 
     return plainToInstance(LoginResDto, {
       userId: user.id,
-      ...token,
+      ...jwtToken,
     });
   }
 
@@ -126,7 +139,7 @@ export class AuthService {
     await user.save();
 
     // Send email verification
-    const token = await this.createVerificationToken({ id: user.id });
+    const verificationToken = await this.createVerificationToken({ id: user.id });
     const tokenExpiresIn = this.configService.getOrThrow(
       'auth.confirmEmailExpires',
       {
@@ -135,14 +148,14 @@ export class AuthService {
     );
     await this.cacheManager.set(
       createCacheKey(CacheKey.EMAIL_VERIFICATION, user.id),
-      token,
+      verificationToken,
       ms(tokenExpiresIn),
     );
     await this.emailQueue.add(
       JobName.EMAIL_VERIFICATION,
       {
         email: dto.email,
-        token,
+        token: verificationToken,
       } as IVerifyEmailJob,
       { attempts: 3, backoff: { type: 'exponential', delay: 60000 } },
     );
@@ -158,19 +171,19 @@ export class AuthService {
       true,
       userToken.exp * 1000 - Date.now(),
     );
-    await SessionEntity.delete(userToken.sessionId);
+    await TokenEntity.delete(userToken.sessionId);
   }
 
   async refreshToken(dto: RefreshReqDto): Promise<RefreshResDto> {
     const { sessionId, hash } = this.verifyRefreshToken(dto.refreshToken);
-    const session = await SessionEntity.findOneBy({ id: sessionId });
+    const token = await TokenEntity.findOneBy({ id: sessionId });
 
-    if (!session || session.hash !== hash) {
+    if (!token || token.hash !== hash || token.type !== TokenType.SESSION) {
       throw new UnauthorizedException();
     }
 
     const user = await this.userRepository.findOneOrFail({
-      where: { id: session.userId },
+      where: { id: token.userId },
       select: ['id'],
     });
 
@@ -179,13 +192,14 @@ export class AuthService {
       .update(randomStringGenerator())
       .digest('hex');
 
-    SessionEntity.update(session.id, { hash: newHash });
+    TokenEntity.update(token.id, { hash: newHash });
 
     return await this.createToken({
       id: user.id,
-      sessionId: session.id,
+      sessionId: token.id,
       hash: newHash,
-    });
+      type: 'session',
+    }) as RefreshResDto;
   }
 
   async verifyAccessToken(token: string): Promise<JwtPayloadType> {
@@ -206,6 +220,131 @@ export class AuthService {
     if (isSessionBlacklisted) {
       throw new UnauthorizedException();
     }
+
+    return payload;
+  }
+
+  /**
+   * Create API token for third-party use
+   * @param userId User ID
+   * @param dto CreateApiTokenReqDto
+   * @returns CreateApiTokenResDto
+   */
+  async createApiToken(userId: Uuid, dto: CreateApiTokenReqDto): Promise<CreateApiTokenResDto> {
+    const user = await this.userRepository.findOneOrFail({
+      where: { id: userId },
+      select: ['id', 'role'],
+    });
+
+    const hash = crypto
+      .createHash('sha256')
+      .update(randomStringGenerator())
+      .digest('hex');
+
+    const token = new TokenEntity({
+      type: TokenType.API,
+      name: dto.name,
+      hash,
+      userId: user.id,
+      expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
+      createdBy: user.id,
+      updatedBy: user.id,
+    });
+    await token.save();
+
+    const { accessToken, tokenExpires } = await this.createToken({
+      id: user.id,
+      sessionId: token.id,
+      hash,
+      type: 'api',
+    });
+
+    return plainToInstance(CreateApiTokenResDto, {
+      id: token.id,
+      name: token.name,
+      accessToken,
+      tokenExpires,
+      expiresAt: token.expiresAt?.toISOString(),
+    });
+  }
+
+  /**
+   * List user's API tokens
+   * @param userId User ID
+   * @returns ListApiTokensResDto
+   */
+  async listApiTokens(userId: Uuid): Promise<ListApiTokensResDto> {
+    const [tokens, total] = await this.tokenRepository.findAndCount({
+      where: { userId: userId },
+      order: { createdAt: 'DESC' },
+    });
+
+    const items = tokens.map(token => {
+      return plainToInstance(ApiTokenItemDto, {
+        id: token.id,
+        name: token.name,
+        createdAt: token.createdAt.toISOString(),
+        expiresAt: token.expiresAt?.toISOString(),
+        lastUsedAt: token.lastUsedAt?.toISOString(),
+        isExpired: token.isExpired(),
+      });
+    });
+
+    return plainToInstance(ListApiTokensResDto, {
+      items,
+      total,
+    });
+  }
+
+  /**
+   * Delete API token
+   * @param userId User ID
+   * @param tokenId Token ID
+   */
+  async deleteApiToken(userId: string, tokenId: string): Promise<void> {
+    const token = await this.tokenRepository.findOne({
+      where: { id: tokenId as any, userId: userId as any, type: TokenType.API },
+    });
+
+    if (!token) {
+      throw new NotFoundException('API token not found');
+    }
+
+    await this.tokenRepository.remove(token);
+  }
+
+  /**
+   * Verify API token
+   * @param token Access token
+   * @returns JwtPayloadType
+   */
+  async verifyApiToken(token: string): Promise<JwtPayloadType> {
+    let payload: JwtPayloadType;
+    try {
+      payload = this.jwtService.verify(token, {
+        secret: this.configService.getOrThrow('auth.secret', { infer: true }),
+      });
+    } catch {
+      throw new UnauthorizedException();
+    }
+
+    // Check if the token is an API token
+    const tokenEntity = await this.tokenRepository.findOne({
+      where: { id: payload.sessionId as any, type: TokenType.API },
+    });
+
+    if (!tokenEntity) {
+      throw new UnauthorizedException();
+    }
+
+    // Check if API token is expired
+    if (tokenEntity.isExpired()) {
+      throw new UnauthorizedException('API token has expired');
+    }
+
+    // Update last used time
+    tokenEntity.updateLastUsed();
+    await this.tokenRepository.save(tokenEntity);
 
     return payload;
   }
@@ -242,14 +381,15 @@ export class AuthService {
     id: string;
     sessionId: string;
     hash: string;
-  }): Promise<Token> {
+    type?: 'session' | 'api';
+  }): Promise<Token | { accessToken: string; tokenExpires: number }> {
     const tokenExpiresIn = this.configService.getOrThrow('auth.expires', {
       infer: true,
     });
     const tokenExpires = Date.now() + ms(tokenExpiresIn);
 
-    const [accessToken, refreshToken] = await Promise.all([
-      await this.jwtService.signAsync(
+    if (data.type === 'api') {
+      const accessToken = await this.jwtService.signAsync(
         {
           id: data.id,
           role: '', // TODO: add role
@@ -259,26 +399,44 @@ export class AuthService {
           secret: this.configService.getOrThrow('auth.secret', { infer: true }),
           expiresIn: tokenExpiresIn,
         },
-      ),
-      await this.jwtService.signAsync(
-        {
-          sessionId: data.sessionId,
-          hash: data.hash,
-        },
-        {
-          secret: this.configService.getOrThrow('auth.refreshSecret', {
-            infer: true,
-          }),
-          expiresIn: this.configService.getOrThrow('auth.refreshExpires', {
-            infer: true,
-          }),
-        },
-      ),
-    ]);
-    return {
-      accessToken,
-      refreshToken,
-      tokenExpires,
-    } as Token;
+      );
+      return {
+        accessToken,
+        tokenExpires,
+      };
+    } else {
+      const [accessToken, refreshToken] = await Promise.all([
+        await this.jwtService.signAsync(
+          {
+            id: data.id,
+            role: '', // TODO: add role
+            sessionId: data.sessionId,
+          },
+          {
+            secret: this.configService.getOrThrow('auth.secret', { infer: true }),
+            expiresIn: tokenExpiresIn,
+          },
+        ),
+        await this.jwtService.signAsync(
+          {
+            sessionId: data.sessionId,
+            hash: data.hash,
+          },
+          {
+            secret: this.configService.getOrThrow('auth.refreshSecret', {
+              infer: true,
+            }),
+            expiresIn: this.configService.getOrThrow('auth.refreshExpires', {
+              infer: true,
+            }),
+          },
+        ),
+      ]);
+      return {
+        accessToken,
+        refreshToken,
+        tokenExpires,
+      } as Token;
+    }
   }
 }

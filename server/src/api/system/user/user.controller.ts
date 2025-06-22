@@ -13,6 +13,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { ApiParam, ApiTags } from '@nestjs/swagger';
@@ -20,6 +21,9 @@ import { CreateUserReqDto } from './dto/create-user.req.dto';
 import { ListUserReqDto } from './dto/list-user.req.dto';
 import { LoadMoreUsersReqDto } from './dto/load-more-users.req.dto';
 import { UpdateUserReqDto } from './dto/update-user.req.dto';
+import { UpdateProfileReqDto } from './dto/update-profile.req.dto';
+import { ChangePasswordReqDto } from './dto/change-password.req.dto';
+import { UploadAvatarReqDto } from './dto/upload-avatar.req.dto';
 import { UserResDto } from './dto/user.res.dto';
 import { UserService } from './user.service';
 
@@ -38,6 +42,50 @@ export class UserController {
   @Get('me')
   async getCurrentUser(@CurrentUser('id') userId: Uuid): Promise<UserResDto> {
     return await this.userService.findOne(userId);
+  }
+
+  @ApiAuth({
+    type: UserResDto,
+    summary: 'Get user profile',
+  })
+  @Get('profile')
+  async getProfile(@CurrentUser('id') userId: Uuid): Promise<UserResDto> {
+    return await this.userService.getProfile(userId);
+  }
+
+  @ApiAuth({
+    type: UserResDto,
+    summary: 'Update user profile',
+  })
+  @Put('profile')
+  async updateProfile(
+    @CurrentUser('id') userId: Uuid,
+    @Body() updateProfileDto: UpdateProfileReqDto,
+  ): Promise<UserResDto> {
+    return await this.userService.updateProfile(userId, updateProfileDto);
+  }
+
+  @ApiAuth({
+    type: UserResDto,
+    summary: 'Upload user avatar',
+  })
+  @Post('avatar')
+  async uploadAvatar(
+    @CurrentUser('id') userId: Uuid,
+    @Body() uploadAvatarDto: UploadAvatarReqDto,
+  ): Promise<UserResDto> {
+    return await this.userService.uploadAvatar(userId, uploadAvatarDto);
+  }
+
+  @ApiAuth({
+    summary: 'Change password',
+  })
+  @Post('change-password')
+  async changePassword(
+    @CurrentUser('id') userId: Uuid,
+    @Body() changePasswordDto: ChangePasswordReqDto,
+  ): Promise<void> {
+    return await this.userService.changePassword(userId, changePasswordDto);
   }
 
   @Post()
@@ -102,11 +150,5 @@ export class UserController {
   @ApiParam({ name: 'id', type: 'String' })
   removeUser(@Param('id', ParseUUIDPipe) id: Uuid) {
     return this.userService.remove(id);
-  }
-
-  @ApiAuth()
-  @Post('me/change-password')
-  async changePassword() {
-    return 'change-password';
   }
 }
