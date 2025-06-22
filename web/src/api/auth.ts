@@ -1,8 +1,35 @@
-import { LoginReqDto, LoginResDto, RefreshReqDto, RefreshResDto } from '@/api/model'; // You'll need to create or adjust this path
 import { fetcher } from './client';
 
+export interface LoginReqDto {
+  email: string;
+  password?: string;
+}
+
+export interface LoginResDto {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+  tokenExpires: number;
+}
+
+export interface RefreshReqDto {
+  refreshToken: string;
+}
+
+export interface RefreshResDto {
+  accessToken: string;
+  refreshToken: string;
+  tokenExpires: number;
+}
+
 export const login = (data: LoginReqDto): Promise<LoginResDto> => {
-  return fetcher('/api/v1/auth/login', { method: 'POST', body: JSON.stringify(data) });
+  return fetcher('/api/v1/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      'User-Agent': navigator.userAgent,
+    },
+  });
 };
 
 export const refreshToken = (data: RefreshReqDto): Promise<RefreshResDto> => {

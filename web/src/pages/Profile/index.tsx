@@ -1,76 +1,679 @@
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { Main } from "@/components/layouts/Main";
-import { Settings, LogOut, Info, ClipboardList } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Avatar,
+  Table,
+  IconButton,
+  Chip,
+  Modal,
+  ModalDialog,
+  ModalClose,
+  DialogTitle,
+  DialogContent,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
+  Stack,
+  Alert,
+  CircularProgress,
+} from "@mui/joy";
+import {
+  Settings,
+  LogOut,
+  Info,
+  Copy,
+  Plus,
+  Edit,
+  Lock,
+  Camera,
+  MoreVertical,
+} from "lucide-react";
+import dayjs from "dayjs";
+import {
+  getUserProfile,
+  updateUserProfile,
+  changePassword,
+  getApiTokens,
+  createApiToken,
+  deleteApiToken,
+  uploadAvatar,
+  type UserProfile,
+  type ApiToken,
+  type CreateTokenRequest,
+} from "@/api/profile";
+import { compressImageToBase64, validateImageFile } from "@/utils/image-compression";
 
-const tokens = [
-  { token: "eyJh****@IW8", desc: "user login", created: "2025/6/5 22:48:37", expires: "2025/6/12 22:48:37" },
-  { token: "eyJh****E1ww", desc: "user login", created: "2025/6/4 02:40:36", expires: "2125/5/11 02:40:36" },
-  { token: "eyJh****JFg4", desc: "user login", created: "2025/5/27 09:43:03", expires: "2125/5/3 09:43:03" },
-  { token: "eyJh****02LA", desc: "user login", created: "2025/5/26 19:26:59", expires: "2125/5/2 19:26:59" },
-  { token: "eyJh****ZwMc", desc: "user login", created: "2025/5/24 16:08:29", expires: "2125/4/30 16:08:29" },
-  { token: "eyJh****ejj0", desc: "user login", created: "2025/3/29 16:19:50", expires: "2125/3/5 16:19:50" },
-  { token: "eyJh****1yw0", desc: "user login", created: "2025/3/20 04:21:19", expires: "2125/2/24 04:21:19" },
-];
+const columnHelper = createColumnHelper<ApiToken>();
 
 export default function ProfileSettings() {
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Modal 状态
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [createTokenModalOpen, setCreateTokenModalOpen] = useState(false);
+
+  // 表单状态
+  const [editForm, setEditForm] = useState({
+    username: "",
+    email: "",
+    bio: ""
+  });
+
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+
+  const [tokenForm, setTokenForm] = useState({
+    name: "",
+    expiresAt: ""
+  });
+
+  // 新建 Token 成功后保存 accessToken
+  const [createdToken, setCreatedToken] = useState<string | null>(null);
+
+  // 查询用户信息
+  const { data: userProfile, isLoading: profileLoading } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: getUserProfile,
+  });
+
+  // 查询 API Tokens
+  const { data: tokensData, isLoading: tokensLoading } = useQuery({
+    queryKey: ['apiTokens'],
+    queryFn: getApiTokens,
+  });
+
+  // 当用户信息加载完成后，更新表单
+  useEffect(() => {
+    if (userProfile) {
+      setEditForm({
+        username: userProfile.username || "",
+        email: userProfile.email || "",
+        bio: userProfile.bio || ""
+      });
+    }
+  }, [userProfile]);
+
+  // 更新用户信息
+  const updateProfileMutation = useMutation({
+    mutationFn: updateUserProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      setEditModalOpen(false);
+    },
+  });
+
+  // 上传头像
+  const uploadAvatarMutation = useMutation({
+    mutationFn: uploadAvatar,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+    },
+  });
+
+  // 修改密码
+  const changePasswordMutation = useMutation({
+    mutationFn: changePassword,
+    onSuccess: () => {
+      setPasswordModalOpen(false);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    },
+  });
+
+  // 创建 Token
+  const createTokenMutation = useMutation({
+    mutationFn: createApiToken,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['apiTokens'] });
+      setCreateTokenModalOpen(true); // 保持弹窗打开
+      setTokenForm({ name: '', expiresAt: '' });
+      setCreatedToken(data.accessToken); // 保存 accessToken
+    },
+  });
+
+  // 删除 Token
+  const deleteTokenMutation = useMutation({
+    mutationFn: deleteApiToken,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['apiTokens'] });
+    },
+  });
+
+  // 处理表单提交
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate(editForm);
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert("新密码和确认密码不匹配");
+      return;
+    }
+    changePasswordMutation.mutate({
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    });
+  };
+
+  const handleCreateToken = (e: React.FormEvent) => {
+    e.preventDefault();
+    const data: CreateTokenRequest = {
+      name: tokenForm.name,
+      expiresAt: tokenForm.expiresAt || undefined,
+    };
+    createTokenMutation.mutate(data);
+  };
+
+  // 处理头像上传
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+
+    try {
+      // 压缩图片并转换为 base64
+      const base64Data = await compressImageToBase64(file, {
+        maxWidth: 200,
+        maxHeight: 200,
+        quality: 0.8,
+        maxSize: 1024 * 1024, // 1MB
+      });
+
+      // 上传到服务器
+      uploadAvatarMutation.mutate({ avatar: base64Data });
+    } catch (error) {
+      console.error('头像上传失败:', error);
+      alert('头像上传失败，请重试');
+    }
+
+    // 清空 input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // 复制 Token
+  const copyToken = (token: string) => {
+    navigator.clipboard.writeText(token);
+    // 这里可以添加一个 toast 提示
+  };
+
+  // 删除 Token
+  const handleDeleteToken = (id: string) => {
+    if (confirm("确定要删除这个 Token 吗？删除后无法恢复。")) {
+      deleteTokenMutation.mutate(id);
+    }
+  };
+
+  const columns = useMemo(() => [
+    columnHelper.accessor('name', {
+      header: '名称',
+      cell: info => <Typography level="body-sm">{info.getValue() || 'Session'}</Typography>,
+    }),
+    columnHelper.accessor('createdAt', {
+      header: '创建时间',
+      cell: info => dayjs(info.getValue()).format('YYYY/MM/DD HH:mm:ss'),
+    }),
+    columnHelper.accessor('expiresAt', {
+      header: '过期时间',
+      cell: info => info.getValue() ? dayjs(info.getValue()).format('YYYY/MM/DD HH:mm:ss') : '永不过期',
+    }),
+    columnHelper.accessor('lastUsedAt', {
+      header: '最后使用',
+      cell: info => info.getValue() ? dayjs(info.getValue()).format('YYYY/MM/DD HH:mm:ss') : '从未使用',
+    }),
+    columnHelper.accessor('isExpired', {
+      header: '状态',
+      cell: info => (
+        <Chip
+          size="sm"
+          color={info.getValue() ? "danger" : "success"}
+          variant="soft"
+        >
+          {info.getValue() ? "已过期" : "有效"}
+        </Chip>
+      ),
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: '操作',
+      cell: ({ row }) => (
+        <IconButton
+          size="sm"
+          color="danger"
+          variant="plain"
+          onClick={() => handleDeleteToken(row.original.id)}
+          disabled={deleteTokenMutation.isPending}
+        >
+          <LogOut size={16} />
+        </IconButton>
+      ),
+    }),
+  ], [deleteTokenMutation.isPending]);
+
+
+  const table = useReactTable({
+    data: tokensData?.items ?? [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  // 表格样式参考 MistakePage
+  const tableSx = {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontSize: '0.875rem',
+    lineHeight: '1.25rem',
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    '& thead': {
+      backgroundColor: '#f8fafc',
+    },
+    '& th': {
+      fontWeight: 600,
+      textAlign: 'left',
+      padding: '0.75rem 1rem',
+      color: '#64748b',
+      borderBottom: '1px solid #e2e8f0',
+      backgroundColor: '#f8fafc',
+    },
+    '& td': {
+      padding: '0.75rem 1rem',
+      color: '#334155',
+      textAlign: 'left',
+      borderBottom: '1px solid #e2e8f0',
+      backgroundColor: 'white',
+    },
+    '& tr:last-child td': {
+      borderBottom: 'none',
+    },
+    '& tbody tr:hover': {
+      backgroundColor: '#f8fafc',
+    },
+  };
+
+  if (profileLoading) {
+    return (
+      <Main>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      </Main>
+    );
+  }
+
   return (
-    <Main className="container">
+    <Main>
+      <PageHeader
+        title="设置"
+        description="管理您的个人资料、密码和访问令牌。"
+      />
       {/* 账户信息卡片 */}
-      <div className="box mb-5" style={{ borderRadius: 12 }}>
-        <div className="is-flex is-align-items-center mb-3">
-          <img src="https://avatars.githubusercontent.com/u/45908451" alt="avatar" style={{ width: 64, height: 64, borderRadius: "50%" }} />
-          <div className="ml-4">
-            <div className="is-size-4 has-text-weight-bold">mahoo12138 <span className="is-size-6 has-text-grey">(mahoo12138)</span></div>
-            <button className="button is-small is-light mt-2">
-              <Settings size={16} className="mr-1" /> 编辑
-            </button>
-          </div>
-        </div>
-      </div>
+      <Card sx={{ mb: 3, borderRadius: 3, boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)' }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+            <Avatar
+              src={userProfile?.image || "https://avatars.githubusercontent.com/u/45908451"}
+              sx={{ width: 64, height: 64, mr: 2 }}
+            />
+            <Box sx={{ flex: 1 }}>
+              <Typography level="h4" sx={{ fontWeight: 'bold' }}>
+                {userProfile?.username} <Typography level="body-sm" sx={{ color: 'text.secondary' }}>({userProfile?.email})</Typography>
+              </Typography>
+              {userProfile?.bio && (
+                <Typography level="body-sm" sx={{ color: 'text.secondary', mt: 1, mb: 2 }}>
+                  {userProfile.bio}
+                </Typography>
+              )}
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="sm"
+                  variant="outlined"
+                  startDecorator={<Edit size={16} />}
+                  onClick={() => setEditModalOpen(true)}
+                >
+                  编辑
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outlined"
+                  startDecorator={<Lock size={16} />}
+                  onClick={() => setPasswordModalOpen(true)}
+                >
+                  修改密码
+                </Button>
+              </Stack>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Access Token 表格 */}
-      <div className="box" style={{ borderRadius: 12 }}>
-        <div className="is-flex is-justify-content-space-between is-align-items-center mb-3">
-          <div>
-            <span className="is-size-5 has-text-weight-semibold">Access Tokens</span>
-            <a className="ml-2" href="#"><Info size={16} /></a>
-            <div className="is-size-7 has-text-grey">A list of all access tokens for your account.</div>
-          </div>
-          <button className="button is-success">创建</button>
-        </div>
-        <div className="table-container">
-          <table className="table is-fullwidth is-hoverable">
-            <thead>
-              <tr>
-                <th>Token</th>
-                <th>说明</th>
-                <th>Created At</th>
-                <th>Expires At</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {tokens.map((t, i) => (
-                <tr key={i}>
-                  <td>
-                    {t.token}
-                    <button className="button is-white is-small ml-2" title="复制">
-                      <ClipboardList size={16} />
-                    </button>
-                  </td>
-                  <td>{t.desc}</td>
-                  <td>{t.created}</td>
-                  <td>{t.expires}</td>
-                  <td>
-                    <button className="button is-white is-small has-text-danger" title="删除">
-                      <LogOut size={16} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Card sx={{ borderRadius: 3, boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)' }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box>
+              <Typography level="title-lg" sx={{ fontWeight: 'semibold' }}>
+                Access Tokens
+              </Typography>
+              <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                A list of all access tokens for your account.
+              </Typography>
+            </Box>
+            <Button
+              color="success"
+              startDecorator={<Plus size={16} />}
+              onClick={() => setCreateTokenModalOpen(true)}
+            >
+              创建
+            </Button>
+          </Box>
+
+          {tokensLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            tokensData?.items.length === 0 ? (
+              <Box sx={{ textAlign: 'center', color: '#64748b', py: 4 }}>
+                暂无 Token，请点击右上角"创建"按钮
+              </Box>
+            ) : (
+              <Table sx={tableSx}>
+                <thead>
+                  {table.getHeaderGroups().map(headerGroup => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map(header => (
+                        <th key={header.id} style={{ width: header.getSize(), textAlign: 'left' }}>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 编辑信息 Modal */}
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)}>
+        <ModalDialog size="md">
+          <ModalClose />
+          <DialogTitle>编辑个人信息</DialogTitle>
+          <DialogContent>
+            <form onSubmit={handleEditSubmit}>
+              <Stack spacing={3}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  <Box sx={{ position: 'relative' }}>
+                    <Avatar
+                      src={userProfile?.image || "https://avatars.githubusercontent.com/u/45908451"}
+                      sx={{ width: 80, height: 80 }}
+                    />
+                    <IconButton
+                      size="sm"
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        bgcolor: 'background.surface',
+                        border: '2px solid',
+                        borderColor: 'background.surface',
+                        borderRadius: '50%',
+                        '&:hover': {
+                          bgcolor: 'background.level1',
+                        },
+                      }}
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadAvatarMutation.isPending}
+                    >
+                      {uploadAvatarMutation.isPending ? (
+                        <CircularProgress size="sm" />
+                      ) : (
+                        <Camera size={16} />
+                      )}
+                    </IconButton>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleAvatarUpload}
+                    />
+                  </Box>
+                </Box>
+                <FormControl>
+                  <FormLabel>用户名</FormLabel>
+                  <Input
+                    value={editForm.username}
+                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                    required
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>邮箱</FormLabel>
+                  <Input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    required
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>个人简介</FormLabel>
+                  <Textarea
+                    minRows={3}
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                    placeholder="介绍一下自己..."
+                  />
+                </FormControl>
+                <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ pt: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setEditModalOpen(false)}
+                    disabled={updateProfileMutation.isPending}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    type="submit"
+                    color="primary"
+                    disabled={updateProfileMutation.isPending}
+                  >
+                    {updateProfileMutation.isPending ? <CircularProgress size="sm" /> : "保存"}
+                  </Button>
+                </Stack>
+              </Stack>
+            </form>
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
+
+      {/* 修改密码 Modal */}
+      <Modal open={passwordModalOpen} onClose={() => setPasswordModalOpen(false)}>
+        <ModalDialog size="md">
+          <ModalClose />
+          <DialogTitle>修改密码</DialogTitle>
+          <DialogContent>
+            <form onSubmit={handlePasswordSubmit}>
+              <Stack spacing={3}>
+                <FormControl>
+                  <FormLabel>当前密码</FormLabel>
+                  <Input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    required
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>新密码</FormLabel>
+                  <Input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    required
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>确认新密码</FormLabel>
+                  <Input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    required
+                  />
+                </FormControl>
+                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                  <Button
+                    variant="outlined"
+                    onClick={() => setPasswordModalOpen(false)}
+                    disabled={changePasswordMutation.isPending}
+                  >
+                    取消
+                  </Button>
+                  <Button
+                    type="submit"
+                    color="primary"
+                    disabled={changePasswordMutation.isPending}
+                  >
+                    {changePasswordMutation.isPending ? <CircularProgress size="sm" /> : "修改密码"}
+                  </Button>
+                </Stack>
+              </Stack>
+            </form>
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
+
+      {/* 创建 Token Modal */}
+      <Modal open={createTokenModalOpen} onClose={() => { setCreateTokenModalOpen(false); setCreatedToken(null); }}>
+        <ModalDialog size="md">
+          <ModalClose />
+          <DialogTitle>创建 API Token</DialogTitle>
+          <DialogContent>
+            {createdToken ? (
+              <Alert color="success" sx={{ mb: 2 }}>
+                <Info size={16} />
+                <Typography level="body-sm">
+                  只会展示一次，请复制保存：
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                  <Input
+                    value={createdToken}
+                    readOnly
+                    sx={{ flex: 1, fontFamily: 'monospace' }}
+                  />
+                  <Button
+                    size="sm"
+                    sx={{ ml: 1 }}
+                    onClick={() => { navigator.clipboard.writeText(createdToken); }}
+                  >
+                    复制
+                  </Button>
+                </Box>
+              </Alert>
+            ) : (
+              <Alert color="primary" sx={{ mb: 2 }}>
+                <Info size={16} />
+                <Typography level="body-sm">
+                  API Token 将用于第三方应用程序访问您的账户。请妥善保管，不要泄露给他人。
+                </Typography>
+              </Alert>
+            )}
+            {!createdToken && (
+              <form onSubmit={handleCreateToken}>
+                <Stack spacing={3}>
+                  <FormControl>
+                    <FormLabel>Token 名称</FormLabel>
+                    <Input
+                      placeholder="例如：GitHub Integration"
+                      value={tokenForm.name}
+                      onChange={(e) => setTokenForm({ ...tokenForm, name: e.target.value })}
+                      required
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>过期时间</FormLabel>
+                    <Input
+                      type="datetime-local"
+                      value={tokenForm.expiresAt}
+                      onChange={(e) => setTokenForm({ ...tokenForm, expiresAt: e.target.value })}
+                    />
+                    <Typography level="body-xs" sx={{ color: 'text.secondary', mt: 0.5 }}>
+                      留空表示永不过期
+                    </Typography>
+                  </FormControl>
+                  <Stack direction="row" spacing={1} justifyContent="flex-end">
+                    <Button
+                      variant="outlined"
+                      onClick={() => setCreateTokenModalOpen(false)}
+                      disabled={createTokenMutation.isPending}
+                    >
+                      取消
+                    </Button>
+                    <Button
+                      type="submit"
+                      color="success"
+                      disabled={createTokenMutation.isPending}
+                    >
+                      {createTokenMutation.isPending ? <CircularProgress size="sm" /> : "创建 Token"}
+                    </Button>
+                  </Stack>
+                </Stack>
+              </form>
+            )}
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
     </Main>
   );
 }
