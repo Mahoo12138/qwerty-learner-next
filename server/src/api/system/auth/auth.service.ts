@@ -35,6 +35,7 @@ import { ListApiTokensResDto, ApiTokenItemDto } from './dto/list-api-tokens.res.
 import { JwtPayloadType } from './types/jwt-payload.type';
 import { JwtRefreshPayloadType } from './types/jwt-refresh-payload.type';
 import { UserService } from '../user/user.service';
+import { Uuid } from '@/common/types/common.type';
 
 type Token = Branded<
   {
@@ -64,9 +65,13 @@ export class AuthService {
   /**
    * Sign in user
    * @param dto LoginReqDto
+   * @param userAgent Optional user agent string
    * @returns LoginResDto
    */
-  async login(dto: LoginReqDto): Promise<LoginResDto> {
+  async login(
+    dto: LoginReqDto,
+    userAgent?: string,
+  ): Promise<LoginResDto> {
     const { email, password } = dto;
     const user = await this.userRepository.findOne({
       where: { email },
@@ -88,6 +93,7 @@ export class AuthService {
     const token = new TokenEntity({
       type: TokenType.SESSION,
       hash,
+      name: userAgent,
       userId: user.id,
       createdBy: SYSTEM_USER_ID,
       updatedBy: SYSTEM_USER_ID,
@@ -98,6 +104,7 @@ export class AuthService {
       id: user.id,
       sessionId: token.id,
       hash,
+      type: 'session',
     });
 
     return plainToInstance(LoginResDto, {
@@ -191,7 +198,8 @@ export class AuthService {
       id: user.id,
       sessionId: token.id,
       hash: newHash,
-    });
+      type: 'session',
+    }) as RefreshResDto;
   }
 
   async verifyAccessToken(token: string): Promise<JwtPayloadType> {
@@ -222,9 +230,9 @@ export class AuthService {
    * @param dto CreateApiTokenReqDto
    * @returns CreateApiTokenResDto
    */
-  async createApiToken(userId: string, dto: CreateApiTokenReqDto): Promise<CreateApiTokenResDto> {
+  async createApiToken(userId: Uuid, dto: CreateApiTokenReqDto): Promise<CreateApiTokenResDto> {
     const user = await this.userRepository.findOneOrFail({
-      where: { id: userId as any },
+      where: { id: userId },
       select: ['id', 'role'],
     });
 
@@ -244,16 +252,18 @@ export class AuthService {
     });
     await token.save();
 
-    const jwtToken = await this.createToken({
+    const { accessToken, tokenExpires } = await this.createToken({
       id: user.id,
       sessionId: token.id,
       hash,
+      type: 'api',
     });
 
     return plainToInstance(CreateApiTokenResDto, {
       id: token.id,
       name: token.name,
-      ...jwtToken,
+      accessToken,
+      tokenExpires,
       expiresAt: token.expiresAt?.toISOString(),
     });
   }
@@ -263,9 +273,9 @@ export class AuthService {
    * @param userId User ID
    * @returns ListApiTokensResDto
    */
-  async listApiTokens(userId: string): Promise<ListApiTokensResDto> {
+  async listApiTokens(userId: Uuid): Promise<ListApiTokensResDto> {
     const [tokens, total] = await this.tokenRepository.findAndCount({
-      where: { userId: userId as any, type: TokenType.API },
+      where: { userId: userId },
       order: { createdAt: 'DESC' },
     });
 
@@ -371,14 +381,15 @@ export class AuthService {
     id: string;
     sessionId: string;
     hash: string;
-  }): Promise<Token> {
+    type?: 'session' | 'api';
+  }): Promise<Token | { accessToken: string; tokenExpires: number }> {
     const tokenExpiresIn = this.configService.getOrThrow('auth.expires', {
       infer: true,
     });
     const tokenExpires = Date.now() + ms(tokenExpiresIn);
 
-    const [accessToken, refreshToken] = await Promise.all([
-      await this.jwtService.signAsync(
+    if (data.type === 'api') {
+      const accessToken = await this.jwtService.signAsync(
         {
           id: data.id,
           role: '', // TODO: add role
@@ -388,26 +399,44 @@ export class AuthService {
           secret: this.configService.getOrThrow('auth.secret', { infer: true }),
           expiresIn: tokenExpiresIn,
         },
-      ),
-      await this.jwtService.signAsync(
-        {
-          sessionId: data.sessionId,
-          hash: data.hash,
-        },
-        {
-          secret: this.configService.getOrThrow('auth.refreshSecret', {
-            infer: true,
-          }),
-          expiresIn: this.configService.getOrThrow('auth.refreshExpires', {
-            infer: true,
-          }),
-        },
-      ),
-    ]);
-    return {
-      accessToken,
-      refreshToken,
-      tokenExpires,
-    } as Token;
+      );
+      return {
+        accessToken,
+        tokenExpires,
+      };
+    } else {
+      const [accessToken, refreshToken] = await Promise.all([
+        await this.jwtService.signAsync(
+          {
+            id: data.id,
+            role: '', // TODO: add role
+            sessionId: data.sessionId,
+          },
+          {
+            secret: this.configService.getOrThrow('auth.secret', { infer: true }),
+            expiresIn: tokenExpiresIn,
+          },
+        ),
+        await this.jwtService.signAsync(
+          {
+            sessionId: data.sessionId,
+            hash: data.hash,
+          },
+          {
+            secret: this.configService.getOrThrow('auth.refreshSecret', {
+              infer: true,
+            }),
+            expiresIn: this.configService.getOrThrow('auth.refreshExpires', {
+              infer: true,
+            }),
+          },
+        ),
+      ]);
+      return {
+        accessToken,
+        refreshToken,
+        tokenExpires,
+      } as Token;
+    }
   }
 }

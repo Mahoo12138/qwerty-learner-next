@@ -7,6 +7,7 @@ export class ApiTokenItemDto {
   })
   id: string;
 
+
   @ApiProperty({
     description: 'Token 名称/备注',
     example: 'GitHub Integration',

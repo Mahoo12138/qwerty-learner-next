@@ -1,6 +1,14 @@
 import { CurrentUser } from '@/decorators/current-user.decorator';
 import { ApiAuth, ApiPublic } from '@/decorators/http.decorators';
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Headers,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginReqDto } from './dto/login.req.dto';
@@ -13,6 +21,7 @@ import { CreateApiTokenReqDto } from './dto/create-api-token.req.dto';
 import { CreateApiTokenResDto } from './dto/create-api-token.res.dto';
 import { ListApiTokensResDto } from './dto/list-api-tokens.res.dto';
 import { JwtPayloadType } from './types/jwt-payload.type';
+import { Uuid } from '@/common/types/common.type';
 
 @ApiTags('auth')
 @Controller({
@@ -27,8 +36,11 @@ export class AuthController {
     summary: 'Login in',
   })
   @Post('login')
-  async login(@Body() userLogin: LoginReqDto): Promise<LoginResDto> {
-    return await this.authService.login(userLogin);
+  async login(
+    @Body() userLogin: LoginReqDto,
+    @Headers('user-agent') userAgent: string,
+  ): Promise<LoginResDto> {
+    return await this.authService.login(userLogin, userAgent);
   }
 
   @ApiPublic({
@@ -79,7 +91,7 @@ export class AuthController {
   async listApiTokens(
     @CurrentUser() userToken: JwtPayloadType,
   ): Promise<ListApiTokensResDto> {
-    return await this.authService.listApiTokens(userToken.id);
+    return await this.authService.listApiTokens(userToken.id as Uuid);
   }
 
   @ApiAuth({
