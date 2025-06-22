@@ -39,7 +39,17 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    request['user'] = await this.authService.verifyAccessToken(accessToken);
+    try {
+      // First try to verify as regular access token
+      request['user'] = await this.authService.verifyAccessToken(accessToken);
+    } catch (error) {
+      try {
+        // If regular token verification fails, try as API token
+        request['user'] = await this.authService.verifyApiToken(accessToken);
+      } catch (apiTokenError) {
+        throw new UnauthorizedException();
+      }
+    }
 
     return true;
   }

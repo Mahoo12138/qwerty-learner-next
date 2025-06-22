@@ -7,6 +7,7 @@ import { ErrorCode } from '@/constants/error-code.constant';
 import { ValidationException } from '@/common/exceptions/validation.exception';
 import { buildPaginator } from '@/utils/cursor-pagination';
 import { paginate } from '@/utils/offset-pagination';
+import { verifyPassword } from '@/utils/password.util';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import assert from 'assert';
@@ -16,6 +17,9 @@ import { CreateUserReqDto } from './dto/create-user.req.dto';
 import { ListUserReqDto } from './dto/list-user.req.dto';
 import { LoadMoreUsersReqDto } from './dto/load-more-users.req.dto';
 import { UpdateUserReqDto } from './dto/update-user.req.dto';
+import { UpdateProfileReqDto } from './dto/update-profile.req.dto';
+import { ChangePasswordReqDto } from './dto/change-password.req.dto';
+import { UploadAvatarReqDto } from './dto/upload-avatar.req.dto';
 import { UserResDto } from './dto/user.res.dto';
 import { UserEntity, UserRole } from './entities/user.entity';
 
@@ -26,7 +30,7 @@ export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-  ) {}
+  ) { }
 
   async create(dto: CreateUserReqDto): Promise<UserResDto> {
     const { username, email, password, role, image } = dto;
@@ -125,10 +129,107 @@ export class UserService {
     await this.userRepository.findOneByOrFail({ id });
     await this.userRepository.softDelete(id);
   }
+
   async findHostUser(): Promise<UserResDto> {
     const hostUser = await this.userRepository.findOne({
       where: { role: UserRole.HOST },
     });
     return plainToInstance(UserResDto, hostUser);
+  }
+
+  // Profile related methods
+  async getProfile(userId: Uuid): Promise<UserResDto> {
+    const user = await this.userRepository.findOneByOrFail({ id: userId });
+    return plainToInstance(UserResDto, user);
+  }
+
+  async updateProfile(userId: Uuid, updateProfileDto: UpdateProfileReqDto): Promise<UserResDto> {
+    const user = await this.userRepository.findOneByOrFail({ id: userId });
+
+    // Check if username or email is being changed and if it's already taken
+    if (updateProfileDto.username && updateProfileDto.username !== user.username) {
+      const existingUser = await this.userRepository.findOne({
+        where: { username: updateProfileDto.username },
+      });
+      if (existingUser) {
+        throw new ValidationException(ErrorCode.E001);
+      }
+    }
+
+    if (updateProfileDto.email && updateProfileDto.email !== user.email) {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: updateProfileDto.email },
+      });
+      if (existingUser) {
+        throw new ValidationException(ErrorCode.E001);
+      }
+    }
+
+    // Update user fields
+    if (updateProfileDto.username) {
+      user.username = updateProfileDto.username;
+    }
+    if (updateProfileDto.email) {
+      user.email = updateProfileDto.email;
+    }
+    if (updateProfileDto.bio) {
+      user.bio = updateProfileDto.bio;
+    }
+    if (updateProfileDto.image) {
+      user.image = updateProfileDto.image;
+    }
+
+    user.updatedBy = userId;
+    const savedUser = await this.userRepository.save(user);
+
+    return plainToInstance(UserResDto, savedUser);
+  }
+
+  async changePassword(userId: Uuid, changePasswordDto: ChangePasswordReqDto): Promise<void> {
+    const user = await this.userRepository.findOneByOrFail({ id: userId });
+
+    // Verify current password
+    const isCurrentPasswordValid = await verifyPassword(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new ValidationException(ErrorCode.E002); // Assuming E002 is for invalid password
+    }
+
+    // Update password (the hashPassword will be called automatically by BeforeUpdate hook)
+    user.password = changePasswordDto.newPassword;
+    user.updatedBy = userId;
+
+    await this.userRepository.save(user);
+  }
+
+  async uploadAvatar(userId: Uuid, uploadAvatarDto: UploadAvatarReqDto): Promise<UserResDto> {
+    const user = await this.userRepository.findOneByOrFail({ id: userId });
+
+    // Validate base64 image data
+    const { avatar } = uploadAvatarDto;
+    
+    // Check if it's a valid base64 image
+    if (!avatar.startsWith('data:image/')) {
+      throw new ValidationException(ErrorCode.E004); // Invalid image format
+    }
+
+    // Check file size (limit to 1MB)
+    const base64Data = avatar.split(',')[1];
+    const fileSizeInBytes = Math.ceil((base64Data.length * 3) / 4);
+    const maxSizeInBytes = 1024 * 1024; // 1MB
+
+    if (fileSizeInBytes > maxSizeInBytes) {
+      throw new ValidationException(ErrorCode.E005); // File too large
+    }
+
+    // Update user avatar
+    user.image = avatar;
+    user.updatedBy = userId;
+
+    const savedUser = await this.userRepository.save(user);
+    return plainToInstance(UserResDto, savedUser);
   }
 }

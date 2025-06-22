@@ -11,7 +11,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { SessionEntity } from './session.entity';
+import { TokenEntity } from './token.entity';
 
 // 定义用户角色枚举
 export enum UserRole {
@@ -47,6 +47,13 @@ export class UserEntity extends AbstractEntity {
   @Column()
   password!: string;
 
+
+  @Column({
+    length: 500,
+    nullable: true,
+  })
+  bio!: string;
+
   @Column({ default: '' })
   image?: string;
 
@@ -64,8 +71,8 @@ export class UserEntity extends AbstractEntity {
   })
   deletedAt: Date;
 
-  @OneToMany(() => SessionEntity, (session) => session.user)
-  sessions?: SessionEntity[];
+  @OneToMany(() => TokenEntity, (token) => token.user)
+  tokens?: TokenEntity[];
 
   @BeforeInsert()
   @BeforeUpdate()
