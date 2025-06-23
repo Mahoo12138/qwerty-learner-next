@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicRouteRouteImport } from './routes/_public/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedTypingRouteImport } from './routes/_authenticated/typing'
 import { Route as AuthenticatedSidebarRouteRouteImport } from './routes/_authenticated/_sidebar/route'
 import { Route as PublicExploreIndexRouteImport } from './routes/_public/explore/index'
 import { Route as PublicAuthSignUpRouteImport } from './routes/_public/auth/sign-up'
@@ -35,6 +36,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTypingRoute = AuthenticatedTypingRouteImport.update({
+  id: '/typing',
+  path: '/typing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSidebarRouteRoute =
@@ -101,6 +107,7 @@ const AuthenticatedSidebarSettingMemberRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/typing': typeof AuthenticatedTypingRoute
   '/': typeof AuthenticatedIndexRoute
   '/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
   '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/setting/': typeof AuthenticatedSidebarSettingIndexRoute
 }
 export interface FileRoutesByTo {
+  '/typing': typeof AuthenticatedTypingRoute
   '/': typeof AuthenticatedIndexRoute
   '/dictionary': typeof AuthenticatedSidebarDictionaryRoute
   '/mistake': typeof AuthenticatedSidebarMistakeRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_public': typeof PublicRouteRouteWithChildren
   '/_authenticated/_sidebar': typeof AuthenticatedSidebarRouteRouteWithChildren
+  '/_authenticated/typing': typeof AuthenticatedTypingRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/_sidebar/setting': typeof AuthenticatedSidebarSettingRouteRouteWithChildren
   '/_authenticated/_sidebar/dictionary': typeof AuthenticatedSidebarDictionaryRoute
@@ -145,6 +154,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/typing'
     | '/'
     | '/setting'
     | '/dictionary'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/setting/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/typing'
     | '/'
     | '/dictionary'
     | '/mistake'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_public'
     | '/_authenticated/_sidebar'
+    | '/_authenticated/typing'
     | '/_authenticated/'
     | '/_authenticated/_sidebar/setting'
     | '/_authenticated/_sidebar/dictionary'
@@ -212,6 +224,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/typing': {
+      id: '/_authenticated/typing'
+      path: '/typing'
+      fullPath: '/typing'
+      preLoaderRoute: typeof AuthenticatedTypingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/_sidebar': {
@@ -337,11 +356,13 @@ const AuthenticatedSidebarRouteRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedSidebarRouteRoute: typeof AuthenticatedSidebarRouteRouteWithChildren
+  AuthenticatedTypingRoute: typeof AuthenticatedTypingRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSidebarRouteRoute: AuthenticatedSidebarRouteRouteWithChildren,
+  AuthenticatedTypingRoute: AuthenticatedTypingRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 

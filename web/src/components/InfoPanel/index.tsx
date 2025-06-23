@@ -8,7 +8,7 @@ type InfoPanelProps = {
   openState: boolean
   onClose: () => void
   title: string
-  icon: ElementType<SVGProps<SVGSVGElement>>
+  icon?: ElementType<SVGProps<SVGSVGElement>>
   iconClassName: string
   buttonClassName: string
   children: React.ReactNode
