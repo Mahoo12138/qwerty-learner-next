@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useSnackbar } from 'notistack';
 
 import Select from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
@@ -33,7 +34,7 @@ import Chip from '@mui/joy/Chip';
 import ChipDelete from '@mui/joy/ChipDelete';
 import Box from '@mui/joy/Box';
 
-import { ChevronDown, Ellipsis, Plus, Trash2, Edit2, ChevronRight } from 'lucide-react';
+import { ChevronDown, Ellipsis, Plus, Trash2, Edit2, ChevronRight, Upload } from 'lucide-react';
 
 import { Main } from "@/components/layouts/Main";
 import Header from "@/components/SettingHeader";
@@ -61,6 +62,7 @@ import {
 import {
   createWord,
   deleteWord,
+  importWords,
 } from '@/api/word';
 
 // 类型扩展
@@ -131,6 +133,9 @@ const DictionaryPage = () => {
   const [modalTags, setModalTags] = useState<string[]>([]);
   const [modalTagInput, setModalTagInput] = useState('');
 
+  const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
+
   // 分类列表
   const { data: categoriesData, refetch: refetchCategories } = useQuery({
     queryKey: ['categories'],
@@ -197,6 +202,40 @@ const DictionaryPage = () => {
     mutationFn: deleteWord,
     onSuccess: () => { refetchWordList(); },
   });
+
+  const importWordsMutation = useMutation({
+    mutationFn: ({ dictionaryId, file }: { dictionaryId: string; file: File }) =>
+      importWords(dictionaryId, file),
+    onSuccess: () => {
+      enqueueSnackbar('Words imported successfully!', { variant: 'success' });
+      refetchWordList();
+      refetch(); // To update the dictionary's word count
+    },
+    onError: (error: Error) => {
+      enqueueSnackbar(error.message, { variant: 'error' });
+    },
+  });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && selectedDictionary) {
+      if (file.type !== 'application/json') {
+        enqueueSnackbar('Please select a JSON file.', { variant: 'warning' });
+        return;
+      }
+      importWordsMutation.mutate({ dictionaryId: selectedDictionary.id, file });
+    }
+    // Reset file input
+    if (event.target) {
+      event.target.value = '';
+    }
+  };
 
   // Intersection Observer for infinite scroll
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -405,7 +444,6 @@ const DictionaryPage = () => {
             display: 'flex',
             gap: 8,
             marginTop: 16,
-            padding: '0 24px',
             flexShrink: 0
           }}>
             <Input placeholder="搜索词库..." variant="outlined" />
@@ -423,7 +461,7 @@ const DictionaryPage = () => {
             </Select>
           </div>
 
-          <Divider sx={{ margin: "16px 24px" }} />
+          <Divider sx={{ margin: "16px 0" }} />
         </div>
 
         {/* Scrollable Grid Area */}
@@ -620,12 +658,28 @@ const DictionaryPage = () => {
             <Divider />
 
             <Typography level="title-md">单词列表</Typography>
-            <Button
-              startDecorator={<Plus size={16} />}
-              onClick={() => setWordModalOpen(true)}
-            >
-              添加单词
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <Button
+                startDecorator={<Plus size={16} />}
+                onClick={() => setWordModalOpen(true)}
+              >
+                添加单词
+              </Button>
+              <Button
+                startDecorator={<Upload size={16} />}
+                onClick={handleImportClick}
+                variant="outlined"
+              >
+                导入单词
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+                accept=".json"
+              />
+            </Box>
 
             <div ref={parentRef} style={{ height: 400, overflow: 'auto' }}>
               <div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>

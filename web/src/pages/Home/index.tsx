@@ -57,7 +57,7 @@ const Home: React.FC = () => {
         <Grid xs={12} sm={6}>
           <Card
             variant="soft"
-            sx={{ height: 180, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
+            sx={{ height: 132, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
           >
             <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', p: 3 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
@@ -77,7 +77,7 @@ const Home: React.FC = () => {
         <Grid xs={12} sm={6}>
           <Card
             variant="soft"
-            sx={{ height: 180, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
+            sx={{ height: 132, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
           >
             <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', p: 3 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
@@ -97,7 +97,7 @@ const Home: React.FC = () => {
         <Grid xs={12} sm={6}>
           <Card
             variant="soft"
-            sx={{ height: 180, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
+            sx={{ height: 132, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
           >
             <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', p: 3 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
