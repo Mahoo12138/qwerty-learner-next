@@ -11,8 +11,16 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateWordDto } from './dto/create-word.dto';
 import { ListWordReqDto } from './dto/list-word.req.dto';
 import { UpdateWordDto } from './dto/update-word.dto';
@@ -35,6 +43,18 @@ export class WordController {
     @CurrentUser('id') userId: Uuid,
   ): Promise<WordEntity> {
     return await this.wordService.create(createWordDto, userId);
+  }
+
+  @Post('import/:dictionaryId')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Import words from a JSON file' })
+  async importWords(
+    @Param('dictionaryId') dictionaryId: Uuid,
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser('id') userId: Uuid,
+  ) {
+    return this.wordService.importWords(dictionaryId, file, userId);
   }
 
   @Get()

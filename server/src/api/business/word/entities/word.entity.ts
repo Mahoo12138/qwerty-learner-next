@@ -24,8 +24,8 @@ export class WordEntity extends AbstractEntity {
   @Column({ length: 100 })
   word: string;
 
-  @Column({ type: 'text', nullable: true, comment: '释义' })
-  definition: string;
+  @Column({ type: 'text', array: true,  nullable: true, comment: '释义' })
+  definition: string[];
 
   @Column({ type: 'text', array: true, nullable: true, comment: '例句' })
   examples: string[];
@@ -33,8 +33,6 @@ export class WordEntity extends AbstractEntity {
   @Column({ type: 'text', nullable: true, comment: '音标' })
   pronunciation: string;
 
-  @Column({ type: 'text', nullable: true })
-  audioUrl: string;
 
   @Column({ type: 'json', nullable: true, comment: '元数据' })
   metadata: Record<string, any>; // 额外元数据，如词源、记忆技巧等
