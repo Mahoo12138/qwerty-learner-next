@@ -1,30 +1,14 @@
 import KeyEventHandler from '../KeyEventHandler'
-import TextAreaHandler from '../TextAreaHandler'
-import { currentDictInfoAtom } from '@/store'
-import { useAtomValue } from 'jotai'
+// import { useTypingConfigStore } from '@/store/typing'
 import type { FormEvent } from 'react'
-import { useMemo } from 'react'
 
 export default function InputHandler({ updateInput }: { updateInput: (updateObj: WordUpdateAction) => void }) {
-  const dictInfo = useAtomValue(currentDictInfoAtom)
-
-  const handler = useMemo(() => {
-    switch (dictInfo.language) {
-      case 'en':
-        return <KeyEventHandler updateInput={updateInput} />
-      case 'de':
-        return <KeyEventHandler updateInput={updateInput} />
-      case 'romaji':
-        return <KeyEventHandler updateInput={updateInput} />
-      case 'code':
-        return <TextAreaHandler updateInput={updateInput} />
-      default:
-        return <TextAreaHandler updateInput={updateInput} />
-    }
-  }, [dictInfo.language, updateInput])
-
-  return <>{handler}</>
+  // 直接用 zustand 获取 currentDictInfo，如果未来需要可用
+  // const currentDictInfo = useTypingConfigStore(s => s.currentDictInfo)
+  // 目前统一用 KeyEventHandler
+  return <KeyEventHandler updateInput={updateInput} />
 }
+
 export type WordUpdateAction = WordAddAction | WordDeleteAction | WordCompositionAction
 
 export type WordAddAction = {
