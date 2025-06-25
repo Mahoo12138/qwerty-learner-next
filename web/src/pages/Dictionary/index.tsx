@@ -114,7 +114,6 @@ const DictionaryCard = ({
     </div>
   </Card>
 );
-
 const DictionaryPage = () => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
