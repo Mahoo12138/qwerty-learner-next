@@ -38,7 +38,7 @@ export class WordService {
     const word = new WordEntity({
       ...createWordDto,
       createdBy: userId,
-      updatedBy: userId,
+      updatedBy: userId
     });
     const savedWord = await this.wordRepository.save(word);
 

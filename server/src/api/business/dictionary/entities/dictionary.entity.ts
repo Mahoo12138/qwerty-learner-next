@@ -27,9 +27,8 @@ export class DictionaryEntity extends AbstractEntity {
   @Column({ length: 100 })
   name: string;
 
-  @Column({ length: 100, comment: '词库语言' })
+  @Column({ length: 100, default: 'en', comment: '词库语言' })
   language: string;
-
 
   @Column({ type: 'text', nullable: true })
   description: string;

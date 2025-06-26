@@ -79,7 +79,7 @@ export class AuthController {
     @CurrentUser() userToken: JwtPayloadType,
     @Body() dto: CreateApiTokenReqDto,
   ): Promise<CreateApiTokenResDto> {
-    return await this.authService.createApiToken(userToken.id, dto);
+    return await this.authService.createApiToken(userToken.id as Uuid, dto);
   }
 
   @ApiAuth({

@@ -1,5 +1,15 @@
 import { Uuid } from '@/common/types/common.type';
-import { IsString, IsOptional, IsNumber, IsArray, IsObject, Length, Min, Max, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreateWordDto {
   @IsString()
@@ -7,8 +17,9 @@ export class CreateWordDto {
   word: string;
 
   @IsOptional()
-  @IsString()
-  definition?: string;
+  @IsArray()
+  @IsString({ each: true })
+  definition?: string[];
 
   @IsOptional()
   @IsArray()
