@@ -10,6 +10,9 @@ export class WordResDto {
   word: string;
 
   @Expose()
+  language: string;
+
+  @Expose()
   definition: string;
 
   @Expose()

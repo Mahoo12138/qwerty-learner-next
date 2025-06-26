@@ -10,6 +10,11 @@ export class CreateDictionaryDto {
   name: string;
 
 
+  @IsString()
+  @Length(1, 100)
+  language: string;
+
+
   @IsOptional()
   @IsString()
   description?: string;
