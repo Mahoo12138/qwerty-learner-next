@@ -1,14 +1,14 @@
 import Layout from '../../components/layouts/Layout'
-import { DictChapterButton } from './components/DictChapterButton'
-import PronunciationSwitcher from './components/PronunciationSwitcher'
-import ResultScreen from './components/ResultScreen'
-import Speed from './components/Speed'
-import StartButton from './components/StartButton'
-import Switcher from './components/Switcher'
-import WordList from './components/WordList'
-import WordPanel from './components/WordPanel'
-import { useConfetti } from './hooks/useConfetti'
-import { useWordList } from './hooks/useWordList'
+import { DictChapterButton } from '../Home/components/DictChapterButton'
+import PronunciationSwitcher from '../Home/components/PronunciationSwitcher'
+import ResultScreen from '../Home/components/ResultScreen'
+import Speed from '../Home/components/Speed'
+import StartButton from '../Home/components/StartButton'
+import Switcher from '../Home/components/Switcher'
+import WordList from '../Home/components/WordList'
+import WordPanel from '../Home/components/WordPanel'
+import { useConfetti } from '../Home/hooks/useConfetti'
+import { useWordList } from '../Home/hooks/useWordList'
 import { TypingContext, TypingStateActionType, initialState, typingReducer } from './store'
 import { DonateCard } from '@/components/DonateCard'
 import Header from '@/components/Header'
@@ -18,13 +18,13 @@ import { idDictionaryMap } from '@/resources/dictionary'
 import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom, randomConfigAtom, reviewModeInfoAtom } from '@/store'
 import { IsDesktop, isLegal } from '@/utils'
 import { useSaveChapterRecord } from '@/utils/db'
-import { useMixPanelChapterLogUploader } from '@/utils/mixpanel'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import type React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useImmerReducer } from 'use-immer'
+import { Box, Stack, Button, CircularProgress } from '@mui/joy'
 
-const Home: React.FC = () => {
+const Typing: React.FC = () => {
   const [state, dispatch] = useImmerReducer(typingReducer, structuredClone(initialState))
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const { words } = useWordList()
@@ -32,7 +32,6 @@ const Home: React.FC = () => {
   const [currentDictId, setCurrentDictId] = useAtom(currentDictIdAtom)
   const setCurrentChapter = useSetAtom(currentChapterAtom)
   const randomConfig = useAtomValue(randomConfigAtom)
-  const chapterLogUploader = useMixPanelChapterLogUploader(state)
   const saveChapterRecord = useSaveChapterRecord()
 
   const reviewModeInfo = useAtomValue(reviewModeInfoAtom)
@@ -101,18 +100,14 @@ const Home: React.FC = () => {
         payload: { words, shouldShuffle: randomConfig.isOpen, initialIndex },
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [words])
+  }, [words, isReviewMode, reviewModeInfo.reviewRecord?.index, randomConfig.isOpen, dispatch])
 
   useEffect(() => {
     // 当用户完成章节后且完成 word Record 数据保存，记录 chapter Record 数据,
     if (state.isFinished && !state.isSavingRecord) {
-      chapterLogUploader()
       saveChapterRecord(state)
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.isFinished, state.isSavingRecord])
+  }, [state.isFinished, state.isSavingRecord, saveChapterRecord, state])
 
   useEffect(() => {
     // 启动计时器
@@ -138,38 +133,64 @@ const Home: React.FC = () => {
           <PronunciationSwitcher />
           <Switcher />
           <StartButton isLoading={isLoading} />
+        </Header>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
           <Tooltip content="跳过该词">
-            <button
-              className={`${
-                state.isShowSkip ? 'bg-orange-400' : 'invisible w-0 bg-gray-300 px-0 opacity-0'
-              } my-btn-primary transition-all duration-300 `}
+            <Button
+              variant={state.isShowSkip ? "solid" : "plain"}
+              color={state.isShowSkip ? "warning" : "neutral"}
               onClick={skipWord}
+              sx={{
+                visibility: state.isShowSkip ? 'visible' : 'hidden',
+                opacity: state.isShowSkip ? 1 : 0,
+                transition: 'all 0.3s',
+                minWidth: state.isShowSkip ? 'auto' : 0
+              }}
             >
               Skip
-            </button>
+            </Button>
           </Tooltip>
-        </Header>
-        <div className="container mx-auto flex h-full flex-1 flex-col items-center justify-center pb-5">
-          <div className="container relative mx-auto flex h-full flex-col items-center">
-            <div className="container flex flex-grow items-center justify-center">
+        </Box>
+        <Box sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          maxWidth: 1200,
+          mx: 'auto',
+          pb: 2.5
+        }}>
+          <Box sx={{ 
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <Box sx={{ 
+              flex: 1,
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center ">
-                  <div
-                    className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid  border-indigo-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                    role="status"
-                  ></div>
-                </div>
+                <Stack alignItems="center" justifyContent="center">
+                  <CircularProgress size="md" />
+                </Stack>
               ) : (
                 !state.isFinished && <WordPanel />
               )}
-            </div>
+            </Box>
             <Speed />
-          </div>
-        </div>
+          </Box>
+        </Box>
       </Layout>
       <WordList />
     </TypingContext.Provider>
   )
 }
 
-export default Home
+export default Typing

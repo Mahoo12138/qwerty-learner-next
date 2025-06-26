@@ -11,7 +11,7 @@ import type { WordPronunciationIconRef } from '@/components/WordPronunciationIco
 import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
 import { EXPLICIT_SPACE } from '@/constants'
 import useKeySounds from '@/hooks/useKeySounds'
-import { TypingContext, TypingStateActionType } from '@/pages/Home/store'
+import { TypingContext, TypingStateActionType } from '@/pages/Typing/store'
 import {
   currentChapterAtom,
   currentDictInfoAtom,
@@ -22,7 +22,7 @@ import {
   wordDictationConfigAtom,
 } from '@/store'
 import type { Word } from '@/typings'
-import { CTRL, getUtcStringForMixpanel, useMixPanelWordLogUploader } from '@/utils'
+import { CTRL } from '@/utils'
 import { useSaveWordRecord } from '@/utils/db'
 import { useAtomValue } from 'jotai'
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
@@ -65,7 +65,7 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     const newWordState = structuredClone(initialWordState)
     newWordState.displayWord = headword
     newWordState.letterStates = new Array(headword.length).fill('normal')
-    newWordState.startTime = getUtcStringForMixpanel()
+    // newWordState.startTime = getUtcStringForMixpanel()
     newWordState.randomLetterVisible = headword.split('').map(() => Math.random() > 0.4)
     setWordState(newWordState)
   }, [word, setWordState])
@@ -195,7 +195,7 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
         setWordState((state) => {
           state.letterStates[inputLength - 1] = 'correct'
           state.isFinished = true
-          state.endTime = getUtcStringForMixpanel()
+          // state.endTime = getUtcStringForMixpanel()
         })
         playHintSound()
       } else {

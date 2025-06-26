@@ -1,11 +1,22 @@
 import Footer from '../Footer'
 import type React from 'react'
+import { Box } from '@mui/joy'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex h-screen w-full flex-col items-center pb-4">
+    <Box
+      component="main"
+      sx={{
+        display: 'flex',
+        height: '100vh',
+        width: '100%',
+        flexDirection: 'column',
+        alignItems: 'center',
+        pb: 2,
+      }}
+    >
       {children}
       <Footer />
-    </main>
+    </Box>
   )
 }

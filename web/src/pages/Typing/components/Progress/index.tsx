@@ -1,5 +1,6 @@
 import { TypingContext } from '../../store'
 import { useContext, useEffect, useState } from 'react'
+import { Box, LinearProgress } from '@mui/joy'
 
 export default function Progress({ className }: { className?: string }) {
   // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
@@ -7,10 +8,11 @@ export default function Progress({ className }: { className?: string }) {
   const [progress, setProgress] = useState(0)
   const [phase, setPhase] = useState(0)
 
+  // 可自定义颜色
   const colorSwitcher: { [key: number]: string } = {
-    0: 'bg-indigo-200 dark:bg-indigo-300',
-    1: 'bg-indigo-300 dark:bg-indigo-400',
-    2: 'bg-indigo-400 dark:bg-indigo-500',
+    0: '#C7D2FE', // indigo-200
+    1: '#A5B4FC', // indigo-300
+    2: '#818CF8', // indigo-400
   }
 
   useEffect(() => {
@@ -21,15 +23,21 @@ export default function Progress({ className }: { className?: string }) {
   }, [state.chapterData.index, state.chapterData.words.length])
 
   return (
-    <div className={`relative w-1/4 pt-1 ${className}`}>
-      <div className="mb-4 flex h-2 overflow-hidden rounded-xl bg-indigo-100 text-xs transition-all duration-300 dark:bg-indigo-200">
-        <div
-          style={{ width: `${progress}%` }}
-          className={`flex flex-col justify-center whitespace-nowrap rounded-xl text-center text-white shadow-none transition-all duration-300 ${
-            colorSwitcher[phase] ?? 'bg-indigo-200 dark:bg-indigo-300'
-          }`}
-        ></div>
-      </div>
-    </div>
+    <Box className={className} sx={{ position: 'relative', width: '100%', pt: 1 }}>
+      <LinearProgress
+        determinate
+        value={progress}
+        sx={{
+          // height: 8,
+          borderRadius: 8,
+          backgroundColor: '#E0E7FF', // indigo-100
+          '& .MuiLinearProgress-bar': {
+            backgroundColor: colorSwitcher[phase] ?? '#C7D2FE',
+            transition: 'width 0.3s',
+            borderRadius: 8,
+          },
+        }}
+      />
+    </Box>
   )
 }

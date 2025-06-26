@@ -2,6 +2,7 @@ import type React from "react";
 import { Link } from "@tanstack/react-router";
 import Header from "@/components/Header";
 import { Book, AlertCircle, BarChart2, Calendar } from "lucide-react";
+import { Box, Stack, Typography, Button, Card, CardContent, Divider, Grid } from '@mui/joy';
 
 const Home: React.FC = () => {
   const getGreeting = () => {
@@ -12,107 +13,109 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="container">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.body' }}>
       <Header />
-      <div className="has-text-centered" style={{ marginTop: "8rem" }}>
-        <h2 className="title is-1 mb-6">
+      <Stack alignItems="center" sx={{ mt: 12 }}>
+        <Typography level="h2" sx={{ fontSize: 40, fontWeight: 700, mb: 3 }}>
           {getGreeting()}
-        </h2>
-        <p className="subtitle is-4 mb-6 has-text-grey">
+        </Typography>
+        <Typography level="body-lg" sx={{ color: 'text.secondary', mb: 3 }}>
           准备好开始今天的打字练习了吗？
-        </p>
-        <Link
-          to="/"
-          className="button is-primary is-large"
+        </Typography>
+        <Button
+          component={Link}
+          to="/typing"
+          size="lg"
+          variant="solid"
+          color="primary"
+          sx={{ fontSize: 20, px: 6, py: 2, borderRadius: 8, mb: 6 }}
         >
           开始练习
-        </Link>
-      </div>
-
-      <div className="columns is-multiline mt-6">
-        <div className="column is-6">
-          <div className="card has-background-light">
-            <div className="card-content">
-              <div className="is-flex is-justify-content-space-between is-align-items-center">
-                <div className="card-text">
-                  <h3 className="title is-4 mb-3">词库</h3>
-                  <p className="has-text-grey">管理你的词库，添加新的单词和短语</p>
-                </div>
-                <Link to="/dictionary" className="is-block">
-                  <Book className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-6">
-          <div className="card has-background-light">
-            <div className="card-content">
-              <div className="is-flex is-justify-content-space-between is-align-items-center">
-                <div className="card-text">
-                  <h3 className="title is-4 mb-3">错题本</h3>
-                  <p className="has-text-grey">查看和复习你经常出错的单词</p>
-                </div>
-                <Link to="/mistake" className="is-block">
-                  <AlertCircle className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-6">
-          <div className="card has-background-light">
-            <div className="card-content">
-              <div className="is-flex is-justify-content-space-between is-align-items-center">
-                <div className="card-text">
-                  <h3 className="title is-4 mb-3">统计</h3>
-                  <p className="has-text-grey">查看你的练习数据和进步情况</p>
-                </div>
-                <Link to="/statistic" className="is-block">
-                  <BarChart2 className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="column is-6">
-          <div className="card has-background-light">
-            <div className="card-content">
-              <div className="is-flex is-justify-content-space-between is-align-items-center">
-                <div className="card-text">
-                  <h3 className="title is-4 mb-3">练习计划</h3>
-                  <p className="has-text-grey">制定和跟踪你的练习计划</p>
-                </div>
-                <Link to="/plan" className="is-block">
-                  <Calendar className="has-text-grey-light" size={48} style={{ transition: "color 0.3s" }} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <style jsx>{`
-        .card:hover .has-text-grey-light {
-          color: var(--bulma-primary) !important;
-        }
-        .card-text {
-          transition: transform 0.3s;
-        }
-        .card:hover .card-text {
-          transform: translateX(8px);
-        }
-        .card:hover .card-text .title {
-          color: var(--bulma-primary) !important;
-        }
-        .card:hover .card-text .has-text-grey {
-          color: var(--bulma-grey-dark) !important;
-        }
-      `}</style>
-    </div>
+        </Button>
+      </Stack>
+      <Grid container spacing={3} sx={{ maxWidth: 900, mx: 'auto', mt: 2 }}>
+        <Grid xs={12} sm={6}>
+          <Card
+            variant="soft"
+            sx={{ height: 132, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
+          >
+            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', p: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
+                <Typography level="h4" sx={{ mb: 1 }}>
+                  词库
+                </Typography>
+                <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                  管理你的词库，添加新的单词和短语
+                </Typography>
+              </Box>
+              <Button component={Link} to="/dictionary" variant="plain" color="neutral" sx={{ p: 0, minWidth: 0, alignSelf: 'flex-end' }}>
+                <Book size={48} style={{ transition: 'color 0.3s' }} />
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid xs={12} sm={6}>
+          <Card
+            variant="soft"
+            sx={{ height: 132, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
+          >
+            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', p: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
+                <Typography level="h4" sx={{ mb: 1 }}>
+                  错题本
+                </Typography>
+                <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                  查看和复习你经常出错的单词
+                </Typography>
+              </Box>
+              <Button component={Link} to="/mistake" variant="plain" color="neutral" sx={{ p: 0, minWidth: 0, alignSelf: 'flex-end' }}>
+                <AlertCircle size={48} style={{ transition: 'color 0.3s' }} />
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid xs={12} sm={6}>
+          <Card
+            variant="soft"
+            sx={{ height: 132, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
+          >
+            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', p: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
+                <Typography level="h4" sx={{ mb: 1 }}>
+                  统计
+                </Typography>
+                <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                  查看你的练习数据和进步情况
+                </Typography>
+              </Box>
+              <Button component={Link} to="/statistic" variant="plain" color="neutral" sx={{ p: 0, minWidth: 0, alignSelf: 'flex-end' }}>
+                <BarChart2 size={48} style={{ transition: 'color 0.3s' }} />
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid xs={12} sm={6}>
+          <Card
+            variant="soft"
+            sx={{ height: 132, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', ':hover': { boxShadow: 'lg', '& .MuiSvgIcon-root': { color: 'primary.500' }, '& .MuiTypography-root': { color: 'primary.700' } }, transition: 'box-shadow 0.3s' }}
+          >
+            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', p: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
+                <Typography level="h4" sx={{ mb: 1 }}>
+                  练习计划
+                </Typography>
+                <Typography level="body-sm" sx={{ color: 'text.secondary' }}>
+                  制定和跟踪你的练习计划
+                </Typography>
+              </Box>
+              <Button component={Link} to="/plan" variant="plain" color="neutral" sx={{ p: 0, minWidth: 0, alignSelf: 'flex-end' }}>
+                <Calendar size={48} style={{ transition: 'color 0.3s' }} />
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

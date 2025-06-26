@@ -6,25 +6,26 @@ import Phonetic from './components/Phonetic'
 import Translation from './components/Translation'
 import WordComponent from './components/Word'
 import { usePrefetchPronunciationSound } from '@/hooks/usePronunciation'
-import { isReviewModeAtom, isShowPrevAndNextWordAtom, loopWordConfigAtom, phoneticConfigAtom, reviewModeInfoAtom } from '@/store'
-import { useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useContext, useMemo, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import type { Word } from '@/typings'
+import { Box, Stack, Typography } from '@mui/joy'
+import { useTypingConfigStore, ReviewModeInfo } from '@/store/typing'
 
 export default function WordPanel() {
-  // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
   const { state, dispatch } = useContext(TypingContext)!
-  const phoneticConfig = useAtomValue(phoneticConfigAtom)
-  const isShowPrevAndNextWord = useAtomValue(isShowPrevAndNextWordAtom)
+  const phoneticConfig = useTypingConfigStore((s) => s.phoneticConfig)
+  const isShowPrevAndNextWord = useTypingConfigStore((s) => s.isShowPrevAndNextWord)
+  const loopWordTimes = useTypingConfigStore((s) => s.loopWordTimes)
+  const reviewModeInfo = useTypingConfigStore((s) => s.reviewModeInfo)
+  const setReviewModeInfo = useTypingConfigStore((s) => s.setReviewModeInfo)
+  
+  const isReviewMode = reviewModeInfo.isReviewMode
+
   const [wordComponentKey, setWordComponentKey] = useState(0)
   const [currentWordExerciseCount, setCurrentWordExerciseCount] = useState(0)
-  const { times: loopWordTimes } = useAtomValue(loopWordConfigAtom)
   const currentWord = state.chapterData.words[state.chapterData.index]
   const nextWord = state.chapterData.words[state.chapterData.index + 1] as Word | undefined
-
-  const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
-  const isReviewMode = useAtomValue(isReviewModeAtom)
 
   const prevIndex = useMemo(() => {
     const newIndex = state.chapterData.index - 1
@@ -38,12 +39,12 @@ export default function WordPanel() {
   usePrefetchPronunciationSound(nextWord?.name)
 
   const reloadCurrentWordComponent = useCallback(() => {
-    setWordComponentKey((old) => old + 1)
+    setWordComponentKey((old: number) => old + 1)
   }, [])
 
   const updateReviewRecord = useCallback(
     (state: TypingState) => {
-      setReviewModeInfo((old) => ({
+      setReviewModeInfo((old: ReviewModeInfo) => ({
         ...old,
         reviewRecord: old.reviewRecord ? { ...old.reviewRecord, index: state.chapterData.index } : undefined,
       }))
@@ -55,7 +56,7 @@ export default function WordPanel() {
     if (state.chapterData.index < state.chapterData.words.length - 1 || currentWordExerciseCount < loopWordTimes - 1) {
       // 用户完成当前单词
       if (currentWordExerciseCount < loopWordTimes - 1) {
-        setCurrentWordExerciseCount((old) => old + 1)
+        setCurrentWordExerciseCount((old: number) => old + 1)
         dispatch({ type: TypingStateActionType.LOOP_CURRENT_WORD })
         reloadCurrentWordComponent()
       } else {
@@ -75,7 +76,7 @@ export default function WordPanel() {
       // 用户完成当前章节
       dispatch({ type: TypingStateActionType.FINISH_CHAPTER })
       if (isReviewMode) {
-        setReviewModeInfo((old) => ({ ...old, reviewRecord: old.reviewRecord ? { ...old.reviewRecord, isFinished: true } : undefined }))
+        setReviewModeInfo((old: ReviewModeInfo) => ({ ...old, reviewRecord: old.reviewRecord ? { ...old.reviewRecord, isFinished: true } : undefined }))
       }
     }
   }, [
@@ -149,28 +150,72 @@ export default function WordPanel() {
   }, [isShowTranslation, state.isTransVisible])
 
   return (
-    <div className="container flex h-full w-full flex-col items-center justify-center">
-      <div className="container flex h-24 w-full shrink-0 grow-0 justify-between px-12 pt-10">
+    <Stack
+      direction="column"
+      alignItems="center"
+      justifyContent="center"
+      sx={{ height: '100%', width: '100%', flex: 1 }}
+    >
+      {/* 顶部导航/切换 */}
+      <Box
+        sx={{
+          width: '100%',
+          height: 96,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          px: 6,
+          pt: 2.5,
+          flexShrink: 0,
+          flexGrow: 0,
+        }}
+      >
         {isShowPrevAndNextWord && state.isTyping && (
           <>
             <PrevAndNextWord type="prev" />
             <PrevAndNextWord type="next" />
           </>
         )}
-      </div>
-      <div className="container flex flex-grow flex-col items-center justify-center">
+      </Box>
+
+      {/* 单词输入区 */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         {currentWord && (
-          <div className="relative flex w-full justify-center">
+          <Box sx={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
             {!state.isTyping && (
-              <div className="absolute flex h-full w-full justify-center">
-                <div className="z-10 flex w-full items-center backdrop-blur-sm">
-                  <p className="w-full select-none text-center text-xl text-gray-600 dark:text-gray-50">
-                    按任意键{state.timerData.time ? '继续' : '开始'}
-                  </p>
-                </div>
-              </div>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10,
+                  backdropFilter: 'blur(4px)',
+                  opacity: !state.isTyping ? 1 : 0,
+                  pointerEvents: !state.isTyping ? 'auto' : 'none',
+                  transition: 'opacity 0.3s',
+                }}
+              >
+                <Typography
+                  level="body-lg"
+                  sx={{ width: '100%', textAlign: 'center', color: 'text.secondary', userSelect: 'none' }}
+                >
+                  按任意键{state.timerData.time ? '继续' : '开始'}
+                </Typography>
+              </Box>
             )}
-            <div className="relative">
+            <Box sx={{ position: 'relative' }}>
               <WordComponent word={currentWord} onFinish={onFinish} key={wordComponentKey} />
               {phoneticConfig.isOpen && <Phonetic word={currentWord} />}
               <Translation
@@ -179,11 +224,15 @@ export default function WordPanel() {
                 onMouseEnter={() => handleShowTranslation(true)}
                 onMouseLeave={() => handleShowTranslation(false)}
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
-      </div>
-      <Progress className={`mb-10 mt-auto ${state.isTyping ? 'opacity-100' : 'opacity-0'}`} />
-    </div>
+      </Box>
+
+      {/* 进度条 */}
+      <Box sx={{ width: '25%', mb: 5, mt: 'auto', opacity: state.isTyping ? 1 : 0, transition: 'opacity 0.3s' }}>
+        <Progress />
+      </Box>
+    </Stack>
   )
 }

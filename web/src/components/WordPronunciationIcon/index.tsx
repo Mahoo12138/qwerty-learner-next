@@ -8,6 +8,8 @@ export const WordPronunciationIcon = React.forwardRef<
   WordPronunciationIconRef,
   { word: Word; lang: string; className?: string; iconClassName?: string }
 >(({ word, lang, className, iconClassName }, ref) => {
+
+  return null
   const currentWord = () => {
     if (lang === 'hapin') {
       if (/[\u0400-\u04FF]/.test(word.notation || '')) {

@@ -5,7 +5,7 @@ import {
   TypingStateActionType,
   initialState,
   typingReducer,
-} from "../store";
+} from "../../Typing/store";
 import Layout from "@/components/layouts/Layout";
 import Header from "@/components/Header";
 import Speed from "../components/Speed";

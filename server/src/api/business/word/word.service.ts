@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WordEntity } from './entities/word.entity';
@@ -11,6 +15,14 @@ import { plainToInstance } from 'class-transformer';
 import { paginate } from '@/utils/offset-pagination';
 import { OffsetPaginatedDto } from '@/common/dto/offset-pagination/paginated.dto';
 import { Uuid } from '@/common/types/common.type';
+
+interface ImportedWord {
+  name: string;
+  trans: string[];
+  usphone?: string;
+  ukphone?: string;
+  examples?: string[];
+}
 
 @Injectable()
 export class WordService {
@@ -26,7 +38,7 @@ export class WordService {
     const word = new WordEntity({
       ...createWordDto,
       createdBy: userId,
-      updatedBy: userId,
+      updatedBy: userId
     });
     const savedWord = await this.wordRepository.save(word);
 
@@ -126,5 +138,69 @@ export class WordService {
     });
 
     return new OffsetPaginatedDto(plainToInstance(WordResDto, words), metaDto);
+  }
+
+  async importWords(
+    dictionaryId: Uuid,
+    file: Express.Multer.File,
+    userId: Uuid,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required.');
+    }
+
+    // 1. Validate dictionary
+    await this.dictionaryService.findOne(dictionaryId);
+
+    // 2. Parse JSON file
+    let wordsToImport: ImportedWord[];
+    try {
+      const fileContent = file.buffer.toString('utf-8');
+      wordsToImport = JSON.parse(fileContent);
+      if (!Array.isArray(wordsToImport)) {
+        throw new Error(); // Will be caught and re-thrown by the catch block
+      }
+    } catch (error) {
+      throw new BadRequestException(
+        'Invalid JSON file. It must be an array of word objects.',
+      );
+    }
+
+    // 3. Map to WordEntity
+    const newWords = wordsToImport
+      .map((item) => {
+        if (!item.name || !item.trans) {
+          return null;
+        }
+        const pronunciation = [item.usphone, item.ukphone]
+          .filter(Boolean)
+          .join(', ');
+
+        return new WordEntity({
+          word: item.name,
+          definition: item.trans,
+          pronunciation,
+          examples: item.examples,
+          dictionaryId,
+          createdBy: userId,
+          updatedBy: userId,
+        });
+      })
+      .filter((word) => word !== null) as WordEntity[];
+
+    if (newWords.length === 0) {
+      return { success: true, message: 'No valid words to import.' };
+    }
+
+    // 4. Bulk insert
+    await this.wordRepository.insert(newWords);
+
+    // 5. Update word count
+    await this.dictionaryService.updateWordCount(dictionaryId, newWords.length);
+
+    return {
+      success: true,
+      message: `Successfully imported ${newWords.length} words.`,
+    };
   }
 }

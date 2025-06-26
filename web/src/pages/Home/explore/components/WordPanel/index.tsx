@@ -1,5 +1,5 @@
-import { TypingContext, TypingStateActionType } from "../../../store";
-import type { TypingState } from "../../../store/type";
+import { TypingContext, TypingStateActionType } from "../../../../Typing/store";
+import type { TypingState } from "../../../../Typing/store/type";
 import PrevAndNextWord from "../../../components/PrevAndNextWord";
 import Progress from "../../../components/Progress";
 import Phonetic from "./components/Phonetic";

@@ -57,4 +57,16 @@ export const deleteWord = (id: string) =>
   });
 
 export const fetchWordsByDictionary = (dictionaryId: string, params: { page?: number; limit?: number }) =>
-  fetcher(`/api/v1/word/dictionary/${dictionaryId}?${new URLSearchParams(params as any)}`); 
+  fetcher(`/api/v1/word/dictionary/${dictionaryId}?${new URLSearchParams(params as any)}`);
+
+export const importWords = (dictionaryId: string, file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return fetcher(`/api/v1/word/import/${dictionaryId}`, {
+    method: 'POST',
+    body: formData,
+    // The browser will automatically set the Content-Type to multipart/form-data
+    // when using FormData, so we don't set it manually in the fetcher.
+  });
+}; 
