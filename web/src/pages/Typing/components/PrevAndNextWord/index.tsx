@@ -1,10 +1,9 @@
 import { TypingContext, TypingStateActionType } from '../../store'
-import Tooltip from '@/components/Tooltip'
 import { useTypingConfigStore } from '@/store/typing'
 import { CTRL } from '@/utils'
 import { useCallback, useContext, useMemo } from 'react'
 import { ArrowLeft as IconPrev, ArrowRight as IconNext } from 'lucide-react'
-import { Box, Typography } from '@mui/joy'
+import { Box, Typography, Tooltip } from '@mui/joy'
 
 export default function PrevAndNextWord({ type }: LastAndNextWordProps) {
   const { state, dispatch } = useContext(TypingContext)!
@@ -36,7 +35,7 @@ export default function PrevAndNextWord({ type }: LastAndNextWordProps) {
   return (
     <>
       {word ? (
-        <Tooltip content={`快捷键: ${shortCutKey}`}>
+        <Tooltip title={`快捷键: ${shortCutKey}`}>
           <Box
             onClick={onClickWord}
             sx={{

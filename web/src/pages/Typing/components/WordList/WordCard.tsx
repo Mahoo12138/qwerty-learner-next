@@ -1,13 +1,14 @@
-import type { WordPronunciationIconRef } from '@/components/WordPronunciationIcon'
-import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
-import { currentDictInfoAtom } from '@/store'
-import type { Word } from '@/typings'
-import { useAtomValue } from 'jotai'
 import { useCallback, useRef } from 'react'
+import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
+import { useTypingConfigStore } from '@/store/typing'
+
+import type { WordPronunciationIconRef } from '@/components/WordPronunciationIcon'
+import type { Word } from '@/typings'
 
 export default function WordCard({ word, isActive }: { word: Word; isActive: boolean }) {
   const wordPronunciationIconRef = useRef<WordPronunciationIconRef>(null)
-  const currentLanguage = useAtomValue(currentDictInfoAtom).language
+  const currentLanguage = useTypingConfigStore(s => s.currentDictInfo?.language || 'en')
+  
 
   const handlePlay = useCallback(() => {
     wordPronunciationIconRef.current?.play()

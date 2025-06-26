@@ -1,20 +1,20 @@
 import { EXPLICIT_SPACE } from '@/constants'
-import { fontSizeConfigAtom } from '@/store'
-import { useAtomValue } from 'jotai'
+import { useTypingConfigStore } from '@/store/typing'
 import React from 'react'
+import { Typography } from '@mui/joy'
 
 export type LetterState = 'normal' | 'correct' | 'wrong'
 
-const stateClassNameMap: Record<string, Record<LetterState, string>> = {
+const stateColorMap: Record<string, Record<LetterState, string>> = {
   true: {
-    normal: 'text-gray-400',
-    correct: 'text-green-400 dark:text-green-700',
-    wrong: 'text-red-400 dark:text-red-600',
+    normal: 'text.secondary',
+    correct: 'success.400',
+    wrong: 'danger.400',
   },
   false: {
-    normal: 'text-gray-600 dark:text-gray-50',
-    correct: 'text-green-600 dark:text-green-400',
-    wrong: 'text-red-600 dark:text-red-400',
+    normal: 'text.primary',
+    correct: 'success.600',
+    wrong: 'danger.600',
   },
 }
 
@@ -25,16 +25,26 @@ export type LetterProps = {
 }
 
 const Letter: React.FC<LetterProps> = ({ letter, state = 'normal', visible = true }) => {
-  const fontSizeConfig = useAtomValue(fontSizeConfigAtom)
+  const fontSizeConfig = useTypingConfigStore(s => s.fontSizeConfig)
+  const isSpace = letter === EXPLICIT_SPACE
+  const color = stateColorMap[String(isSpace)][state]
   return (
-    <span
-      className={`m-0 p-0 font-mono font-normal ${
-        stateClassNameMap[(letter === EXPLICIT_SPACE) as unknown as string][state]
-      } pr-0.8 duration-0 dark:text-opacity-80`}
-      style={{ fontSize: fontSizeConfig.foreignFont.toString() + 'px' }}
+    <Typography
+      component="span"
+      sx={{
+        m: 0,
+        p: 0,
+        fontFamily: 'monospace',
+        fontWeight: 400,
+        pr: 1,
+        fontSize: fontSizeConfig.foreignFont,
+        color,
+        transition: 'color 0.2s',
+        opacity: 0.8,
+      }}
     >
       {visible ? letter : '_'}
-    </span>
+    </Typography>
   )
 }
 

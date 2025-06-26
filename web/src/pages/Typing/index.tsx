@@ -10,9 +10,10 @@ import type { WordWithIndex } from '@/typings'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { useImmerReducer } from 'use-immer'
-import { Box, Stack, CircularProgress } from '@mui/joy'
+import { Box, Stack, CircularProgress, Container } from '@mui/joy'
 import { useQuery } from '@tanstack/react-query'
 import { isLegal } from '@/utils'
+import Speed from './components/Speed'
 
 const Typing: React.FC = () => {
   const [state, dispatch] = useImmerReducer(typingReducer, structuredClone(initialState))
@@ -88,15 +89,12 @@ const Typing: React.FC = () => {
       <Layout>
         <Header>
         </Header>
-        <Box sx={{
+        <Container sx={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          maxWidth: 1200,
-          mx: 'auto',
-          pb: 2.5
         }}>
           <Box sx={{
             position: 'relative',
@@ -110,6 +108,7 @@ const Typing: React.FC = () => {
               flex: 1,
               width: '100%',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
@@ -118,11 +117,14 @@ const Typing: React.FC = () => {
                   <CircularProgress size="md" />
                 </Stack>
               ) : (
-                !state.isFinished && <WordPanel />
+                !state.isFinished && <>
+                  <WordPanel /> 
+                  <Speed />
+                </>
               )}
             </Box>
           </Box>
-        </Box>
+        </Container>
       </Layout>
     </TypingContext.Provider>
   )

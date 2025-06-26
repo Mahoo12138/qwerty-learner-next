@@ -6,7 +6,6 @@ import { TipAlert } from './TipAlert'
 import style from './index.module.css'
 import { initialWordState } from './type'
 import type { WordState } from './type'
-import Tooltip from '@/components/Tooltip'
 import type { WordPronunciationIconRef } from '@/components/WordPronunciationIcon'
 import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
 import { EXPLICIT_SPACE } from '@/constants'
@@ -19,9 +18,17 @@ import { useSaveWordRecord } from '@/utils/db'
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useImmer } from 'use-immer'
-import { Box } from '@mui/joy'
+import { Box, Tooltip } from '@mui/joy'
+import { keyframes } from '@emotion/react'
 
 const vowelLetters = ['A', 'E', 'I', 'O', 'U']
+
+const shake = keyframes`
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+`
 
 export default function WordComponent({ word, onFinish }: { word: Word; onFinish: () => void }) {
   const { state, dispatch } = useContext(TypingContext)!
@@ -259,15 +266,23 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
       >
         {['romaji', 'hapin'].includes(currentLanguage) && word.notation && <Notation notation={word.notation} />}
         <Box
-          className={`tooltip-info relative w-fit bg-transparent p-0 leading-normal shadow-none dark:bg-transparent ${
-            wordDictationConfig.isOpen ? 'tooltip' : ''
-          }`}
+          className={`tooltip-info relative w-fit bg-transparent p-0 leading-normal shadow-none dark:bg-transparent ${wordDictationConfig.isOpen ? 'tooltip' : ''
+            }`}
+
           data-tip="按 Tab 快捷键显示完整单词"
         >
           <Box
             onMouseEnter={() => handleHoverWord(true)}
             onMouseLeave={() => handleHoverWord(false)}
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: isTextSelectable ? 'all' : 'none', ...(wordState.hasWrong ? { border: '1px solid red' } : {}) }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              userSelect: isTextSelectable ? 'all' : 'none',
+              animation: wordState.hasWrong
+                ? `${shake} 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both`
+                : undefined,
+            }}
           >
             {wordState.displayWord.split('').map((t, index) => {
               return <Letter key={`${index}-${t}`} letter={t} visible={getLetterVisible(index)} state={wordState.letterStates[index]} />
@@ -275,7 +290,7 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
           </Box>
           {pronunciationIsOpen && (
             <Box sx={{ position: 'absolute', right: -48, top: '50%', height: 36, width: 36, transform: 'translateY(-50%)' }}>
-              <Tooltip content={`快捷键${CTRL} + J`}>
+              <Tooltip title={`快捷键${CTRL} + J`}>
                 <WordPronunciationIcon word={word} lang={currentLanguage} ref={wordPronunciationIconRef} className="h-full w-full" />
               </Tooltip>
             </Box>

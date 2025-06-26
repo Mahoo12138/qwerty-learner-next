@@ -1,9 +1,8 @@
-import Tooltip from '@/components/Tooltip'
 import { SoundIcon } from '@/components/WordPronunciationIcon/SoundIcon'
 import useSpeech from '@/hooks/useSpeech'
 import { useTypingConfigStore } from '@/store/typing'
 import { useCallback, useMemo } from 'react'
-import { Box, Typography, IconButton } from '@mui/joy'
+import { Box, Typography, IconButton, Tooltip } from '@mui/joy'
 
 export type TranslationProps = {
   trans: string
@@ -52,7 +51,7 @@ export default function Translation({ trans, showTrans = true, onMouseEnter, onM
         {showTrans ? trans : '\u00A0'}
       </Typography>
       {isShowTransRead && showTrans && (
-        <Tooltip content="朗读释义">
+        <Tooltip title="朗读释义">
           <IconButton size="sm" variant="plain" onClick={handleClickSoundIcon} sx={{ ml: 1 }}>
             <SoundIcon animated={speaking} />
           </IconButton>

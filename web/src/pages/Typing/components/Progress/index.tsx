@@ -28,7 +28,7 @@ export default function Progress({ className }: { className?: string }) {
         determinate
         value={progress}
         sx={{
-          height: 8,
+          // height: 8,
           borderRadius: 8,
           backgroundColor: '#E0E7FF', // indigo-100
           '& .MuiLinearProgress-bar': {
