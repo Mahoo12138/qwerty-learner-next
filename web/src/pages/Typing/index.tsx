@@ -17,6 +17,7 @@ import Speed from './components/Speed'
 import { useConfetti } from './hooks/useConfetti'
 import ResultScreen from './components/ResultScreen'
 import { useTypingConfigStore } from '@/store/typing'
+import { useSaveChapterRecord } from './hooks/useSaveChapterRecord'
 
 const Typing: React.FC = () => {
   const [state, dispatch] = useImmerReducer(typingReducer, structuredClone(initialState))
@@ -24,6 +25,9 @@ const Typing: React.FC = () => {
     currentDictInfo,
     setCurrentDictInfo
   } = useTypingConfigStore();
+  
+  const { saveChapterRecord, isSaving } = useSaveChapterRecord()
+
   // 1. 获取所有词典
   const {
     data: dictData,
@@ -54,7 +58,6 @@ const Typing: React.FC = () => {
 
   const isLoading = isDictLoading || (currentDictInfo && isWordsLoading)
 
-
   // 4. 单词加载后初始化打字状态
   useEffect(() => {
     if (wordsData && wordsData.data && currentDictInfo) {
@@ -76,7 +79,6 @@ const Typing: React.FC = () => {
     }
   }, [wordsData, currentDictInfo, dispatch])
 
-
   useEffect(() => {
     if (!state.isTyping) {
       const onKeyDown = (e: KeyboardEvent) => {
@@ -94,10 +96,22 @@ const Typing: React.FC = () => {
 
   useEffect(() => {
     // 当用户完成章节后且完成 word Record 数据保存，记录 chapter Record 数据,
-    if (state.isFinished && !state.isSavingRecord) {
-      // saveChapterRecord(state)
+    if (state.isFinished && !state.isSavingRecord && !isSaving && wordsData?.data) {
+      const words: WordWithIndex[] = (wordsData.data as WordResDto[]).map((w, idx) => {
+        const [usphone, ukphone] = w.pronunciation.split(',') || ['', '']
+
+        return {
+          name: w.word,
+          trans: w.definition,
+          usphone,
+          ukphone,
+          index: idx,
+        }
+      })
+      
+      saveChapterRecord({ state, words })
     }
-  }, [state.isFinished, state.isSavingRecord,  /* saveChapterRecord */, state])
+  }, [state.isFinished, state.isSavingRecord, isSaving, wordsData, saveChapterRecord])
 
   useEffect(() => {
     // 启动计时器
