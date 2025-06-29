@@ -20,12 +20,8 @@ export class ChapterRecordEntity extends AbstractEntity {
   })
   id!: Uuid;
 
-  @Column({ type: 'uuid', comment: '词典标识或功能类型' })
+  @Column({ type: 'uuid', comment: '词典 Id' })
   dict: Uuid;
-
-  @Column({ type: 'int', nullable: true, comment: '章节索引，错题场景为-1' })
-  chapter: number | null;
-
 
   @Column({ type: 'int', comment: '练习时间（秒）' })
   time: number;
@@ -48,9 +44,6 @@ export class ChapterRecordEntity extends AbstractEntity {
   // 添加与单词记录的一对多关系
   @OneToMany(() => WordRecordEntity, wordRecord => wordRecord.chapterRecordId)
   words: WordRecordEntity[];
-
-  @Column({ type: 'boolean', default: false, comment: '是否已完成' })
-  isFinished: boolean;
 
   @Column({ type: 'uuid', comment: '用户ID' })
   userId: Uuid;
