@@ -194,8 +194,6 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
         })
         playKeySound()
       }
-
-      dispatch({ type: TypingStateActionType.REPORT_CORRECT_WORD })
     } else {
       playBeepSound()
       setWordState((state) => {
@@ -211,8 +209,6 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
           state.letterMistake[inputLength - 1] = [inputChar]
         }
 
-        const currentState = JSON.parse(JSON.stringify(state))
-        dispatch({ type: TypingStateActionType.REPORT_WRONG_WORD, payload: { letterMistake: currentState.letterMistake } })
       })
 
       if (currentChapter === 0 && state.chapterData.index === 0 && wordState.wrongCount >= 3) {

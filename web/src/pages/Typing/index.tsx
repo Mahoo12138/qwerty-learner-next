@@ -8,7 +8,7 @@ import type { DictionaryResDto, WordResDto } from '@/api/dictionary'
 import type { WordWithIndex } from '@/typings'
 
 import type React from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useImmerReducer } from 'use-immer'
 import { Box, Stack, CircularProgress, Container } from '@mui/joy'
 import { useQuery } from '@tanstack/react-query'
@@ -27,6 +27,7 @@ const Typing: React.FC = () => {
   } = useTypingConfigStore();
   
   const { saveChapterRecord, isSaving } = useSaveChapterRecord()
+  const hasSavedChapterRef = useRef(false); // New ref to track if save was triggered for current completion
 
   // 1. 获取所有词典
   const {
@@ -65,6 +66,7 @@ const Typing: React.FC = () => {
         const [usphone, ukphone] = w.pronunciation.split(',') || ['', '']
 
         return {
+          id: w.id,
           name: w.word,
           trans: w.definition,
           usphone,
@@ -95,12 +97,25 @@ const Typing: React.FC = () => {
   }, [state.isTyping, isLoading, dispatch])
 
   useEffect(() => {
+    console.log('useEffect triggered. State:', {
+      isFinished: state.isFinished,
+      isSavingRecord: state.isSavingRecord,
+      isSaving: isSaving,
+      wordsDataExists: !!wordsData?.data,
+      hasSavedChapterRef: hasSavedChapterRef.current,
+    });
+
     // 当用户完成章节后且完成 word Record 数据保存，记录 chapter Record 数据,
-    if (state.isFinished && !state.isSavingRecord && !isSaving && wordsData?.data) {
+    // Add hasSavedChapterRef.current to prevent infinite calls after a single chapter completion.
+    if (state.isFinished && !state.isSavingRecord && !isSaving && wordsData?.data && !hasSavedChapterRef.current) {
+      console.log('saveChapterRecord logic executing once for finished chapter.');
+      hasSavedChapterRef.current = true; // Set flag to true to prevent re-execution for this completion
+
       const words: WordWithIndex[] = (wordsData.data as WordResDto[]).map((w, idx) => {
         const [usphone, ukphone] = w.pronunciation.split(',') || ['', '']
 
         return {
+          id: w.id,
           name: w.word,
           trans: w.definition,
           usphone,
@@ -108,8 +123,12 @@ const Typing: React.FC = () => {
           index: idx,
         }
       })
-      
+
       saveChapterRecord({ state, words })
+    } else if (!state.isFinished && hasSavedChapterRef.current) {
+      // Reset the flag if a new chapter starts or user exits the finished state
+      console.log('Resetting hasSavedChapterRef as chapter is not finished.');
+      hasSavedChapterRef.current = false;
     }
   }, [state.isFinished, state.isSavingRecord, isSaving, wordsData, saveChapterRecord])
 
