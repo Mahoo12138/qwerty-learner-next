@@ -6,6 +6,7 @@ import { TipAlert } from './TipAlert'
 import style from './index.module.css'
 import { initialWordState } from './type'
 import type { WordState } from './type'
+import type { LetterMistakes } from '@/utils/db/record'
 import type { WordPronunciationIconRef } from '@/components/WordPronunciationIcon'
 import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
 import { EXPLICIT_SPACE } from '@/constants'
@@ -30,7 +31,15 @@ const shake = keyframes`
   40%, 60% { transform: translateX(4px); }
 `
 
-export default function WordComponent({ word, onFinish }: { word: Word; onFinish: () => void }) {
+export default function WordComponent({ word, onFinish }: {
+  word: Word;
+  onFinish: (data: {
+    letterMistake: LetterMistakes;
+    letterTimeArray: number[];
+    correctCount: number;
+    wrongCount: number;
+  }) => void;
+}) {
   const { state, dispatch } = useContext(TypingContext)!
   const [wordState, setWordState] = useImmer<WordState>(structuredClone(initialWordState))
 
@@ -201,7 +210,6 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
         state.hasWrong = true
         state.hasMadeInputWrong = true
         state.wrongCount += 1
-        state.letterTimeArray = []
 
         if (state.letterMistake[inputLength - 1]) {
           state.letterMistake[inputLength - 1].push(inputChar)
@@ -235,17 +243,21 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
 
   useEffect(() => {
     if (wordState.isFinished) {
-      dispatch({ type: TypingStateActionType.SET_IS_SAVING_RECORD, payload: true })
-      saveWordRecord({
-        word: word.name,
-        wrongCount: wordState.wrongCount,
-        letterTimeArray: wordState.letterTimeArray,
+      onFinish({
         letterMistake: wordState.letterMistake,
+        letterTimeArray: wordState.letterTimeArray,
+        correctCount: wordState.correctCount,
+        wrongCount: wordState.wrongCount,
       })
-
-      onFinish()
     }
-  }, [wordState.isFinished])
+  }, [
+    wordState.isFinished,
+    wordState.letterMistake,
+    wordState.letterTimeArray,
+    wordState.correctCount,
+    wordState.wrongCount,
+    onFinish,
+  ])
 
   useEffect(() => {
     if (wordState.wrongCount >= 4) {

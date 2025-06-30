@@ -135,9 +135,9 @@ export const transformTypingStateToChapterRecord = (
     .map(log => {
       const word = words[log.index]
       return {
-        wordId: '', // 暂时使用空字符串，后续可以通过wordName查找对应的wordId
+        wordId: word.id, // 从 word 对象中获取 wordId
         wordName: word.name,
-        timing: [], // 这里需要从打字状态中获取时间数据
+        timing: log.letterTimeArray, // 从 log 中获取 letterTimeArray
         wrongCount: log.wrongCount,
         mistakes: log.LetterMistakes,
       }
