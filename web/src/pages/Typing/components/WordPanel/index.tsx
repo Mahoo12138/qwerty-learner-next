@@ -52,44 +52,51 @@ export default function WordPanel() {
     [setReviewModeInfo],
   )
 
-  const onFinish = useCallback(() => {
-    if (state.chapterData.index < state.chapterData.words.length - 1 || currentWordExerciseCount < loopWordTimes - 1) {
-      // 用户完成当前单词
-      if (currentWordExerciseCount < loopWordTimes - 1) {
-        setCurrentWordExerciseCount((old: number) => old + 1)
-        dispatch({ type: TypingStateActionType.LOOP_CURRENT_WORD })
-        reloadCurrentWordComponent()
+  const onFinish = useCallback(
+    (data: { letterMistake: any; letterTimeArray: number[]; correctCount: number; wrongCount: number }) => {
+      console.log("onFinish", data)
+      if (data.wrongCount === 0) {
+        dispatch({ type: TypingStateActionType.REPORT_CORRECT_WORD, payload: { letterTimeArray: data.letterTimeArray } })
+      } else {
+        dispatch({ type: TypingStateActionType.REPORT_WRONG_WORD, payload: { letterMistake: data.letterMistake, letterTimeArray: data.letterTimeArray } })
+      }
+
+      if (state.chapterData.index < state.chapterData.words.length - 1 || currentWordExerciseCount < loopWordTimes - 1) {
+        if (currentWordExerciseCount < loopWordTimes - 1) {
+          setCurrentWordExerciseCount((old: number) => old + 1)
+          dispatch({ type: TypingStateActionType.LOOP_CURRENT_WORD })
+          reloadCurrentWordComponent()
+        } else {
+          setCurrentWordExerciseCount(0)
+          if (isReviewMode) {
+            dispatch({
+              type: TypingStateActionType.NEXT_WORD,
+              payload: {
+                updateReviewRecord,
+                letterTimeArray: data.letterTimeArray,
+              },
+            })
+          } else {
+            dispatch({ type: TypingStateActionType.NEXT_WORD, payload: { letterTimeArray: data.letterTimeArray } })
+          }
+        }
       } else {
         setCurrentWordExerciseCount(0)
-        if (isReviewMode) {
-          dispatch({
-            type: TypingStateActionType.NEXT_WORD,
-            payload: {
-              updateReviewRecord,
-            },
-          })
-        } else {
-          dispatch({ type: TypingStateActionType.NEXT_WORD })
-        }
+        dispatch({ type: TypingStateActionType.FINISH_CHAPTER, payload: { letterTimeArray: data.letterTimeArray } })
       }
-    } else {
-      // 用户完成当前章节
-      dispatch({ type: TypingStateActionType.FINISH_CHAPTER })
-      if (isReviewMode) {
-        setReviewModeInfo((old: ReviewModeInfo) => ({ ...old, reviewRecord: old.reviewRecord ? { ...old.reviewRecord, isFinished: true } : undefined }))
-      }
-    }
-  }, [
-    state.chapterData.index,
-    state.chapterData.words.length,
-    currentWordExerciseCount,
-    loopWordTimes,
-    dispatch,
-    reloadCurrentWordComponent,
-    isReviewMode,
-    updateReviewRecord,
-    setReviewModeInfo,
-  ])
+    },
+    [
+      state.chapterData.index,
+      state.chapterData.words.length,
+      currentWordExerciseCount,
+      loopWordTimes,
+      dispatch,
+      reloadCurrentWordComponent,
+      isReviewMode,
+      updateReviewRecord,
+      setReviewModeInfo,
+    ],
+  )
 
   const onSkipWord = useCallback(
     (type: 'prev' | 'next') => {
@@ -200,38 +207,37 @@ export default function WordPanel() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  zIndex: 10,
-                  backdropFilter: 'blur(4px)',
-                  opacity: !state.isTyping ? 1 : 0,
-                  pointerEvents: !state.isTyping ? 'auto' : 'none',
-                  transition: 'opacity 0.3s',
+                  zIndex: 20,
+                  bgcolor: '#fff',
+                  opacity: 0.8,
+                  borderRadius: 1,
                 }}
               >
-                <Typography
-                  level="body-lg"
-                  sx={{ width: '100%', textAlign: 'center', color: 'text.secondary', userSelect: 'none' }}
-                >
-                  按任意键{state.timerData.time ? '继续' : '开始'}
-                </Typography>
+                <Typography level="h3">按下任意键开始练习</Typography>
               </Box>
             )}
-            <Box sx={{ position: 'relative' }}>
-              <WordComponent word={currentWord} onFinish={onFinish} key={wordComponentKey} />
-              {phoneticConfig.isOpen && <Phonetic word={currentWord} />}
-              <Translation
-                trans={currentWord.trans.join('；')}
-                showTrans={shouldShowTranslation}
-                onMouseEnter={() => handleShowTranslation(true)}
-                onMouseLeave={() => handleShowTranslation(false)}
-              />
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                maxWidth: '800px',
+                gap: 1,
+              }}
+            >
+              <Phonetic word={currentWord} />
+              <WordComponent word={currentWord} onFinish={onFinish} />
+              {shouldShowTranslation && (
+                <Translation
+                  trans={currentWord.trans.join('；')}
+                  showTrans={shouldShowTranslation}
+                  onMouseEnter={() => handleShowTranslation(true)}
+                  onMouseLeave={() => handleShowTranslation(false)}
+                />
+              )}
             </Box>
           </Box>
         )}
-      </Box>
-
-      {/* 进度条 */}
-      <Box sx={{ width: '25%', mb: 5, mt: 'auto', opacity: state.isTyping ? 1 : 0, transition: 'opacity 0.3s' }}>
-        <Progress />
       </Box>
     </Stack>
   )
