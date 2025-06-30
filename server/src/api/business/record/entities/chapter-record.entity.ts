@@ -42,7 +42,7 @@ export class ChapterRecordEntity extends AbstractEntity {
   wordNumber: number;
 
   // 添加与单词记录的一对多关系
-  @OneToMany(() => WordRecordEntity, wordRecord => wordRecord.chapterRecordId)
+  @OneToMany(() => WordRecordEntity, wordRecord => wordRecord.chapterRecord)
   words: WordRecordEntity[];
 
   @Column({ type: 'uuid', comment: '用户ID' })
