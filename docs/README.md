@@ -1,9 +1,73 @@
-# NestJS Boilerplate Documentation
+# Qwerty Learner Project Documentation
 
-This is a boilerplate for NestJS projects. It is a starting point for building a RESTful API with NestJS.
+[中文](zh/README.md)
 
-## Detail Documentation
+Welcome to the documentation for the Qwerty Learner project! This monorepo contains both the frontend (web) and backend (server) applications, designed for efficient vocabulary learning and management.
 
+## Project Structure
+
+```
+qwerty-learner-next/
+├── web/      # Frontend (React, Vite, TypeScript)
+├── server/   # Backend (NestJS, TypeORM, PostgreSQL)
+└── docs/     # Documentation
+```
+
+## Features
+- Modern web frontend with React, Vite, Zustand, Jotai, MUI Joy, and more
+- RESTful backend API with NestJS, TypeORM, PostgreSQL
+- User authentication, vocabulary management, error book, statistics, and more
+- Internationalization (i18n)
+- E2E and unit tests
+- Dockerized deployment
+- CI/CD ready
+
+## Quick Start
+
+See [Setup & Development](development.md) for detailed instructions.
+
+### Prerequisites
+- Node.js >= 20.10.0
+- pnpm >= 9.5.0
+
+### Install dependencies
+```bash
+pnpm install
+```
+
+### Run frontend (web)
+```bash
+cd web
+pnpm dev
+```
+
+### Run backend (server)
+```bash
+cd server
+cp .env.example .env
+pnpm start:dev
+```
+
+## Deployment
+See [Deployment Guide](deployment.md).
+
+## Contribution
+See [Development Guide](development.md) and [Conventions](conventions/styleguide.md).
+
+## Technology Stack
+### Frontend (web)
+- React 19, Vite, TypeScript
+- Zustand, Jotai, TanStack Query/Router/Table
+- MUI Joy, @tabler/icons-react, Radix UI
+- ECharts, Dexie, SWR, i18next, Playwright
+
+### Backend (server)
+- NestJS 10, TypeScript
+- TypeORM, PostgreSQL
+- @nestjs-modules/mailer, BullMQ, Swagger
+- Jest, ESLint, Prettier, Docker
+
+## Documentation
 - [Setup & Development](development.md)
 - [Architecture](architecture.md)
 - [Database](database.md)
@@ -12,49 +76,6 @@ This is a boilerplate for NestJS projects. It is a starting point for building a
 - [Deployment](deployment.md)
 - [Technologies](technologies.md)
 - [Troubleshooting](troubleshooting.md)
-- Convention
-  - [Naming cheatsheet](conventions/naming-cheatsheet.md)
-  - [TypeScript Style Guide and Coding Conventions](conventions/styleguide.md)
-  - [Clean code Typescript](conventions/clean-code-typescript.md)
-  - [Branch conventions](conventions/branch-conventions.md)
-  - [Commit conventions](conventions/commit-conventions.md)
-  - [Linting & formatting](conventions/linting.md)
 
-## Features
-
-- [x] Fastify support. (Checkout the [`feature.fastify`](https://github.com/vndevteam/nestjs-boilerplate/tree/feature.fastify) branch)
-- [x] Database. Support [TypeORM](https://www.npmjs.com/package/typeorm)
-- [x] Seeding ([Typeorm Extension](https://www.npmjs.com/package/typeorm-extension)).
-- [x] Config Service ([@nestjs/config](https://www.npmjs.com/package/@nestjs/config)).
-- [x] Mailing ([@nestjs-modules/mailer](https://www.npmjs.com/package/@nestjs-modules/mailer) & [nodemailer](https://www.npmjs.com/package/nodemailer)).
-- [x] Sign in and sign up via email.
-- [ ] Social sign in (Apple, Facebook, Google, Twitter).
-- [ ] Admin and User roles.
-- [x] Pagination: Offset and Cursor (Clone from [typeorm-cursor-pagination](https://github.com/benjamin658/typeorm-cursor-pagination) and add more features).
-- [x] Internationalization/Translations (I18N) ([nestjs-i18n](https://www.npmjs.com/package/nestjs-i18n)).
-- [ ] File uploads. Support local and Amazon S3 drivers.
-- [x] Swagger.
-- [x] E2E and units tests.
-- [x] Docker.
-- [x] CI (Github Actions).
-
-## References
-
-- [TypeScript](https://www.typescriptlang.org/)
-- [NestJS](https://docs.nestjs.com/)
-- [NestJS I18n](https://nestjs-i18n.com/)
-- [TypeORM](https://typeorm.io/)
-- [TypeORM Extension](https://typeorm-extension.tada5hi.net/)
-- [Nodemailer](https://nodemailer.com/)
-- [NestJS Mailer](https://nest-modules.github.io/mailer/)
-- [Jest](https://jestjs.io/)
-- [PNPM](https://pnpm.io/)
-- [ESLint](https://eslint.org/)
-- [TypeScript ESLint](https://typescript-eslint.io/)
-- [Prettier](https://prettier.io/)
-- [Husky](https://typicode.github.io/husky/)
-- [Lint Staged](https://github.com/lint-staged/lint-staged)
-- [Commitlint](https://commitlint.js.org/)
-- [Conventional Commits](https://www.conventionalcommits.org/)
-- [Commitizen](https://commitizen-tools.github.io/commitizen/)
-- [Renovate](https://docs.renovatebot.com/)
+## License
+MIT
