@@ -21,7 +21,10 @@
     "start": "turbo start",
     "test": "turbo test",
     "test:server": "pnpm test --filter=server",
-    "test:web": "pnpm test --filter=web"
+    "test:web": "pnpm test --filter=web",
+    "docs:dev": "pnpm --filter=./docs docs:dev",
+    "docs:build": "pnpm --filter=./docs docs:build",
+    "docs:serve": "pnpm --filter=./docs docs:serve"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
