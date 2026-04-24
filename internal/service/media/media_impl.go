@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -58,6 +59,11 @@ func (s *serviceImpl) Upload(ctx context.Context, req UploadReq) (*UploadResult,
 	}
 
 	contentType := normalizeContentType(http.DetectContentType(req.Data))
+	if contentType == "application/octet-stream" {
+		if fallback := inferContentTypeFromFilename(filename); fallback != "" {
+			contentType = fallback
+		}
+	}
 	allowed, err := parseAllowedMimeTypes(def.AllowedMimeTypes)
 	if err != nil {
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
@@ -544,6 +550,22 @@ func normalizeContentType(contentType string) string {
 		return "image/jpeg"
 	default:
 		return contentType
+	}
+}
+
+func inferContentTypeFromFilename(filename string) string {
+	ext := strings.ToLower(filepath.Ext(strings.TrimSpace(filename)))
+	switch ext {
+	case ".mp3":
+		return "audio/mpeg"
+	case ".wav":
+		return "audio/wav"
+	case ".ogg":
+		return "audio/ogg"
+	case ".webm":
+		return "audio/webm"
+	default:
+		return ""
 	}
 }
 
