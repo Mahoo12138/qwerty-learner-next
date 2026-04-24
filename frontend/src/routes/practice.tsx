@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import {
   CheckCircle2,
   ChevronLeft,
@@ -8,10 +8,12 @@ import {
   Clock3,
   Eye,
   Flag,
+  Settings2,
   Play,
   RotateCcw,
   SkipForward,
   Trash2,
+  Volume2,
   Wifi,
   WifiOff,
   Zap,
@@ -19,8 +21,13 @@ import {
 import { useWordBanks } from '@/api/wordBanks'
 import { useSentenceBanks } from '@/api/sentenceBanks'
 import { useCompletePractice, useCreateSession, useDiscardSession, useSession, useSessions } from '@/api/practice'
+import { useSystemSoundCatalog, useUserKeySounds } from '@/api/media'
+import { useSaveSetting, useUserSettings } from '@/api/settings'
 import { useWebSocket } from '@/hooks/useWebSocket'
+import { useTypingSound } from '@/hooks/useTypingSound'
 import { useWordTyping } from '@/hooks/useWordTyping'
+import { useAuthStore } from '@/stores/authStore'
+import { useSettingsStore } from '@/stores/settingsStore'
 import { AchievementToast } from '@/components/AchievementToast'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -51,6 +58,9 @@ export const Route = createFileRoute('/practice')({
 function Practice() {
   const navigate = useNavigate()
   const { sessionId: resumeSessionId } = Route.useSearch()
+  const user = useAuthStore((s) => s.user)
+  const userSettings = useSettingsStore((s) => s.userSettings)
+  useUserSettings()
 
   const [mode, setMode] = useState('normal')
   const [sourceType, setSourceType] = useState<'word_bank' | 'sentence_bank'>('word_bank')
@@ -77,6 +87,9 @@ function Practice() {
   const createSession = useCreateSession()
   const completePractice = useCompletePractice()
   const discardSession = useDiscardSession()
+  const { data: soundCatalog } = useSystemSoundCatalog()
+  const { data: userKeySounds = [] } = useUserKeySounds(user?.id)
+  const saveSetting = useSaveSetting()
 
   const textItems = useMemo(() => {
     if (!activeSession) return []
@@ -110,6 +123,65 @@ function Practice() {
   const { stats: wsStats, connected, error: wsError, send, close } = useWebSocket(
     activeSession?.session.id ?? null,
   )
+
+  const soundEnabled = userSettings['user.practice.enable_sound'] === 'true'
+  const configuredSoundId = (userSettings['user.practice.key_sound_id'] ?? '').trim()
+  const showTimer = (userSettings['user.practice.show_timer'] ?? 'true') === 'true'
+  const showWpm = (userSettings['user.practice.show_wpm'] ?? 'true') === 'true'
+  const showAccuracy = (userSettings['user.practice.show_accuracy'] ?? 'true') === 'true'
+
+  const selectedSoundFileId = useMemo(() => {
+    const defaultSound = soundCatalog?.effects?.key
+
+    if (!configuredSoundId) {
+      return defaultSound?.file_id ?? ''
+    }
+
+    if (defaultSound && (defaultSound.file_id === configuredSoundId || defaultSound.identifier === configuredSoundId)) {
+      return defaultSound.file_id
+    }
+
+    const systemSound = soundCatalog?.keyboards.find(
+      (item) => item.file_id === configuredSoundId || item.identifier === configuredSoundId,
+    )
+    if (systemSound) {
+      return systemSound.file_id
+    }
+
+    const userSound = userKeySounds.find((item) => item.id === configuredSoundId)
+    return userSound?.id ?? ''
+  }, [configuredSoundId, soundCatalog?.effects?.key, soundCatalog?.keyboards, userKeySounds])
+
+  const { play: playTypingSound } = useTypingSound({
+    enabled: soundEnabled && Boolean(activeSession) && !submitted,
+    mediaId: selectedSoundFileId || null,
+  })
+
+  const { play: playCorrectSound } = useTypingSound({
+    enabled: soundEnabled && Boolean(activeSession) && !submitted,
+    mediaId: soundCatalog?.effects?.['success']?.file_id ?? null,
+  })
+
+  const { play: playErrorSound } = useTypingSound({
+    enabled: soundEnabled && Boolean(activeSession) && !submitted,
+    mediaId: soundCatalog?.effects?.['error']?.file_id ?? null,
+  })
+
+  const prevIsFinished = useRef(false)
+  useEffect(() => {
+    if (wordState.isFinished && !prevIsFinished.current) {
+      playCorrectSound()
+    }
+    prevIsFinished.current = wordState.isFinished
+  }, [wordState.isFinished, playCorrectSound])
+
+  const prevHasWrong = useRef(false)
+  useEffect(() => {
+    if (wordState.hasWrong && !prevHasWrong.current) {
+      playErrorSound()
+    }
+    prevHasWrong.current = wordState.hasWrong
+  }, [wordState.hasWrong, playErrorSound])
 
   const clearResumeSearch = useCallback(() => {
     void navigate({ to: '/practice', search: { sessionId: undefined }, replace: true })
@@ -163,6 +235,10 @@ function Practice() {
 
       const didType = handleKeyDown(event)
 
+      if (event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        playTypingSound()
+      }
+
       if (didType && event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey) {
         send({
           type: 'keystroke',
@@ -175,7 +251,7 @@ function Practice() {
 
     window.addEventListener('keydown', listener)
     return () => window.removeEventListener('keydown', listener)
-  }, [activeSession, handleKeyDown, send, submitted, wordState.displayWord, wordState.inputWord.length])
+  }, [activeSession, handleKeyDown, playTypingSound, send, submitted, wordState.displayWord, wordState.inputWord.length])
 
   useEffect(() => {
     if (!activeSession || submitted) return
@@ -325,6 +401,14 @@ function Practice() {
   const currentWordInfo = sourceType === 'word_bank' && activeSession?.words
     ? (activeSession.words[wordIndex] ?? null)
     : null
+
+  const updateBoolSetting = useCallback((key: string, next: boolean) => {
+    saveSetting.mutate({ key, value: String(next) })
+  }, [saveSetting])
+
+  const updateEnumSetting = useCallback((key: string, value: string) => {
+    saveSetting.mutate({ key, value })
+  }, [saveSetting])
 
   return (
     <div className="mx-auto max-w-7xl p-4 md:p-8">
@@ -500,7 +584,73 @@ function Practice() {
             finishedWords={localStats.wordCount}
             errorCount={localStats.totalWrong}
             wsError={wsError}
+            showTimer={showTimer}
+            showWpm={showWpm}
+            showAccuracy={showAccuracy}
           />
+
+          <Card className="border-border/70 bg-card/70">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Settings2 className="h-4 w-4" />
+                练习快捷设置
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
+                <QuickSettingToggle
+                  label="显示计时"
+                  enabled={showTimer}
+                  onToggle={(next) => updateBoolSetting('user.practice.show_timer', next)}
+                />
+                <QuickSettingToggle
+                  label="显示 WPM"
+                  enabled={showWpm}
+                  onToggle={(next) => updateBoolSetting('user.practice.show_wpm', next)}
+                />
+                <QuickSettingToggle
+                  label="显示准确率"
+                  enabled={showAccuracy}
+                  onToggle={(next) => updateBoolSetting('user.practice.show_accuracy', next)}
+                />
+                <QuickSettingToggle
+                  label="按键音效"
+                  enabled={soundEnabled}
+                  onToggle={(next) => updateBoolSetting('user.practice.enable_sound', next)}
+                />
+              </div>
+
+              {soundEnabled && (
+                <label className="space-y-1 text-sm">
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <Volume2 className="h-3.5 w-3.5" />
+                    当前按键音色
+                  </span>
+                  <Select
+                    value={configuredSoundId || '__default'}
+                    onValueChange={(value) => updateEnumSetting('user.practice.key_sound_id', value === '__default' ? '' : value)}
+                  >
+                    <SelectTrigger className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__default">系统默认按键音</SelectItem>
+                      {(soundCatalog?.keyboards ?? []).map((item) => (
+                        <SelectItem key={item.file_id} value={item.file_id}>
+                          系统: {item.display_name || item.identifier}
+                        </SelectItem>
+                      ))}
+                      {userKeySounds.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          我的: {item.display_name || item.filename}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </label>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="flex flex-wrap gap-2">
             {!submitted ? (
@@ -667,6 +817,9 @@ function StatsDock({
   finishedWords,
   errorCount,
   wsError,
+  showTimer,
+  showWpm,
+  showAccuracy,
 }: {
   wpm: number
   accuracy: number
@@ -675,17 +828,42 @@ function StatsDock({
   finishedWords: number
   errorCount: number
   wsError: string | null
+  showTimer: boolean
+  showWpm: boolean
+  showAccuracy: boolean
 }) {
   return (
     <div className="grid grid-cols-2 gap-3 rounded-xl border border-border/70 bg-card/70 p-4 md:grid-cols-6">
-      <StatTile icon={Clock3} label="时间" value={formatDuration(elapsed)} />
-      <StatTile icon={Zap} label="WPM" value={String(wpm)} />
-      <StatTile icon={Flag} label="正确率" value={`${accuracy}%`} />
+      {showTimer && <StatTile icon={Clock3} label="时间" value={formatDuration(elapsed)} />}
+      {showWpm && <StatTile icon={Zap} label="WPM" value={String(wpm)} />}
+      {showAccuracy && <StatTile icon={Flag} label="正确率" value={`${accuracy}%`} />}
       <StatTile icon={CheckCircle2} label="完成词数" value={String(finishedWords)} />
       <StatTile icon={CheckCircle2} label="输入数" value={String(typed)} />
       <StatTile icon={Wifi} label="错误数" value={String(errorCount)} />
       {wsError && <p className="col-span-2 text-xs text-destructive md:col-span-6">{wsError}</p>}
     </div>
+  )
+}
+
+function QuickSettingToggle({
+  label,
+  enabled,
+  onToggle,
+}: {
+  label: string
+  enabled: boolean
+  onToggle: (next: boolean) => void
+}) {
+  return (
+    <Button
+      type="button"
+      variant={enabled ? 'secondary' : 'outline'}
+      className="justify-between"
+      onClick={() => onToggle(!enabled)}
+    >
+      <span>{label}</span>
+      <Badge variant={enabled ? 'success' : 'outline'}>{enabled ? '开' : '关'}</Badge>
+    </Button>
   )
 }
 

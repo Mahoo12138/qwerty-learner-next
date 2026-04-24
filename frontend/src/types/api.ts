@@ -298,6 +298,37 @@ export interface UserControlItem {
   is_editable: boolean
 }
 
+// --- Media types ---
+
+export interface MediaFileMeta {
+  id: string
+  type_key: string
+  owner_type: string
+  owner_id: string
+  slot: string
+  display_name: string
+  remark: string
+  filename: string
+  content_type: string
+  size_bytes: number
+  hash: string
+  created_at: string
+  updated_at: string
+}
+
+export interface MediaLink {
+  identifier: string
+  file_id: string
+  url: string
+  display_name: string
+  remark: string
+}
+
+export interface SystemSoundCatalog {
+  effects: Record<string, MediaLink | null>
+  keyboards: MediaLink[]
+}
+
 // --- Article Library types ---
 
 export interface ArticleBank {

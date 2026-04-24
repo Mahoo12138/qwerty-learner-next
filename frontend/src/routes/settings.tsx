@@ -1,11 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
+import { useSettingsStore } from '@/stores/settingsStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { request } from '@/api/client'
 import { useUpdateProfile } from '@/api/auth'
 import {
   useBatchSaveSettings,
+  useSaveSetting,
   useSaveSystemSetting,
   useSaveUserControl,
   useSettingDefinitions,
@@ -14,6 +16,7 @@ import {
   useUserControls,
   useUserSettings,
 } from '@/api/settings'
+import { useSystemSoundCatalog, useUploadUserKeySound, useUserKeySounds } from '@/api/media'
 import {
   useApiTokens,
   useCreateApiToken,
@@ -47,6 +50,8 @@ import {
   RefreshCw,
   Clock,
   MoreVertical,
+  Music2,
+  Upload,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -319,6 +324,9 @@ function PreferenceSection() {
               onChange={(key, value) => setDraft((prev) => ({ ...prev, [key]: value }))}
             />
           ))}
+
+          <TypingSoundSection />
+
           <div className="flex justify-end">
             <Button
               onClick={handleSave}
@@ -330,6 +338,137 @@ function PreferenceSection() {
         </div>
       )}
     </section>
+  )
+}
+
+function TypingSoundSection() {
+  const user = useAuthStore((s) => s.user)
+  const userSettings = useSettingsStore((s) => s.userSettings)
+  const saveSetting = useSaveSetting()
+  const uploadUserKeySound = useUploadUserKeySound()
+  const { data: soundCatalog } = useSystemSoundCatalog()
+  const { data: userKeySounds = [] } = useUserKeySounds(user?.id)
+  const uploadInputRef = useRef<HTMLInputElement | null>(null)
+
+  const selectedSoundId = (userSettings['user.practice.key_sound_id'] ?? '').trim()
+  const systemDefaultKey = soundCatalog?.effects?.key
+
+  const saveSoundSelection = (value: string) => {
+    saveSetting.mutate({ key: 'user.practice.key_sound_id', value })
+  }
+
+  const handleUploadSound = (file: File) => {
+    if (!user?.id) {
+      return
+    }
+    if (!file.type.startsWith('audio/')) {
+      return
+    }
+
+    uploadUserKeySound.mutate(
+      {
+        userId: user.id,
+        file,
+        displayName: file.name,
+      },
+      {
+        onSuccess: (data) => {
+          saveSoundSelection(data.file_id)
+        },
+      },
+    )
+  }
+
+  const selectedDisplayName = (() => {
+    if (!selectedSoundId) {
+      return systemDefaultKey?.display_name || '系统默认按键音'
+    }
+
+    if (systemDefaultKey?.identifier === selectedSoundId || systemDefaultKey?.file_id === selectedSoundId) {
+      return systemDefaultKey.display_name || '系统默认按键音'
+    }
+
+    const keyboardItem = soundCatalog?.keyboards.find(
+      (item) => item.identifier === selectedSoundId || item.file_id === selectedSoundId,
+    )
+    if (keyboardItem) {
+      return keyboardItem.display_name || '系统键盘音效'
+    }
+
+    const userItem = userKeySounds.find((item) => item.id === selectedSoundId)
+    if (userItem) {
+      return userItem.display_name || userItem.filename || '我的音效'
+    }
+
+    return '未找到对应音效'
+  })()
+
+  return (
+    <div className="rounded-lg border border-slate-200/70 p-4 dark:border-slate-800/70">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium text-slate-900 dark:text-slate-100">键盘音效</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">选择按键时播放的声音，可上传个人音效并立即生效。</p>
+        </div>
+        <Music2 className="h-4 w-4 text-slate-500" />
+      </div>
+
+      <div className="space-y-3">
+        <label className="space-y-1 text-sm">
+          <span className="text-slate-500 dark:text-slate-400">当前音效：{selectedDisplayName}</span>
+          <Select
+            value={selectedSoundId || '__default'}
+            onValueChange={(value) => saveSoundSelection(value === '__default' ? '' : value)}
+            disabled={saveSetting.isPending}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="选择按键音效" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__default">系统默认按键音</SelectItem>
+              {(soundCatalog?.keyboards ?? []).map((item) => (
+                <SelectItem key={item.file_id} value={item.file_id}>
+                  系统: {item.display_name || item.identifier}
+                </SelectItem>
+              ))}
+              {userKeySounds.map((item) => (
+                <SelectItem key={item.id} value={item.id}>
+                  我的: {item.display_name || item.filename}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </label>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={uploadInputRef}
+            type="file"
+            accept="audio/*,.wav,.mp3,.ogg,.webm"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (!file) {
+                return
+              }
+              event.target.value = ''
+              handleUploadSound(file)
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!user?.id || uploadUserKeySound.isPending || saveSetting.isPending}
+            onClick={() => uploadInputRef.current?.click()}
+          >
+            {uploadUserKeySound.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            上传我的音效
+          </Button>
+          <p className="text-xs text-slate-500 dark:text-slate-400">支持 mp3 / ogg / wav / webm，上传后将自动切换为该音效。</p>
+        </div>
+      </div>
+    </div>
   )
 }
 
