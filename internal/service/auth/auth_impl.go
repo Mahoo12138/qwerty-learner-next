@@ -57,6 +57,7 @@ func (s *serviceImpl) RegisterInitialAdmin(ctx context.Context, username, email,
 		u := &entity.User{
 			ID:           uuid.New().String(),
 			Username:     username,
+			Nickname:     "用户" + username,
 			Email:        email,
 			PasswordHash: hash,
 			Role:         "admin",
@@ -145,6 +146,7 @@ func (s *serviceImpl) registerWithRole(ctx context.Context, username, email, pas
 	user := &entity.User{
 		ID:           uuid.New().String(),
 		Username:     username,
+		Nickname:     "用户" + username,
 		Email:        email,
 		PasswordHash: hash,
 		Role:         role,
@@ -217,7 +219,7 @@ func (s *serviceImpl) GetCurrentUser(ctx context.Context, userID string) (*entit
 	return &user, nil
 }
 
-func (s *serviceImpl) UpdateCurrentUser(ctx context.Context, userID, username, email string) (*entity.User, error) {
+func (s *serviceImpl) UpdateCurrentUser(ctx context.Context, userID, username, nickname, email string) (*entity.User, error) {
 	var user entity.User
 	if err := s.db.WithContext(ctx).Where("id = ?", userID).First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -257,6 +259,7 @@ func (s *serviceImpl) UpdateCurrentUser(ctx context.Context, userID, username, e
 
 	if err := s.db.WithContext(ctx).Model(&user).Updates(map[string]interface{}{
 		"username": username,
+		"nickname": nickname,
 		"email":    email,
 	}).Error; err != nil {
 		return nil, gerror.NewCode(code.CodeInternalError)

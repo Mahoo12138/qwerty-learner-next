@@ -67,6 +67,7 @@ func (c *ControllerV1Public) Login(ctx context.Context, req *v1.LoginReq) (res *
 		User: map[string]interface{}{
 			"id":              user.ID,
 			"username":        user.Username,
+			"nickname":        user.Nickname,
 			"email":           user.Email,
 			"avatar_media_id": user.AvatarMediaID,
 			"role":            user.Role,
@@ -107,6 +108,7 @@ func (c *ControllerV1) Me(ctx context.Context, req *v1.MeReq) (res *v1.MeRes, er
 	return &v1.MeRes{
 		ID:            user.ID,
 		Username:      user.Username,
+		Nickname:      user.Nickname,
 		Email:         user.Email,
 		AvatarMediaID: user.AvatarMediaID,
 		Role:          user.Role,
@@ -122,7 +124,7 @@ func (c *ControllerV1) UpdateProfile(ctx context.Context, req *v1.UpdateProfileR
 		return nil, gerror.NewCode(code.CodeUnauthorized, "unauthorized")
 	}
 
-	user, err := c.authSvc.UpdateCurrentUser(ctx, userID, req.Username, req.Email)
+	user, err := c.authSvc.UpdateCurrentUser(ctx, userID, req.Username, req.Nickname, req.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -130,6 +132,7 @@ func (c *ControllerV1) UpdateProfile(ctx context.Context, req *v1.UpdateProfileR
 	return &v1.UpdateProfileRes{
 		ID:            user.ID,
 		Username:      user.Username,
+		Nickname:      user.Nickname,
 		Email:         user.Email,
 		AvatarMediaID: user.AvatarMediaID,
 		Role:          user.Role,

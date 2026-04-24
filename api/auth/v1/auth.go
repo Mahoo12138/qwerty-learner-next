@@ -59,6 +59,7 @@ type MeReq struct {
 type MeRes struct {
 	ID            string      `json:"id"`
 	Username      string      `json:"username"`
+	Nickname      string      `json:"nickname"`
 	Email         string      `json:"email"`
 	AvatarMediaID *string     `json:"avatar_media_id,omitempty"`
 	Role          string      `json:"role"`
@@ -69,12 +70,14 @@ type MeRes struct {
 type UpdateProfileReq struct {
 	g.Meta   `path:"/auth/profile" method:"put" tags:"Auth" summary:"Update current user profile"`
 	Username string `json:"username" v:"required|length:3,20|regex:^[a-zA-Z0-9_]+$#用户名必填|用户名长度3-20位|只允许字母数字下划线"`
+	Nickname string `json:"nickname" v:"max-length:30#昵称最长30位"`
 	Email    string `json:"email" v:"required|email#邮箱必填|邮箱格式不正确"`
 }
 
 type UpdateProfileRes struct {
 	ID            string      `json:"id"`
 	Username      string      `json:"username"`
+	Nickname      string      `json:"nickname"`
 	Email         string      `json:"email"`
 	AvatarMediaID *string     `json:"avatar_media_id,omitempty"`
 	Role          string      `json:"role"`

@@ -9,6 +9,7 @@ import (
 type User struct {
 	ID            string         `gorm:"primaryKey;type:text" json:"id"`
 	Username      string         `gorm:"uniqueIndex;type:text;not null" json:"username"`
+	Nickname      string         `gorm:"type:text;not null;default:''" json:"nickname"`
 	Email         string         `gorm:"uniqueIndex;type:text;not null" json:"email"`
 	PasswordHash  string         `gorm:"type:text;not null" json:"-"`
 	AvatarMediaID *string        `gorm:"type:text" json:"avatar_media_id,omitempty"`
