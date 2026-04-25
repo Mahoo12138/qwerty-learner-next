@@ -32,9 +32,14 @@ function LoginPage() {
     return null
   }
 
+  if (publicSettings.isError) {
+    navigate({ to: '/system-error', replace: true })
+    return null
+  }
+
   const ownerUserID = publicSettings.data?.['system.owner_user_id'] ?? ''
   if (!ownerUserID.trim()) {
-    navigate({ to: '/register-admin' })
+    navigate({ to: '/register-admin', replace: true })
     return null
   }
 

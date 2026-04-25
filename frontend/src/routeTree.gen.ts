@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SystemErrorRouteImport } from './routes/system-error'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterAdminRouteImport } from './routes/register-admin'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -24,6 +25,11 @@ import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HistorySessionIdRouteImport } from './routes/history.$sessionId'
 
+const SystemErrorRoute = SystemErrorRouteImport.update({
+  id: '/system-error',
+  path: '/system-error',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/register-admin': typeof RegisterAdminRoute
   '/settings': typeof SettingsRoute
+  '/system-error': typeof SystemErrorRoute
   '/history/$sessionId': typeof HistorySessionIdRoute
 }
 export interface FileRoutesByTo {
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/register-admin': typeof RegisterAdminRoute
   '/settings': typeof SettingsRoute
+  '/system-error': typeof SystemErrorRoute
   '/history/$sessionId': typeof HistorySessionIdRoute
 }
 export interface FileRoutesById {
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/register-admin': typeof RegisterAdminRoute
   '/settings': typeof SettingsRoute
+  '/system-error': typeof SystemErrorRoute
   '/history/$sessionId': typeof HistorySessionIdRoute
 }
 export interface FileRouteTypes {
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/register-admin'
     | '/settings'
+    | '/system-error'
     | '/history/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/register-admin'
     | '/settings'
+    | '/system-error'
     | '/history/$sessionId'
   id:
     | '__root__'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/register-admin'
     | '/settings'
+    | '/system-error'
     | '/history/$sessionId'
   fileRoutesById: FileRoutesById
 }
@@ -209,10 +221,18 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   RegisterAdminRoute: typeof RegisterAdminRoute
   SettingsRoute: typeof SettingsRoute
+  SystemErrorRoute: typeof SystemErrorRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/system-error': {
+      id: '/system-error'
+      path: '/system-error'
+      fullPath: '/system-error'
+      preLoaderRoute: typeof SystemErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -339,6 +359,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   RegisterAdminRoute: RegisterAdminRoute,
   SettingsRoute: SettingsRoute,
+  SystemErrorRoute: SystemErrorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -23,9 +23,18 @@ function RegisterAdminPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
 
+  if (publicSettings.isLoading) {
+    return null
+  }
+
+  if (publicSettings.isError) {
+    navigate({ to: '/system-error', replace: true })
+    return null
+  }
+
   const ownerUserID = publicSettings.data?.['system.owner_user_id'] ?? ''
   if (publicSettings.isSuccess && ownerUserID.trim()) {
-    navigate({ to: '/login' })
+    navigate({ to: '/login', replace: true })
     return null
   }
 
