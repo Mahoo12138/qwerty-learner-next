@@ -9,6 +9,7 @@ export interface ApiResponse<T> {
 export interface User {
   id: string
   username: string
+  nickname: string
   email: string
   avatar_media_id?: string | null
   role: 'user' | 'admin'

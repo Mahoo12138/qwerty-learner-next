@@ -1030,6 +1030,7 @@ function ProfileSection({ user }: { user: CurrentUser | null }) {
   const { data: publicSystem = {} } = usePublicSystemSettings(['system.allow_username_change'])
   const [open, setOpen] = useState(false)
   const [username, setUsername] = useState(user?.username ?? '')
+  const [nickname, setNickname] = useState(user?.nickname ?? '')
   const [email, setEmail] = useState(user?.email ?? '')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -1079,7 +1080,7 @@ function ProfileSection({ user }: { user: CurrentUser | null }) {
     user?.role === 'admin' ||
     (publicSystem['system.allow_username_change'] ?? 'true').trim().toLowerCase() !== 'false'
 
-  const dirty = username !== (user?.username ?? '') || email !== (user?.email ?? '')
+  const dirty = username !== (user?.username ?? '') || nickname !== (user?.nickname ?? '') || email !== (user?.email ?? '')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1088,7 +1089,7 @@ function ProfileSection({ user }: { user: CurrentUser | null }) {
     setError('')
 
     updateProfile.mutate(
-      { username, email },
+      { username, nickname, email },
       {
         onSuccess: () => {
           setMessage('账户资料已更新')
@@ -1149,6 +1150,7 @@ function ProfileSection({ user }: { user: CurrentUser | null }) {
 
   const reset = () => {
     setUsername(user?.username ?? '')
+    setNickname(user?.nickname ?? '')
     setEmail(user?.email ?? '')
     setMessage('')
     setError('')
@@ -1187,10 +1189,14 @@ function ProfileSection({ user }: { user: CurrentUser | null }) {
       <div className="grid grid-cols-1 gap-4 sm:flex sm:items-center sm:justify-between sm:gap-6">
         <div className="flex items-center gap-6">
           <Avatar className="h-14 w-14">
-            <AvatarImage src={avatarUrl} alt={`${user.username} avatar`} />
-            <AvatarFallback className="text-base">{user.username.slice(0, 1).toUpperCase()}</AvatarFallback>
+            <AvatarImage src={avatarUrl} alt={`${user.nickname || user.username} avatar`} />
+            <AvatarFallback className="text-base">{(user.nickname || user.username).slice(0, 1).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex items-center gap-6">
+            <div className="min-w-[160px]">
+              <p className="text-xs text-slate-500 dark:text-slate-400">昵称</p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user.nickname || <span className="text-slate-400 dark:text-slate-600">未设置</span>}</p>
+            </div>
             <div className="min-w-[160px]">
               <p className="text-xs text-slate-500 dark:text-slate-400">用户名</p>
               <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user.username}</p>
@@ -1230,8 +1236,8 @@ function ProfileSection({ user }: { user: CurrentUser | null }) {
                   <p className="mb-2 text-sm font-medium text-slate-900 dark:text-slate-100">头像</p>
                   <div className="flex flex-wrap items-center gap-3">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src={avatarUrl} alt={`${user.username} avatar`} />
-                      <AvatarFallback className="text-lg">{user.username.slice(0, 1).toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={avatarUrl} alt={`${user.nickname || user.username} avatar`} />
+                      <AvatarFallback className="text-lg">{(user.nickname || user.username).slice(0, 1).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-wrap items-center gap-2">
                       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
@@ -1250,6 +1256,11 @@ function ProfileSection({ user }: { user: CurrentUser | null }) {
                   </div>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">建议使用方形头像，系统会在超过 256KB 时自动压缩。</p>
                 </div>
+
+                <label className="block space-y-1 text-sm">
+                  <span className="text-slate-500 dark:text-slate-400">昵称</span>
+                  <Input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="请输入昵称" maxLength={30} />
+                </label>
 
                 <label className="block space-y-1 text-sm">
                   <span className="text-slate-500 dark:text-slate-400">用户名</span>

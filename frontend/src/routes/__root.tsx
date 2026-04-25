@@ -194,7 +194,7 @@ function DesktopSidebar({
   onToggleTheme,
   onToggleCollapse,
 }: {
-  user: { username: string; email: string }
+  user: { username: string; nickname: string; email: string }
   dark: boolean
   collapsed: boolean
   onNav: (to: string) => void
@@ -219,11 +219,11 @@ function DesktopSidebar({
       <div className="space-y-3 p-3">
         <div className={cn('rounded-lg bg-secondary/50 p-2.5', collapsed ? 'flex justify-center' : 'flex items-center gap-2.5')}>
           <Avatar>
-            <AvatarFallback>{user.username?.slice(0, 1).toUpperCase()}</AvatarFallback>
+            <AvatarFallback>{(user.nickname || user.username)?.slice(0, 1).toUpperCase()}</AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{user.username}</p>
+              <p className="truncate text-sm font-medium text-foreground">{user.nickname || user.username}</p>
               <p className="truncate text-xs text-muted-foreground">{user.email}</p>
             </div>
           )}
@@ -256,7 +256,7 @@ function MobileSidebar({
   onLogout,
   onToggleTheme,
 }: {
-  user: { username: string; email: string }
+  user: { username: string; nickname: string; email: string }
   dark: boolean
   onNav: (to: string) => void
   onLogout: () => void
@@ -279,10 +279,10 @@ function MobileSidebar({
       <div className="space-y-2 p-3">
         <div className="flex items-center gap-2.5 rounded-lg bg-secondary/50 p-2.5">
           <Avatar>
-            <AvatarFallback>{user.username?.slice(0, 1).toUpperCase()}</AvatarFallback>
+            <AvatarFallback>{(user.nickname || user.username)?.slice(0, 1).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-foreground">{user.username}</p>
+            <p className="truncate text-sm font-medium text-foreground">{user.nickname || user.username}</p>
             <p className="truncate text-xs text-muted-foreground">{user.email}</p>
           </div>
         </div>

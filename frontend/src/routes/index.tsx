@@ -48,7 +48,7 @@ function Dashboard() {
   return (
     <div className="mx-auto max-w-6xl p-6 md:p-8">
       <h1 className="mb-1 text-2xl font-semibold tracking-tight text-foreground">
-        欢迎回来，{user.username}
+        欢迎回来，{user.nickname || user.username}
       </h1>
       <p className="mb-8 text-sm text-muted-foreground">
         继续今天的练习，保持进步

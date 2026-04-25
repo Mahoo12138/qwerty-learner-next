@@ -59,7 +59,7 @@ export function useUpdateProfile() {
   const setUser = useAuthStore((s) => s.setUser)
 
   return useMutation({
-    mutationFn: (params: { username: string; email: string }) =>
+    mutationFn: (params: { username: string; nickname: string; email: string }) =>
       request<User>('/auth/profile', {
         method: 'PUT',
         body: JSON.stringify(params),
