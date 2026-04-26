@@ -59,3 +59,17 @@ export {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from './DropdownMenu'
+
+export { Progress } from './Progress'
+export type { ProgressProps } from './Progress'
+
+export {
+  Select,
+  SelectValue,
+  SelectGroup,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+} from './Select'
