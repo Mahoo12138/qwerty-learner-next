@@ -1,0 +1,968 @@
+import { useNavigate } from '@tanstack/react-router'
+import { clsx } from 'clsx'
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Eye,
+  Flag,
+  Play,
+  RotateCcw,
+  Settings2,
+  SkipForward,
+  Trash2,
+  Volume2,
+  Wifi,
+  WifiOff,
+  Zap,
+} from 'lucide-react'
+import { useSentenceBanks } from '@/api/sentenceBanks'
+import { useSystemSoundCatalog, useUserKeySounds } from '@/api/media'
+import { useCompletePractice, useCreateSession, useDiscardSession, useSession, useSessions } from '@/api/practice'
+import { useSaveSetting, useUserSettings } from '@/api/settings'
+import { useWordBanks } from '@/api/wordBanks'
+import { AchievementToast } from '@/components/AchievementToast'
+import { Badge } from '@/components/core/Badge'
+import { Button } from '@/components/core/Button'
+import { Input } from '@/components/core/Input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/core/Select'
+import { useTypingSound } from '@/hooks/useTypingSound'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import { useWordTyping } from '@/hooks/useWordTyping'
+import {
+  clearPracticeSessionProgress,
+  loadPracticeSessionProgress,
+  savePracticeSessionProgress,
+} from '@/lib/practiceSessionProgress'
+import { useAuthStore } from '@/stores/authStore'
+import { useSettingsStore } from '@/stores/settingsStore'
+import * as css from '@/styles/pages/practice.css'
+import type { Achievement, SessionWithContent } from '@/types/api'
+
+interface PracticePageProps {
+  resumeSessionId?: string
+}
+
+export function PracticePage({ resumeSessionId }: PracticePageProps) {
+  const navigate = useNavigate()
+  const user = useAuthStore((state) => state.user)
+  const userSettings = useSettingsStore((state) => state.userSettings)
+  useUserSettings()
+
+  const [mode, setMode] = useState('normal')
+  const [sourceType, setSourceType] = useState<'word_bank' | 'sentence_bank'>('word_bank')
+  const [sourceId, setSourceId] = useState('')
+  const [itemCount, setItemCount] = useState(20)
+
+  const [activeSession, setActiveSession] = useState<SessionWithContent | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [submitError, setSubmitError] = useState('')
+  const [discardingSessionId, setDiscardingSessionId] = useState<string | null>(null)
+  const [newAchievements, setNewAchievements] = useState<Achievement[]>([])
+
+  const dismissAchievements = useCallback(() => setNewAchievements([]), [])
+
+  const { data: wordBanks = [] } = useWordBanks()
+  const { data: sentenceBanks = [] } = useSentenceBanks()
+  const { data: recentSessions } = useSessions(1, 6)
+  const {
+    data: resumeSession,
+    error: resumeError,
+    isLoading: isResumeLoading,
+  } = useSession(resumeSessionId ?? '')
+
+  const createSession = useCreateSession()
+  const completePractice = useCompletePractice()
+  const discardSession = useDiscardSession()
+  const { data: soundCatalog } = useSystemSoundCatalog()
+  const { data: userKeySounds = [] } = useUserKeySounds(user?.id)
+  const saveSetting = useSaveSetting()
+
+  const textItems = useMemo(() => {
+    if (!activeSession) return []
+    if (activeSession.words) return activeSession.words.map((word) => ({ id: word.id, content: word.content }))
+    if (activeSession.sentences) {
+      return activeSession.sentences.map((sentence) => ({ id: sentence.id, content: sentence.content }))
+    }
+    return []
+  }, [activeSession])
+
+  const words = useMemo(() => textItems.map((item) => item.content), [textItems])
+  const initialSnapshot = useMemo(
+    () => loadPracticeSessionProgress(activeSession?.session.id),
+    [activeSession?.session.id],
+  )
+
+  const {
+    wordIndex,
+    wordState,
+    isTyping,
+    isFinished,
+    timerTime,
+    handleKeyDown,
+    pause,
+    getStats,
+    getKeystrokeStats,
+    getResumeSnapshot,
+    getErrorItems,
+    skipWord,
+    reset,
+  } = useWordTyping({ words, initialSnapshot })
+
+  const { stats: wsStats, connected, error: wsError, send, close } = useWebSocket(activeSession?.session.id ?? null)
+
+  const soundEnabled = userSettings['user.practice.enable_sound'] === 'true'
+  const configuredSoundId = (userSettings['user.practice.key_sound_id'] ?? '').trim()
+  const showTimer = (userSettings['user.practice.show_timer'] ?? 'true') === 'true'
+  const showWpm = (userSettings['user.practice.show_wpm'] ?? 'true') === 'true'
+  const showAccuracy = (userSettings['user.practice.show_accuracy'] ?? 'true') === 'true'
+
+  const selectedSoundFileId = useMemo(() => {
+    const defaultSound = soundCatalog?.effects?.key
+
+    if (!configuredSoundId) {
+      return defaultSound?.file_id ?? ''
+    }
+
+    if (defaultSound && (defaultSound.file_id === configuredSoundId || defaultSound.identifier === configuredSoundId)) {
+      return defaultSound.file_id
+    }
+
+    const systemSound = soundCatalog?.keyboards.find(
+      (item) => item.file_id === configuredSoundId || item.identifier === configuredSoundId,
+    )
+    if (systemSound) {
+      return systemSound.file_id
+    }
+
+    const userSound = userKeySounds.find((item) => item.id === configuredSoundId)
+    return userSound?.id ?? ''
+  }, [configuredSoundId, soundCatalog?.effects?.key, soundCatalog?.keyboards, userKeySounds])
+
+  const { play: playTypingSound } = useTypingSound({
+    enabled: soundEnabled && Boolean(activeSession) && !submitted,
+    mediaId: selectedSoundFileId || null,
+  })
+
+  const { play: playCorrectSound } = useTypingSound({
+    enabled: soundEnabled && Boolean(activeSession) && !submitted,
+    mediaId: soundCatalog?.effects?.success?.file_id ?? null,
+  })
+
+  const { play: playErrorSound } = useTypingSound({
+    enabled: soundEnabled && Boolean(activeSession) && !submitted,
+    mediaId: soundCatalog?.effects?.error?.file_id ?? null,
+  })
+
+  const prevIsFinished = useRef(false)
+  useEffect(() => {
+    if (wordState.isFinished && !prevIsFinished.current) {
+      playCorrectSound()
+    }
+    prevIsFinished.current = wordState.isFinished
+  }, [playCorrectSound, wordState.isFinished])
+
+  const prevHasWrong = useRef(false)
+  useEffect(() => {
+    if (wordState.hasWrong && !prevHasWrong.current) {
+      playErrorSound()
+    }
+    prevHasWrong.current = wordState.hasWrong
+  }, [playErrorSound, wordState.hasWrong])
+
+  const clearResumeSearch = useCallback(() => {
+    void navigate({ to: '/practice', search: { sessionId: undefined }, replace: true })
+  }, [navigate])
+
+  useEffect(() => {
+    if (!resumeSessionId || !resumeError) return
+    setCreateError(resumeError instanceof Error ? resumeError.message : '恢复练习失败，请重试')
+    clearResumeSearch()
+  }, [clearResumeSearch, resumeError, resumeSessionId])
+
+  useEffect(() => {
+    if (!resumeSessionId || !resumeSession) return
+
+    if (resumeSession.result || resumeSession.session.ended_at) {
+      clearPracticeSessionProgress(resumeSessionId)
+      void navigate({ to: '/history/$sessionId', params: { sessionId: resumeSessionId }, replace: true })
+      return
+    }
+
+    const hasContent = (resumeSession.words?.length ?? 0) > 0 || (resumeSession.sentences?.length ?? 0) > 0
+    if (!hasContent) {
+      setCreateError('该练习记录缺少可恢复内容，暂时无法继续。')
+      clearResumeSearch()
+      return
+    }
+
+    close()
+    setMode(resumeSession.session.mode)
+    setSourceType(resumeSession.session.source_type as 'word_bank' | 'sentence_bank')
+    setSourceId(resumeSession.session.source_id ?? '')
+    setItemCount(resumeSession.session.item_count || 20)
+    setSubmitted(false)
+    setCreateError('')
+    setSubmitError('')
+    setNewAchievements([])
+    setActiveSession({
+      session: resumeSession.session,
+      words: resumeSession.words,
+      sentences: resumeSession.sentences,
+    })
+    clearResumeSearch()
+  }, [clearResumeSearch, close, navigate, resumeSession, resumeSessionId])
+
+  useEffect(() => {
+    if (!activeSession || submitted) return
+
+    const listener = (event: KeyboardEvent) => {
+      const beforeLength = wordState.inputWord.length
+      const expected = wordState.displayWord[beforeLength] || ''
+      const isCharacterKey = event.key.length === 1 && !event.ctrlKey && !event.altKey && !event.metaKey
+
+      const didType = handleKeyDown(event)
+
+      if (isCharacterKey) {
+        playTypingSound()
+      }
+
+      if (didType && isCharacterKey) {
+        send({
+          type: 'keystroke',
+          char: event.key,
+          timestamp: Date.now(),
+          is_correct: event.key === expected,
+        })
+      }
+    }
+
+    window.addEventListener('keydown', listener)
+    return () => window.removeEventListener('keydown', listener)
+  }, [activeSession, handleKeyDown, playTypingSound, send, submitted, wordState.displayWord, wordState.inputWord.length])
+
+  useEffect(() => {
+    if (!activeSession || submitted) return
+
+    const pausePractice = () => pause()
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        pausePractice()
+      }
+    }
+
+    window.addEventListener('blur', pausePractice)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('blur', pausePractice)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [activeSession, pause, submitted])
+
+  useEffect(() => {
+    if (!activeSession || submitted || words.length === 0) return
+    savePracticeSessionProgress(activeSession.session.id, getResumeSnapshot())
+  }, [
+    activeSession,
+    getResumeSnapshot,
+    submitted,
+    timerTime,
+    wordIndex,
+    wordState.hasWrong,
+    wordState.inputWord,
+    words.length,
+  ])
+
+  const localStats = getStats()
+  const displayStats = {
+    wpm: localStats.wpm,
+    rawWpm: wsStats?.raw_wpm ?? localStats.wpm,
+    accuracy: localStats.accuracy,
+    elapsedMs: timerTime * 1000,
+  }
+
+  const progress = words.length > 0 ? ((wordIndex + (isFinished ? 1 : 0)) / words.length) * 100 : 0
+  const prevWord = words[wordIndex - 1] ?? ''
+  const nextWord = words[wordIndex + 1] ?? ''
+  const selectedWordBank = sourceType === 'word_bank'
+    ? (wordBanks.find((bank) => bank.id === sourceId) ?? null)
+    : null
+  const currentWordInfo = sourceType === 'word_bank' && activeSession?.words
+    ? (activeSession.words[wordIndex] ?? null)
+    : null
+  const availableSourceCount = sourceType === 'word_bank' ? wordBanks.length : sentenceBanks.length
+
+  const startPractice = () => {
+    if (!sourceId) return
+    setSubmitted(false)
+    setCreateError('')
+    setSubmitError('')
+
+    createSession.mutate(
+      {
+        mode,
+        source_type: sourceType,
+        source_id: sourceId,
+        item_count: Math.min(200, Math.max(1, itemCount)),
+      },
+      {
+        onSuccess: (session) => setActiveSession(session),
+        onError: (error) => {
+          setCreateError(error instanceof Error ? error.message : '创建练习失败，请重试')
+        },
+      },
+    )
+  }
+
+  const submitPractice = () => {
+    if (!activeSession) return
+    const stats = getStats()
+
+    completePractice.mutate(
+      {
+        sessionId: activeSession.session.id,
+        wpm: stats.wpm,
+        raw_wpm: stats.wpm,
+        accuracy: stats.accuracy / 100,
+        error_count: stats.totalWrong,
+        char_count: textItems.reduce((sum, item) => sum + item.content.length, 0),
+        consistency: 0.9,
+        duration_ms: Math.max(1, stats.time * 1000),
+        keystroke_stats: getKeystrokeStats(),
+        error_items: getErrorItems(sourceType, textItems),
+      },
+      {
+        onSuccess: (data) => {
+          clearPracticeSessionProgress(activeSession.session.id)
+          setSubmitted(true)
+          close()
+          if (data.new_achievements?.length) {
+            setNewAchievements(data.new_achievements)
+          }
+        },
+        onError: (error) => {
+          setSubmitError(error instanceof Error ? error.message : '提交失败，请重试')
+        },
+      },
+    )
+  }
+
+  const resetPractice = useCallback(() => {
+    clearPracticeSessionProgress(activeSession?.session.id)
+    close()
+    setActiveSession(null)
+    setSubmitted(false)
+    setCreateError('')
+    setSubmitError('')
+    setNewAchievements([])
+    reset()
+    clearResumeSearch()
+  }, [activeSession?.session.id, clearResumeSearch, close, reset])
+
+  const openSessionDetail = useCallback((sessionId: string) => {
+    void navigate({ to: '/history/$sessionId', params: { sessionId } })
+  }, [navigate])
+
+  const continueSession = useCallback((sessionId: string) => {
+    void navigate({ to: '/practice', search: { sessionId } })
+  }, [navigate])
+
+  const discardPendingSession = useCallback((sessionId: string) => {
+    if (!window.confirm('确定要舍弃这条未完成练习吗？舍弃后无法继续恢复。')) {
+      return
+    }
+
+    setCreateError('')
+    setDiscardingSessionId(sessionId)
+    discardSession.mutate(sessionId, {
+      onSuccess: () => {
+        clearPracticeSessionProgress(sessionId)
+        setDiscardingSessionId(null)
+        if (activeSession?.session.id === sessionId) {
+          resetPractice()
+        }
+      },
+      onError: (error) => {
+        setDiscardingSessionId(null)
+        setCreateError(error instanceof Error ? error.message : '舍弃练习失败，请重试')
+      },
+    })
+  }, [activeSession?.session.id, discardSession, resetPractice])
+
+  const updateBoolSetting = useCallback((key: string, next: boolean) => {
+    saveSetting.mutate({ key, value: String(next) })
+  }, [saveSetting])
+
+  const updateEnumSetting = useCallback((key: string, value: string) => {
+    saveSetting.mutate({ key, value })
+  }, [saveSetting])
+
+  return (
+    <div className={css.pageRoot}>
+      <AchievementToast achievements={newAchievements} onDismiss={dismissAchievements} />
+
+      <header className={css.pageHeader}>
+        <h1 className={css.pageTitle}>打字练习</h1>
+        <p className={css.pageSubtitle}>
+          用更像训练课的布局，把每一轮击键拆成节奏、准确率和可恢复进度，减少分心，稳定提速。
+        </p>
+        <div className={css.actionBar}>
+          <Badge variant="secondary">{wordBanks.length} 个词库</Badge>
+          <Badge variant="secondary">{sentenceBanks.length} 个句库</Badge>
+          <Badge variant="outline">支持断点恢复</Badge>
+        </div>
+      </header>
+
+      {isResumeLoading && !activeSession && (
+        <p className={css.resumingNotice}>正在恢复未完成练习...</p>
+      )}
+
+      {!activeSession ? (
+        <div className={css.lobbyGrid}>
+          <section className={css.configCard}>
+            <div className={css.sectionHeaderRow}>
+              <h2 className={css.configTitle}>训练准备</h2>
+              <Badge variant="secondary">{availableSourceCount} 个可用内容库</Badge>
+            </div>
+
+            <div className={css.configGrid}>
+              <label className={css.configLabel}>
+                <span className={css.configLabelText}>模式</span>
+                <Select value={mode} onValueChange={setMode}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">普通打字</SelectItem>
+                    <SelectItem value="dictation">默写模式</SelectItem>
+                    <SelectItem value="recitation">背词模式</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+
+              <label className={css.configLabel}>
+                <span className={css.configLabelText}>内容类型</span>
+                <Select
+                  value={sourceType}
+                  onValueChange={(value) => {
+                    const nextSourceType = value as 'word_bank' | 'sentence_bank'
+                    setSourceType(nextSourceType)
+                    setSourceId('')
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="word_bank">词库</SelectItem>
+                    <SelectItem value="sentence_bank">句库</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+
+              <label className={css.configLabel}>
+                <span className={css.configLabelText}>内容库</span>
+                <Select
+                  value={sourceId || '__none'}
+                  onValueChange={(value) => setSourceId(value === '__none' ? '' : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none">请选择</SelectItem>
+                    {sourceType === 'word_bank'
+                      ? wordBanks.map((bank) => (
+                          <SelectItem key={bank.id} value={bank.id}>
+                            {bank.name} ({bank.word_count})
+                          </SelectItem>
+                        ))
+                      : sentenceBanks.map((bank) => (
+                          <SelectItem key={bank.id} value={bank.id}>
+                            {bank.name} ({bank.sentence_count})
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
+              </label>
+
+              <label className={css.configLabel}>
+                <span className={css.configLabelText}>条目数量</span>
+                <Input
+                  type="number"
+                  min={1}
+                  max={200}
+                  value={itemCount}
+                  onChange={(event) => {
+                    const nextValue = Number(event.target.value)
+                    if (!Number.isFinite(nextValue)) {
+                      setItemCount(1)
+                      return
+                    }
+                    setItemCount(Math.min(200, Math.max(1, nextValue)))
+                  }}
+                />
+              </label>
+            </div>
+
+            <div className={css.startRow}>
+              <Button onClick={startPractice} disabled={!sourceId || createSession.isPending || isResumeLoading}>
+                <Play />
+                {createSession.isPending ? '创建中...' : '开始练习'}
+              </Button>
+              <Badge variant="outline">{formatModeLabel(mode)}</Badge>
+              <Badge variant="outline">{formatSourceLabel(sourceType)}</Badge>
+            </div>
+
+            {createError && <p className={css.errorCallout}>{createError}</p>}
+          </section>
+
+          <aside className={css.recentCard}>
+            <div className={css.sectionHeaderRow}>
+              <h2 className={css.recentTitle}>最近练习</h2>
+              <Badge variant="outline">{recentSessions?.total ?? 0} 条</Badge>
+            </div>
+
+            <div className={css.sessionList}>
+              {recentSessions?.list.map((session) => (
+                <div key={session.id} className={css.sessionItem}>
+                  <div className={css.sessionMeta}>
+                    <div className={css.actionBar}>
+                      <span className={css.sessionName}>
+                        {formatSessionName(session.mode, session.source_type, session.item_count)}
+                      </span>
+                      <Badge variant={session.result || session.ended_at ? 'success' : 'warning'}>
+                        {session.result || session.ended_at ? '已完成' : '未完成'}
+                      </Badge>
+                    </div>
+                    <span className={css.sessionDate}>{new Date(session.created_at).toLocaleString('zh-CN')}</span>
+                    <span className={css.sessionWpm}>
+                      {session.result ? `${session.result.wpm.toFixed(1)} WPM` : '等待继续或舍弃'}
+                    </span>
+                  </div>
+
+                  <div className={css.sessionActions}>
+                    <Button variant="outline" size="sm" onClick={() => openSessionDetail(session.id)}>
+                      <Eye />
+                      查看
+                    </Button>
+                    {!session.result && !session.ended_at && (
+                      <>
+                        <Button size="sm" onClick={() => continueSession(session.id)}>
+                          <Play />
+                          继续
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => discardPendingSession(session.id)}
+                          disabled={discardingSessionId === session.id}
+                        >
+                          <Trash2 />
+                          {discardingSessionId === session.id ? '舍弃中...' : '舍弃'}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {(recentSessions?.list.length ?? 0) === 0 && (
+                <p className={css.emptyText}>第一次训练会在这里留下成绩、继续入口和待处理的练习记录。</p>
+              )}
+            </div>
+          </aside>
+        </div>
+      ) : (
+        <section className={css.arenaRoot}>
+          <div className={css.progressStrip}>
+            <div className={css.progressMeta}>
+              <span className={css.progressLabel}>
+                进度 {Math.min(wordIndex + 1, words.length)} / {words.length}
+              </span>
+              <span className={css.connectionBadge[connected ? 'online' : 'offline']}>
+                {connected ? <Wifi className={css.iconXs} /> : <WifiOff className={css.iconXs} />}
+                {connected ? '实时连接' : '已离线'}
+              </span>
+            </div>
+            <div className={css.progressTrack}>
+              <div className={css.progressFill} style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+
+          <div className={css.arenaLayout}>
+            <div className={css.mainColumn}>
+              {!isFinished && (
+                <section className={css.typingStage}>
+                  {!isTyping && (
+                    <div className={css.pauseOverlay}>
+                      <p className={css.pauseHint}>按任意键 {timerTime > 0 ? '继续' : '开始'}</p>
+                    </div>
+                  )}
+
+                  <div className={css.contextRow}>
+                    <div className={css.contextWord}>
+                      <ChevronLeft className={css.iconXs} />
+                      <span className={css.contextWordText}>{prevWord || '...'}</span>
+                    </div>
+                    <div className={css.contextWord}>
+                      <span className={css.contextWordText}>{nextWord || '...'}</span>
+                      <ChevronRight className={css.iconXs} />
+                    </div>
+                  </div>
+
+                  <WordPanel
+                    word={wordState.displayWord}
+                    letterStates={wordState.letterStates}
+                    hasWrong={wordState.hasWrong}
+                    dictationMode={mode === 'dictation'}
+                  />
+
+                  {currentWordInfo && (
+                    <div className={css.wordInfoGrid}>
+                      <InfoBlock label="音标" value={currentWordInfo.pronunciation || '暂无'} />
+                      <InfoBlock label="释义" value={currentWordInfo.definition || '暂无'} />
+                    </div>
+                  )}
+                </section>
+              )}
+
+              <StatsDock
+                wpm={displayStats.wpm}
+                accuracy={displayStats.accuracy}
+                elapsed={displayStats.elapsedMs}
+                typed={localStats.totalCorrect + localStats.totalWrong}
+                finishedWords={localStats.wordCount}
+                errorCount={localStats.totalWrong}
+                wsError={wsError}
+                showTimer={showTimer}
+                showWpm={showWpm}
+                showAccuracy={showAccuracy}
+              />
+
+              {submitError && <p className={css.errorCallout}>{submitError}</p>}
+
+              {isFinished && (
+                <ResultCard
+                  title={selectedWordBank?.name ?? '本轮练习'}
+                  wpm={displayStats.wpm}
+                  accuracy={displayStats.accuracy}
+                  duration={displayStats.elapsedMs}
+                  errors={localStats.totalWrong}
+                  onSubmit={submitPractice}
+                  submitting={completePractice.isPending}
+                  submitted={submitted}
+                />
+              )}
+            </div>
+
+            <aside className={css.sideColumn}>
+              <section className={css.quickSettingsCard}>
+                <h2 className={css.quickSettingsTitle}>
+                  <Settings2 className={css.iconSm} />
+                  练习快捷设置
+                </h2>
+
+                <div className={css.toggleGrid}>
+                  <QuickSettingToggle
+                    label="显示计时"
+                    enabled={showTimer}
+                    onToggle={(next) => updateBoolSetting('user.practice.show_timer', next)}
+                  />
+                  <QuickSettingToggle
+                    label="显示 WPM"
+                    enabled={showWpm}
+                    onToggle={(next) => updateBoolSetting('user.practice.show_wpm', next)}
+                  />
+                  <QuickSettingToggle
+                    label="显示准确率"
+                    enabled={showAccuracy}
+                    onToggle={(next) => updateBoolSetting('user.practice.show_accuracy', next)}
+                  />
+                  <QuickSettingToggle
+                    label="按键音效"
+                    enabled={soundEnabled}
+                    onToggle={(next) => updateBoolSetting('user.practice.enable_sound', next)}
+                  />
+                </div>
+
+                {soundEnabled && (
+                  <label className={css.soundSelectRow}>
+                    <span className={css.soundSelectLabel}>
+                      <Volume2 className={css.iconXs} />
+                      当前按键音色
+                    </span>
+                    <Select
+                      value={configuredSoundId || '__default'}
+                      onValueChange={(value) => updateEnumSetting('user.practice.key_sound_id', value === '__default' ? '' : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__default">系统默认按键音</SelectItem>
+                        {(soundCatalog?.keyboards ?? []).map((item) => (
+                          <SelectItem key={item.file_id} value={item.file_id}>
+                            系统: {item.display_name || item.identifier}
+                          </SelectItem>
+                        ))}
+                        {userKeySounds.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            我的: {item.display_name || item.filename}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </label>
+                )}
+              </section>
+
+              <section className={css.quickSettingsCard}>
+                <h2 className={css.quickSettingsTitle}>
+                  <Play className={css.iconSm} />
+                  赛道操作
+                </h2>
+
+                <div className={css.actionButtons}>
+                  {!submitted && !isFinished && (
+                    <Button
+                      onClick={skipWord}
+                      variant="outline"
+                      disabled={isFinished || words.length <= 1}
+                      className={css.panelButton}
+                    >
+                      <SkipForward />
+                      跳过当前词
+                    </Button>
+                  )}
+
+                  {submitted ? (
+                    <Button onClick={resetPractice} className={css.panelButton}>
+                      <RotateCcw />
+                      再来一轮
+                    </Button>
+                  ) : (
+                    <Button onClick={resetPractice} variant="ghost" className={css.panelButton}>
+                      <RotateCcw />
+                      退出练习
+                    </Button>
+                  )}
+                </div>
+              </section>
+            </aside>
+          </div>
+        </section>
+      )}
+    </div>
+  )
+}
+
+function WordPanel({
+  word,
+  letterStates,
+  hasWrong,
+  dictationMode,
+}: {
+  word: string
+  letterStates: Array<'normal' | 'correct' | 'wrong'>
+  hasWrong: boolean
+  dictationMode: boolean
+}) {
+  const revealByState = (index: number) => letterStates[index] === 'correct' || letterStates[index] === 'wrong'
+
+  return (
+    <div className={css.wordDisplay}>
+      <div className={clsx(css.letterRow, hasWrong && css.letterRowWrong)}>
+        {word.split('').map((character, index) => {
+          const state = letterStates[index]
+          const visible = !dictationMode || revealByState(index)
+          const tone = visible ? state : 'hidden'
+
+          return (
+            <span
+              key={`${character}-${index}`}
+              className={clsx(css.letterBase, css.letterVariants[tone])}
+            >
+              {visible ? character : '_'}
+            </span>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function StatsDock({
+  wpm,
+  accuracy,
+  elapsed,
+  typed,
+  finishedWords,
+  errorCount,
+  wsError,
+  showTimer,
+  showWpm,
+  showAccuracy,
+}: {
+  wpm: number
+  accuracy: number
+  elapsed: number
+  typed: number
+  finishedWords: number
+  errorCount: number
+  wsError: string | null
+  showTimer: boolean
+  showWpm: boolean
+  showAccuracy: boolean
+}) {
+  return (
+    <div className={css.statsDock}>
+      {showTimer && <StatTile icon={Clock3} label="时间" value={formatDuration(elapsed)} />}
+      {showWpm && <StatTile icon={Zap} label="WPM" value={String(wpm)} />}
+      {showAccuracy && <StatTile icon={Flag} label="正确率" value={`${accuracy}%`} />}
+      <StatTile icon={CheckCircle2} label="完成词数" value={String(finishedWords)} />
+      <StatTile icon={Zap} label="输入数" value={String(typed)} />
+      <StatTile icon={Wifi} label="错误数" value={String(errorCount)} />
+      {wsError && <p className={css.wsError}>{wsError}</p>}
+    </div>
+  )
+}
+
+function QuickSettingToggle({
+  label,
+  enabled,
+  onToggle,
+}: {
+  label: string
+  enabled: boolean
+  onToggle: (next: boolean) => void
+}) {
+  return (
+    <Button
+      type="button"
+      variant={enabled ? 'secondary' : 'outline'}
+      className={css.quickSettingButton}
+      onClick={() => onToggle(!enabled)}
+    >
+      <span>{label}</span>
+      <Badge variant={enabled ? 'success' : 'outline'}>{enabled ? '开' : '关'}</Badge>
+    </Button>
+  )
+}
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<{ className?: string }>
+  label: string
+  value: string
+}) {
+  return (
+    <div className={css.statTile}>
+      <div className={css.statTileLabel}>
+        <Icon className={css.iconXs} />
+        <span>{label}</span>
+      </div>
+      <p className={css.statTileValue}>{value}</p>
+    </div>
+  )
+}
+
+function ResultCard({
+  title,
+  wpm,
+  accuracy,
+  duration,
+  errors,
+  onSubmit,
+  submitting,
+  submitted,
+}: {
+  title: string
+  wpm: number
+  accuracy: number
+  duration: number
+  errors: number
+  onSubmit: () => void
+  submitting: boolean
+  submitted: boolean
+}) {
+  return (
+    <section className={css.resultCard}>
+      <h2 className={css.resultHeading}>本轮完成</h2>
+      <p className={css.resultSub}>{submitted ? '成绩已同步到历史记录。' : title}</p>
+
+      <div className={css.resultGrid}>
+        <SummaryItem label="WPM" value={String(wpm)} />
+        <SummaryItem label="准确率" value={`${accuracy}%`} />
+        <SummaryItem label="用时" value={formatDuration(duration)} />
+        <SummaryItem label="错误数" value={String(errors)} />
+      </div>
+
+      {!submitted && (
+        <Button onClick={onSubmit} disabled={submitting}>
+          <CheckCircle2 />
+          {submitting ? '提交中...' : '提交成绩'}
+        </Button>
+      )}
+    </section>
+  )
+}
+
+function SummaryItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={css.resultStat}>
+      <p className={css.resultStatLabel}>{label}</p>
+      <p className={css.resultStatValue}>{value}</p>
+    </div>
+  )
+}
+
+function InfoBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className={css.infoBlock}>
+      <p className={css.infoBlockLabel}>{label}</p>
+      <p className={css.infoBlockValue}>{value}</p>
+    </div>
+  )
+}
+
+function formatDuration(ms: number): string {
+  const seconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  const mm = String(minutes).padStart(2, '0')
+  const ss = String(remainingSeconds).padStart(2, '0')
+  return `${mm}:${ss}`
+}
+
+function formatSessionName(mode: string, sourceType: string, itemCount: number) {
+  return `【${formatModeLabel(mode)}】【${formatSourceLabel(sourceType)}】【${itemCount}项】`
+}
+
+function formatModeLabel(mode: string) {
+  switch (mode) {
+    case 'dictation':
+      return '默写模式'
+    case 'recitation':
+      return '背词模式'
+    default:
+      return '普通打字'
+  }
+}
+
+function formatSourceLabel(sourceType: string) {
+  return sourceType === 'sentence_bank' ? '句库练习' : '词库练习'
+}
