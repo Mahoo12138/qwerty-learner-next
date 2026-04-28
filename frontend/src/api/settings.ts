@@ -43,9 +43,18 @@ export function useSaveSetting() {
         body: JSON.stringify({ value }),
       }),
     onMutate: ({ key, value }) => {
-      useSettingsStore.getState().updateSetting(key, value)
+      const store = useSettingsStore.getState()
+      const previousSettings = { ...store.userSettings }
+      store.updateSetting(key, value)
+      return { previousSettings }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings'] }),
+    onError: (_error, _variables, context) => {
+      if (!context) {
+        return
+      }
+      useSettingsStore.getState().setUserSettings(context.previousSettings)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['settings'] }),
   })
 }
 
@@ -59,9 +68,17 @@ export function useBatchSaveSettings() {
       }),
     onMutate: (kvs) => {
       const store = useSettingsStore.getState()
+      const previousSettings = { ...store.userSettings }
       Object.entries(kvs).forEach(([k, v]) => store.updateSetting(k, v))
+      return { previousSettings }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings'] }),
+    onError: (_error, _variables, context) => {
+      if (!context) {
+        return
+      }
+      useSettingsStore.getState().setUserSettings(context.previousSettings)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['settings'] }),
   })
 }
 
