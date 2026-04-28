@@ -236,11 +236,19 @@ func (s *serviceImpl) SetSettingControl(ctx context.Context, key string, isVisib
 		UpdatedAt:     now,
 	}
 	return s.db.WithContext(ctx).
+		Model(&entity.SettingControl{}).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "definition_key"}},
 			DoUpdates: clause.AssignmentColumns([]string{"is_visible", "is_editable", "updated_by", "updated_at"}),
 		}).
-		Create(&ctrl).Error
+		Create(map[string]interface{}{
+			"id":             ctrl.ID,
+			"definition_key": ctrl.DefinitionKey,
+			"is_visible":     ctrl.IsVisible,
+			"is_editable":    ctrl.IsEditable,
+			"updated_by":     ctrl.UpdatedBy,
+			"updated_at":     ctrl.UpdatedAt,
+		}).Error
 }
 
 func (s *serviceImpl) GetSettingControls(ctx context.Context) (map[string]*entity.SettingControl, error) {
