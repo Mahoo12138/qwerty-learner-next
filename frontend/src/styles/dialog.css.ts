@@ -1,4 +1,4 @@
-import { keyframes, style } from '@vanilla-extract/css'
+import { globalStyle, keyframes, style } from '@vanilla-extract/css'
 import { vars } from './theme.css'
 
 /* ── Keyframes ──────────────────────────────────────────────── */
@@ -116,11 +116,6 @@ export const dialogCloseButton = style({
   background: 'transparent',
   transition: `color ${vars.motion.fast} ${vars.motion.easing}, background-color ${vars.motion.fast} ${vars.motion.easing}`,
   selectors: {
-    '& svg': {
-      width: '14px',
-      height: '14px',
-      pointerEvents: 'none',
-    },
     '&:hover': {
       color: vars.color.text.primary,
       backgroundColor: `color-mix(in oklab, ${vars.color.brand.primary} 10%, ${vars.color.bg.app})`,
@@ -130,4 +125,10 @@ export const dialogCloseButton = style({
       boxShadow: vars.shadow.focusRing,
     },
   },
+})
+
+globalStyle(`${dialogCloseButton} svg`, {
+  width: '14px',
+  height: '14px',
+  pointerEvents: 'none',
 })

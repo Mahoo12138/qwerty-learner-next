@@ -1,5 +1,5 @@
 import { recipe } from '@vanilla-extract/recipes'
-import { style } from '@vanilla-extract/css'
+import { globalStyle, style } from '@vanilla-extract/css'
 
 import { vars } from './theme.css'
 
@@ -30,11 +30,12 @@ export const buttonBase = style({
       pointerEvents: 'none',
       opacity: '0.5',
     },
-    '& svg': {
-      pointerEvents: 'none',
-      flexShrink: '0',
-    },
   },
+})
+
+globalStyle(`${buttonBase} svg`, {
+  pointerEvents: 'none',
+  flexShrink: 0,
 })
 
 export const buttonRecipe = recipe({
@@ -107,35 +108,23 @@ export const buttonRecipe = recipe({
         paddingRight: vars.space.md,
         fontSize: vars.fontSize.xs,
         borderRadius: vars.radius.sm,
-        selectors: {
-          '& svg': { width: '14px', height: '14px' },
-        },
       },
       default: {
         height: '36px',
         paddingLeft: vars.space.lg,
         paddingRight: vars.space.lg,
         fontSize: vars.fontSize.sm,
-        selectors: {
-          '& svg': { width: '16px', height: '16px' },
-        },
       },
       lg: {
         height: '40px',
         paddingLeft: vars.space.xl,
         paddingRight: vars.space.xl,
         fontSize: vars.fontSize.sm,
-        selectors: {
-          '& svg': { width: '16px', height: '16px' },
-        },
       },
       icon: {
         width: '36px',
         height: '36px',
         padding: '0',
-        selectors: {
-          '& svg': { width: '16px', height: '16px' },
-        },
       },
     },
   },

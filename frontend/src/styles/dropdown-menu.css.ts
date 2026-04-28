@@ -1,4 +1,4 @@
-import { keyframes, style } from '@vanilla-extract/css'
+import { globalStyle, keyframes, style } from '@vanilla-extract/css'
 import { vars } from './theme.css'
 
 /* ── Keyframes ──────────────────────────────────────────────── */
@@ -70,13 +70,14 @@ const itemBase = style({
     '&[data-inset]': {
       paddingLeft: '28px',
     },
-    '& svg': {
-      pointerEvents: 'none',
-      flexShrink: 0,
-      width: '16px',
-      height: '16px',
-    },
   },
+})
+
+globalStyle(`${itemBase} svg`, {
+  pointerEvents: 'none',
+  flexShrink: 0,
+  width: '16px',
+  height: '16px',
 })
 
 export const dropdownItem = style([itemBase, {
@@ -107,12 +108,11 @@ export const dropdownIndicator = style({
   alignItems: 'center',
   justifyContent: 'center',
   pointerEvents: 'none',
-  selectors: {
-    '& svg': {
-      width: '14px',
-      height: '14px',
-    },
-  },
+})
+
+globalStyle(`${dropdownIndicator} svg`, {
+  width: '14px',
+  height: '14px',
 })
 
 /* ── Sub-trigger ────────────────────────────────────────────── */

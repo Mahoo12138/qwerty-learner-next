@@ -1,4 +1,4 @@
-import { keyframes, style } from '@vanilla-extract/css'
+import { globalStyle, keyframes, style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
 import { vars } from './theme.css'
 
@@ -204,11 +204,6 @@ export const sheetCloseButton = style({
   background: 'transparent',
   transition: `color ${vars.motion.fast} ${vars.motion.easing}, background-color ${vars.motion.fast} ${vars.motion.easing}`,
   selectors: {
-    '& svg': {
-      width: '14px',
-      height: '14px',
-      pointerEvents: 'none',
-    },
     '&:hover': {
       color: vars.color.text.primary,
       backgroundColor: `color-mix(in oklab, ${vars.color.brand.primary} 10%, ${vars.color.bg.app})`,
@@ -218,4 +213,10 @@ export const sheetCloseButton = style({
       boxShadow: vars.shadow.focusRing,
     },
   },
+})
+
+globalStyle(`${sheetCloseButton} svg`, {
+  width: '14px',
+  height: '14px',
+  pointerEvents: 'none',
 })
