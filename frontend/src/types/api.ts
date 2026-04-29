@@ -12,7 +12,7 @@ export interface User {
   nickname: string
   email: string
   avatar_media_id?: string | null
-  role: 'user' | 'admin'
+  role: 'user' | 'admin' | 'owner'
   is_active: number
   created_at: string
 }

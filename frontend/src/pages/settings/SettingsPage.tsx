@@ -20,6 +20,12 @@ import {
   useUserSettings,
 } from '@/api/settings'
 import {
+  useAdminUsers,
+  useCreateAdminUser,
+  useDeleteAdminUser,
+  useUpdateAdminUser,
+} from '@/api/admin'
+import {
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -73,6 +79,7 @@ import {
   Trash2,
   Upload,
   User,
+  UserCog,
   Users,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -338,11 +345,20 @@ export function SettingsPage() {
   const dark = useThemeStore((state) => state.dark)
   const [activeGroup, setActiveGroup] = useState('my-account')
 
+  const isPrivileged = user?.role === 'admin' || user?.role === 'owner'
+
   const groups: SettingsGroup[] = [
     { key: 'my-account', label: '我的账号', description: '资料、密码与令牌', icon: User },
     { key: 'preferences', label: '偏好设置', description: '界面与练习习惯', icon: SlidersHorizontal },
-    ...(user?.role === 'admin'
+    ...(isPrivileged
       ? [
+          {
+            key: 'user-accounts',
+            label: '用户管理',
+            description: '创建、禁用与删除用户',
+            icon: UserCog,
+            adminOnly: true,
+          },
           {
             key: 'system-management',
             label: '系统管理',
@@ -367,6 +383,9 @@ export function SettingsPage() {
 
   const currentGroup = groups.find((group) => group.key === resolvedActiveGroup)
   const CurrentGroupIcon = currentGroup?.icon ?? Settings
+
+  const roleBadgeLabel =
+    user?.role === 'owner' ? '所有者模式' : user?.role === 'admin' ? '管理员模式' : '学习者模式'
 
   return (
     <div className={css.pageRoot}>
@@ -420,8 +439,8 @@ export function SettingsPage() {
             <div className={css.overviewBadgeRow}>
               <Badge variant="secondary">{currentGroup?.label ?? '设置'}</Badge>
               <Badge variant="outline">{dark ? '深色模式' : '浅色模式'}</Badge>
-              {user?.role === 'admin' ? (
-                <Badge variant="warning">管理员模式</Badge>
+              {isPrivileged ? (
+                <Badge variant="warning">{roleBadgeLabel}</Badge>
               ) : (
                 <Badge variant="outline">学习者模式</Badge>
               )}
@@ -452,10 +471,13 @@ export function SettingsPage() {
         ) : null}
 
         {resolvedActiveGroup === 'preferences' ? <PreferenceSection /> : null}
-        {resolvedActiveGroup === 'system-management' && user?.role === 'admin' ? (
+        {resolvedActiveGroup === 'user-accounts' && isPrivileged ? (
+          <UserAccountsSection callerRole={user?.role ?? 'user'} />
+        ) : null}
+        {resolvedActiveGroup === 'system-management' && isPrivileged ? (
           <SystemManagementSection />
         ) : null}
-        {resolvedActiveGroup === 'user-management' && user?.role === 'admin' ? (
+        {resolvedActiveGroup === 'user-management' && isPrivileged ? (
           <UserManagementSection />
         ) : null}
       </main>
@@ -1727,4 +1749,311 @@ function isExpired(value: string | null) {
 
 function itemLabel(primary?: string | null, fallback?: string | null, empty = '') {
   return primary || fallback || empty
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  owner: '所有者',
+  admin: '管理员',
+  user: '普通用户',
+}
+
+const ROLE_BADGE_VARIANT: Record<string, 'warning' | 'secondary' | 'outline'> = {
+  owner: 'warning',
+  admin: 'secondary',
+  user: 'outline',
+}
+
+function UserAccountsSection({ callerRole }: { callerRole: string }) {
+  const currentUser = useAuthStore((state) => state.user)
+  const { data, isLoading } = useAdminUsers(1, 100)
+  const createUser = useCreateAdminUser()
+  const updateUser = useUpdateAdminUser()
+  const deleteUser = useDeleteAdminUser()
+
+  const [createOpen, setCreateOpen] = useState(false)
+  const [newUsername, setNewUsername] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [newRole, setNewRole] = useState<'user' | 'admin'>('user')
+  const [formError, setFormError] = useState('')
+
+  const users = data?.list ?? []
+
+  const handleCreate = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setFormError('')
+
+    createUser.mutate(
+      { username: newUsername.trim(), email: newEmail.trim(), password: newPassword, role: newRole },
+      {
+        onSuccess: () => {
+          setCreateOpen(false)
+          setNewUsername('')
+          setNewEmail('')
+          setNewPassword('')
+          setNewRole('user')
+        },
+        onError: (err: unknown) => {
+          const message = (err as { message?: string })?.message ?? '创建失败，请重试'
+          setFormError(message)
+        },
+      },
+    )
+  }
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setCreateOpen(false)
+      setFormError('')
+      setNewUsername('')
+      setNewEmail('')
+      setNewPassword('')
+      setNewRole('user')
+      return
+    }
+    setCreateOpen(true)
+  }
+
+  const toggleActive = (id: string, current: number) => {
+    updateUser.mutate({ id, is_active: current === 1 ? 0 : 1 })
+  }
+
+  const handleRoleChange = (id: string, role: string) => {
+    updateUser.mutate({ id, role })
+  }
+
+  const handleDelete = (id: string, username: string) => {
+    if (confirm(`确定要删除用户「${username}」吗？此操作不可恢复，该用户的所有数据将被永久删除。`)) {
+      deleteUser.mutate(id)
+    }
+  }
+
+  return (
+    <section className={css.section}>
+      <div className={css.sectionHeader}>
+        <div>
+          <div className={css.sectionTitleRow}>
+            <UserCog className={css.sectionIcon} size={16} />
+            <h2 className={css.sectionTitle}>用户管理</h2>
+          </div>
+          <p className={css.fieldDesc}>
+            {callerRole === 'owner'
+              ? '作为所有者，你可以创建管理员和普通用户，并管理所有账号状态。'
+              : '作为管理员，你可以创建普通用户并管理其账号状态。'}
+          </p>
+        </div>
+
+        <Dialog open={createOpen} onOpenChange={handleOpenChange}>
+          <Button type="button" variant="outline" size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus size={16} />
+            新建用户
+          </Button>
+
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>新建用户</DialogTitle>
+              <DialogDescription>
+                {callerRole === 'owner'
+                  ? '你可以创建管理员或普通用户账号。'
+                  : '你可以创建普通用户账号。'}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleCreate} className={css.dialogForm}>
+              <div className={css.dialogFormField}>
+                <label htmlFor="new-username" className={css.dialogFormLabel}>用户名</label>
+                <Input
+                  id="new-username"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  placeholder="3–32 个字符"
+                  minLength={3}
+                  maxLength={32}
+                  required
+                />
+              </div>
+
+              <div className={css.dialogFormField}>
+                <label htmlFor="new-email" className={css.dialogFormLabel}>邮箱</label>
+                <Input
+                  id="new-email"
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  required
+                />
+              </div>
+
+              <div className={css.dialogFormField}>
+                <label htmlFor="new-password" className={css.dialogFormLabel}>初始密码</label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="至少 8 位"
+                  minLength={8}
+                  maxLength={64}
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+
+              {callerRole === 'owner' ? (
+                <div className={css.dialogFormField}>
+                  <label htmlFor="new-role" className={css.dialogFormLabel}>角色</label>
+                  <Select
+                    value={newRole}
+                    onValueChange={(v) => setNewRole(v as 'user' | 'admin')}
+                  >
+                    <SelectTrigger id="new-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">普通用户</SelectItem>
+                      <SelectItem value="admin">管理员</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+
+              {formError ? (
+                <p className={css.fieldStatus} style={{ color: 'var(--color-error, #ef4444)' }}>
+                  {formError}
+                </p>
+              ) : null}
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+                  取消
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    !newUsername.trim() ||
+                    !newEmail.trim() ||
+                    !newPassword ||
+                    createUser.isPending
+                  }
+                >
+                  {createUser.isPending ? '创建中...' : '创建用户'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? (
+        <div className={css.loadingWrapper}>
+          <Loader2 size={20} className={css.spinner} />
+        </div>
+      ) : users.length === 0 ? (
+        <div className={css.tokenEmptyState}>
+          <Users className={css.tokenEmptyIcon} size={32} />
+          <p>暂无用户数据。</p>
+        </div>
+      ) : (
+        <div className={css.tokenList}>
+          {users.map((u) => {
+            const isSelf = u.id === currentUser?.id
+            const isActive = u.is_active === 1
+            const canModify = !isSelf && !(callerRole === 'admin' && (u.role === 'admin' || u.role === 'owner'))
+            const canChangeRole = !isSelf && callerRole === 'owner' && u.role !== 'owner'
+
+            return (
+              <div
+                key={u.id}
+                className={clsx(
+                  css.tokenCardBase,
+                  css.tokenCardState[isActive ? 'active' : 'inactive'],
+                )}
+              >
+                <div className={css.tokenBody}>
+                  <div className={css.tokenNameRow}>
+                    <h3 className={css.tokenName}>
+                      {u.nickname || u.username}
+                      {isSelf ? (
+                        <span className={css.navAdminBadge} style={{ marginLeft: 6 }}>当前账号</span>
+                      ) : null}
+                    </h3>
+                    <Badge variant={ROLE_BADGE_VARIANT[u.role] ?? 'outline'}>
+                      {ROLE_LABEL[u.role] ?? u.role}
+                    </Badge>
+                    {!isActive ? (
+                      <span className={css.tokenStatusBadge.disabled}>已禁用</span>
+                    ) : null}
+                  </div>
+
+                  <div className={css.tokenScopeRow}>
+                    <span className={css.tokenMetaValue}>{u.username}</span>
+                    <span className={css.tokenMetaValue}>{u.email}</span>
+                  </div>
+                </div>
+
+                <div className={css.tokenMetaCol}>
+                  <div className={css.tokenMetaRow}>
+                    <span className={css.tokenMetaLabel}>注册时间:</span>
+                    <span className={css.tokenMetaValue}>{formatDateTime(u.created_at)}</span>
+                  </div>
+                </div>
+
+                {canModify ? (
+                  <div className={css.tokenActions}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        type="button"
+                        className={css.iconGhostButton}
+                        aria-label={`${u.username} 操作菜单`}
+                      >
+                        <MoreVertical size={16} />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => toggleActive(u.id, u.is_active)}
+                          disabled={updateUser.isPending}
+                        >
+                          {isActive ? '禁用账号' : '启用账号'}
+                        </DropdownMenuItem>
+
+                        {canChangeRole ? (
+                          <>
+                            {u.role !== 'admin' ? (
+                              <DropdownMenuItem
+                                onClick={() => handleRoleChange(u.id, 'admin')}
+                                disabled={updateUser.isPending}
+                              >
+                                设为管理员
+                              </DropdownMenuItem>
+                            ) : null}
+                            {u.role !== 'user' ? (
+                              <DropdownMenuItem
+                                onClick={() => handleRoleChange(u.id, 'user')}
+                                disabled={updateUser.isPending}
+                              >
+                                降级为普通用户
+                              </DropdownMenuItem>
+                            ) : null}
+                          </>
+                        ) : null}
+
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleDelete(u.id, u.username)}
+                          disabled={deleteUser.isPending}
+                        >
+                          删除账号
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ) : null}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
 }
