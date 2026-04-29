@@ -60,7 +60,7 @@ func (s *serviceImpl) RegisterInitialAdmin(ctx context.Context, username, email,
 			Nickname:     "用户" + username,
 			Email:        email,
 			PasswordHash: hash,
-			Role:         "admin",
+			Role:         "owner",
 			IsActive:     1,
 		}
 		if err = tx.Create(u).Error; err != nil {

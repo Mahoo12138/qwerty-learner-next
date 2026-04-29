@@ -72,13 +72,15 @@ resource/
 
 ### 5. 认证接口
 
-| 方法 | 路径 | 说明 | 鉴权 |
-|------|------|------|------|
-| POST | `/api/v1/auth/register` | 用户注册 | 无 |
-| POST | `/api/v1/auth/login` | 用户登录 | 无 |
-| POST | `/api/v1/auth/refresh` | 刷新 Token | Cookie |
-| GET  | `/api/v1/auth/me` | 当前用户信息 | JWT |
-| GET  | `/health` | 健康检查 | 无 |
+
+| 方法   | 路径                      | 说明       | 鉴权     |
+| ---- | ----------------------- | -------- | ------ |
+| POST | `/api/v1/auth/register` | 用户注册     | 无      |
+| POST | `/api/v1/auth/login`    | 用户登录     | 无      |
+| POST | `/api/v1/auth/refresh`  | 刷新 Token | Cookie |
+| GET  | `/api/v1/auth/me`       | 当前用户信息   | JWT    |
+| GET  | `/health`               | 健康检查     | 无      |
+
 
 ### 6. 安全措施
 
@@ -137,10 +139,11 @@ $ curl -X POST .../login (错误密码)              # → 40101
 
 ## 待完成（Phase 1 前端）
 
-- [ ] Vite + React 19 + Tailwind CSS v4 项目初始化
-- [ ] TanStack Router 文件路由配置
-- [ ] TanStack Query 全局配置
-- [ ] Zustand auth store
-- [ ] 登录/注册页面
-- [ ] 基础布局
-- [ ] Vite proxy 联调验证
+- Vite + React 19 + Tailwind CSS v4 项目初始化
+- TanStack Router 文件路由配置
+- TanStack Query 全局配置
+- Zustand auth store
+- 登录/注册页面
+- 基础布局
+- Vite proxy 联调验证
+

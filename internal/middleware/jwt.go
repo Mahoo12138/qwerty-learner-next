@@ -110,13 +110,27 @@ func JWTAuth(jwtSecret string, validators ...ApiTokenValidator) func(r *ghttp.Re
 	}
 }
 
-// AdminOnly ensures the current user has admin role.
+// AdminOnly ensures the current user has admin or owner role.
 func AdminOnly(r *ghttp.Request) {
 	role := r.GetCtxVar("role").String()
-	if role != "admin" {
+	if role != "admin" && role != "owner" {
 		r.Response.WriteJsonExit(map[string]interface{}{
 			"code":    40302,
 			"message": "admin required",
+			"data":    nil,
+		})
+		return
+	}
+	r.Middleware.Next()
+}
+
+// OwnerOnly ensures the current user has the owner role.
+func OwnerOnly(r *ghttp.Request) {
+	role := r.GetCtxVar("role").String()
+	if role != "owner" {
+		r.Response.WriteJsonExit(map[string]interface{}{
+			"code":    40302,
+			"message": "owner required",
 			"data":    nil,
 		})
 		return

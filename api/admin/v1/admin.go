@@ -16,6 +16,15 @@ type ListUsersRes struct {
 	PageSize int         `json:"page_size"`
 }
 
+type CreateUserReq struct {
+	g.Meta   `path:"/admin/users" method:"post" tags:"Admin" summary:"Create a new user"`
+	Username string `json:"username" v:"required|length:3,32"`
+	Email    string `json:"email"    v:"required|email"`
+	Password string `json:"password" v:"required|length:8,64"`
+	Role     string `json:"role"     v:"required|in:user,admin" d:"user"`
+}
+type CreateUserRes struct{}
+
 type UpdateUserReq struct {
 	g.Meta   `path:"/admin/users/{id}" method:"put" tags:"Admin" summary:"Update user"`
 	Id       string  `json:"id" in:"path"`
@@ -23,6 +32,12 @@ type UpdateUserReq struct {
 	Role     *string `json:"role"`
 }
 type UpdateUserRes struct{}
+
+type DeleteUserReq struct {
+	g.Meta `path:"/admin/users/{id}" method:"delete" tags:"Admin" summary:"Delete user"`
+	Id     string `json:"id" in:"path"`
+}
+type DeleteUserRes struct{}
 
 type ListPublicWordBanksReq struct {
 	g.Meta   `path:"/admin/word-banks" method:"get" tags:"Admin" summary:"List public word banks"`
