@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/authStore'
+import { router } from '@/router'
 import type { ApiResponse } from '@/types/api'
 
 const BASE_URL = '/api/v1'
@@ -61,12 +62,14 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
       return request(path, init)
     } catch {
       useAuthStore.getState().logout()
+      router.navigate({ to: '/login', replace: true })
       throw new ApiError(40102, 'Session expired')
     }
   }
 
   if (json.code === 40104 || json.code === 40101) {
     useAuthStore.getState().logout()
+    router.navigate({ to: '/login', replace: true })
     throw new ApiError(json.code, json.message)
   }
 
