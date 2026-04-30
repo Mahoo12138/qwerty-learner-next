@@ -29,7 +29,7 @@ type KeyStat struct {
 	TotalHits     int     `json:"total_hits"`
 	TotalErrors   int     `json:"total_errors"`
 	ErrorRate     float64 `json:"error_rate"` // computed
-	AvgIntervalMs int     `json:"avg_interval_ms"`
+	AvgIntervalMs float64 `json:"avg_interval_ms"`
 }
 
 // Summary represents an overall practice summary for a user.
