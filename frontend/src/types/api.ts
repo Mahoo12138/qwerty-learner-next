@@ -121,6 +121,7 @@ export interface WordBank {
   owner_id: string
   name: string
   description: string
+  language: string
   is_public: number
   word_count: number
   created_at: string
@@ -424,4 +425,19 @@ export interface ApiToken {
 export interface CreateApiTokenResponse {
   token: ApiToken
   raw_token: string
+}
+
+export type ContentLibraryType = 'word_bank' | 'sentence_bank' | 'article_bank'
+
+export interface LibrarySubscriptionItem {
+  id: string
+  user_id: string
+  library_type: ContentLibraryType
+  library_id: string
+  created_at: string
+  library_name: string
+  library_owner_id: string
+  library_is_public: number
+  is_available: number
+  unavailable_reason?: string
 }

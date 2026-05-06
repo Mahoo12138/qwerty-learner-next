@@ -14,7 +14,7 @@ export function useWordBank(id: string) {
 export function useCreateWordBank() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (data: { name: string; description?: string; is_public?: number }) =>
+    mutationFn: (data: { name: string; description?: string; language?: string; is_public?: number }) =>
       request<WordBank>('/word-banks', { method: 'POST', body: JSON.stringify(data) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['wordBanks'] }),
   })
@@ -23,7 +23,7 @@ export function useCreateWordBank() {
 export function useUpdateWordBank() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; name?: string; description?: string; is_public?: number }) =>
+    mutationFn: ({ id, ...data }: { id: string; name?: string; description?: string; language?: string; is_public?: number }) =>
       request<WordBank>(`/word-banks/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['wordBanks'] }),
   })

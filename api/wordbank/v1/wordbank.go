@@ -16,6 +16,7 @@ type CreateWordBankReq struct {
 	g.Meta      `path:"/word-banks" method:"post" tags:"WordBank" summary:"Create word bank"`
 	Name        string `json:"name"        v:"required#name is required"`
 	Description string `json:"description"`
+	Language    string `json:"language"`
 	IsPublic    int    `json:"is_public"`
 }
 type CreateWordBankRes struct{}
@@ -31,6 +32,7 @@ type UpdateWordBankReq struct {
 	Id          string  `json:"id" in:"path"`
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
+	Language    *string `json:"language"`
 	IsPublic    *int    `json:"is_public"`
 }
 type UpdateWordBankRes struct{}
