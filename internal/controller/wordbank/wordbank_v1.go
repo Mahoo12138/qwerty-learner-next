@@ -33,6 +33,7 @@ func (c *ControllerV1) CreateWordBank(ctx context.Context, req *v1.CreateWordBan
 	bank, err := c.wordSvc.CreateBank(ctx, userID, wordService.CreateBankReq{
 		Name:        req.Name,
 		Description: req.Description,
+		Language:    req.Language,
 		IsPublic:    req.IsPublic,
 	})
 	if err != nil {
@@ -60,10 +61,12 @@ func (c *ControllerV1) GetWordBank(ctx context.Context, req *v1.GetWordBankReq) 
 func (c *ControllerV1) UpdateWordBank(ctx context.Context, req *v1.UpdateWordBankReq) (res *v1.UpdateWordBankRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	bank, err := c.wordSvc.UpdateBank(ctx, userID, req.Id, wordService.UpdateBankReq{
+	bank, err := c.wordSvc.UpdateBank(ctx, userID, userRole, req.Id, wordService.UpdateBankReq{
 		Name:        req.Name,
 		Description: req.Description,
+		Language:    req.Language,
 		IsPublic:    req.IsPublic,
 	})
 	if err != nil {
@@ -77,8 +80,9 @@ func (c *ControllerV1) UpdateWordBank(ctx context.Context, req *v1.UpdateWordBan
 func (c *ControllerV1) DeleteWordBank(ctx context.Context, req *v1.DeleteWordBankReq) (res *v1.DeleteWordBankRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	if err = c.wordSvc.DeleteBank(ctx, userID, req.Id); err != nil {
+	if err = c.wordSvc.DeleteBank(ctx, userID, userRole, req.Id); err != nil {
 		return nil, err
 	}
 
@@ -108,8 +112,9 @@ func (c *ControllerV1) ListWords(ctx context.Context, req *v1.ListWordsReq) (res
 func (c *ControllerV1) CreateWord(ctx context.Context, req *v1.CreateWordReq) (res *v1.CreateWordRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	word, err := c.wordSvc.CreateWord(ctx, userID, req.Id, wordService.CreateWordReq{
+	word, err := c.wordSvc.CreateWord(ctx, userID, userRole, req.Id, wordService.CreateWordReq{
 		Content:         req.Content,
 		Pronunciation:   req.Pronunciation,
 		Definition:      req.Definition,
@@ -128,8 +133,9 @@ func (c *ControllerV1) CreateWord(ctx context.Context, req *v1.CreateWordReq) (r
 func (c *ControllerV1) UpdateWord(ctx context.Context, req *v1.UpdateWordReq) (res *v1.UpdateWordRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	word, err := c.wordSvc.UpdateWord(ctx, userID, req.WordId, wordService.UpdateWordReq{
+	word, err := c.wordSvc.UpdateWord(ctx, userID, userRole, req.WordId, wordService.UpdateWordReq{
 		Content:         req.Content,
 		Pronunciation:   req.Pronunciation,
 		Definition:      req.Definition,
@@ -148,8 +154,9 @@ func (c *ControllerV1) UpdateWord(ctx context.Context, req *v1.UpdateWordReq) (r
 func (c *ControllerV1) DeleteWord(ctx context.Context, req *v1.DeleteWordReq) (res *v1.DeleteWordRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	if err = c.wordSvc.DeleteWord(ctx, userID, req.WordId); err != nil {
+	if err = c.wordSvc.DeleteWord(ctx, userID, userRole, req.WordId); err != nil {
 		return nil, err
 	}
 
@@ -162,6 +169,7 @@ func (c *ControllerV1) DeleteWord(ctx context.Context, req *v1.DeleteWordReq) (r
 func (c *ControllerV1) ImportWords(ctx context.Context, req *v1.ImportWordsReq) (res *v1.ImportWordsRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
 	file := r.GetUploadFile("file")
 	if file == nil {
@@ -176,7 +184,7 @@ func (c *ControllerV1) ImportWords(ctx context.Context, req *v1.ImportWordsReq) 
 	}
 	defer f.Close()
 
-	count, err := c.wordSvc.ImportWords(ctx, userID, req.Id, req.Format, f)
+	count, err := c.wordSvc.ImportWords(ctx, userID, userRole, req.Id, req.Format, f)
 	if err != nil {
 		return nil, err
 	}

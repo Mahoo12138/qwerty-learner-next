@@ -59,8 +59,9 @@ func (c *ControllerV1) GetSentenceBank(ctx context.Context, req *v1.GetSentenceB
 func (c *ControllerV1) UpdateSentenceBank(ctx context.Context, req *v1.UpdateSentenceBankReq) (res *v1.UpdateSentenceBankRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	bank, err := c.sentenceSvc.UpdateBank(ctx, userID, req.Id, sentenceService.UpdateBankReq{
+	bank, err := c.sentenceSvc.UpdateBank(ctx, userID, userRole, req.Id, sentenceService.UpdateBankReq{
 		Name:     req.Name,
 		Category: req.Category,
 		IsPublic: req.IsPublic,
@@ -76,8 +77,9 @@ func (c *ControllerV1) UpdateSentenceBank(ctx context.Context, req *v1.UpdateSen
 func (c *ControllerV1) DeleteSentenceBank(ctx context.Context, req *v1.DeleteSentenceBankReq) (res *v1.DeleteSentenceBankRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	if err = c.sentenceSvc.DeleteBank(ctx, userID, req.Id); err != nil {
+	if err = c.sentenceSvc.DeleteBank(ctx, userID, userRole, req.Id); err != nil {
 		return nil, err
 	}
 
@@ -107,8 +109,9 @@ func (c *ControllerV1) ListSentences(ctx context.Context, req *v1.ListSentencesR
 func (c *ControllerV1) CreateSentence(ctx context.Context, req *v1.CreateSentenceReq) (res *v1.CreateSentenceRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	sent, err := c.sentenceSvc.CreateSentence(ctx, userID, req.Id, sentenceService.CreateSentenceReq{
+	sent, err := c.sentenceSvc.CreateSentence(ctx, userID, userRole, req.Id, sentenceService.CreateSentenceReq{
 		Content:           req.Content,
 		Translation:       req.Translation,
 		TranslationSource: req.TranslationSource,
@@ -127,8 +130,9 @@ func (c *ControllerV1) CreateSentence(ctx context.Context, req *v1.CreateSentenc
 func (c *ControllerV1) UpdateSentence(ctx context.Context, req *v1.UpdateSentenceReq) (res *v1.UpdateSentenceRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	sent, err := c.sentenceSvc.UpdateSentence(ctx, userID, req.SentenceId, sentenceService.UpdateSentenceReq{
+	sent, err := c.sentenceSvc.UpdateSentence(ctx, userID, userRole, req.SentenceId, sentenceService.UpdateSentenceReq{
 		Content:           req.Content,
 		Translation:       req.Translation,
 		TranslationSource: req.TranslationSource,
@@ -147,8 +151,9 @@ func (c *ControllerV1) UpdateSentence(ctx context.Context, req *v1.UpdateSentenc
 func (c *ControllerV1) DeleteSentence(ctx context.Context, req *v1.DeleteSentenceReq) (res *v1.DeleteSentenceRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	if err = c.sentenceSvc.DeleteSentence(ctx, userID, req.SentenceId); err != nil {
+	if err = c.sentenceSvc.DeleteSentence(ctx, userID, userRole, req.SentenceId); err != nil {
 		return nil, err
 	}
 
@@ -161,6 +166,7 @@ func (c *ControllerV1) DeleteSentence(ctx context.Context, req *v1.DeleteSentenc
 func (c *ControllerV1) ImportSentences(ctx context.Context, req *v1.ImportSentencesReq) (res *v1.ImportSentencesRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
 	file := r.GetUploadFile("file")
 	if file == nil {
@@ -175,7 +181,7 @@ func (c *ControllerV1) ImportSentences(ctx context.Context, req *v1.ImportSenten
 	}
 	defer f.Close()
 
-	count, err := c.sentenceSvc.ImportSentences(ctx, userID, req.Id, req.Format, f)
+	count, err := c.sentenceSvc.ImportSentences(ctx, userID, userRole, req.Id, req.Format, f)
 	if err != nil {
 		return nil, err
 	}

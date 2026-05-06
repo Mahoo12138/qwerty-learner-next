@@ -2,6 +2,7 @@ package practice
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/gogf/gf/v2/errors/gerror"
@@ -58,27 +59,27 @@ type SessionListItem struct {
 }
 
 type SessionDetail struct {
-	Session        entity.PracticeSession  `json:"session"`
-	Result         *entity.PracticeResult  `json:"result,omitempty"`
-	KeystrokeStats []entity.KeystrokeStat  `json:"keystroke_stats"`
-	ErrorItems     []entity.ErrorRecord    `json:"error_items"`
-	Words          []entity.Word           `json:"words,omitempty"`
-	Sentences      []entity.Sentence       `json:"sentences,omitempty"`
+	Session        entity.PracticeSession `json:"session"`
+	Result         *entity.PracticeResult `json:"result,omitempty"`
+	KeystrokeStats []entity.KeystrokeStat `json:"keystroke_stats"`
+	ErrorItems     []entity.ErrorRecord   `json:"error_items"`
+	Words          []entity.Word          `json:"words,omitempty"`
+	Sentences      []entity.Sentence      `json:"sentences,omitempty"`
 }
 
 // CompleteRequest holds the data submitted when a practice session finishes.
 type CompleteRequest struct {
-	SessionID      string            `json:"session_id"`
-	UserID         string            `json:"-"` // from JWT context
-	WPM            float64           `json:"wpm"`
-	RawWPM         float64           `json:"raw_wpm"`
-	Accuracy       float64           `json:"accuracy"`
-	ErrorCount     int               `json:"error_count"`
-	CharCount      int               `json:"char_count"`
-	Consistency    float64           `json:"consistency"`
-	DurationMs     int64             `json:"duration_ms"`
-	KeystrokeStats []KeystrokeInput  `json:"keystroke_stats"`
-	ErrorItems     []ErrorItemInput  `json:"error_items"`
+	SessionID      string           `json:"session_id"`
+	UserID         string           `json:"-"` // from JWT context
+	WPM            float64          `json:"wpm"`
+	RawWPM         float64          `json:"raw_wpm"`
+	Accuracy       float64          `json:"accuracy"`
+	ErrorCount     int              `json:"error_count"`
+	CharCount      int              `json:"char_count"`
+	Consistency    float64          `json:"consistency"`
+	DurationMs     int64            `json:"duration_ms"`
+	KeystrokeStats []KeystrokeInput `json:"keystroke_stats"`
+	ErrorItems     []ErrorItemInput `json:"error_items"`
 }
 
 type KeystrokeInput struct {
@@ -97,8 +98,8 @@ type ErrorItemInput struct {
 
 // CompleteResult wraps the practice result with any newly unlocked achievements.
 type CompleteResult struct {
-	Result              *entity.PracticeResult `json:"result"`
-	NewAchievements     []entity.Achievement   `json:"new_achievements"`
+	Result          *entity.PracticeResult `json:"result"`
+	NewAchievements []entity.Achievement   `json:"new_achievements"`
 }
 
 type serviceImpl struct {
@@ -119,6 +120,9 @@ func (s *serviceImpl) CreateSession(ctx context.Context, req CreateSessionReques
 	}
 	if req.ItemCount > 200 {
 		req.ItemCount = 200
+	}
+	if err := s.ensureSourceAccessible(ctx, req.UserID, req.SourceType, req.SourceID); err != nil {
+		return nil, err
 	}
 
 	now := time.Now()
@@ -367,6 +371,10 @@ func (s *serviceImpl) CompletePractice(ctx context.Context, req CompleteRequest)
 			}
 		}
 
+		if err := s.syncWordMastery(ctx, tx, session, req, now); err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -381,6 +389,37 @@ func (s *serviceImpl) CompletePractice(ctx context.Context, req CompleteRequest)
 		Result:          result,
 		NewAchievements: newAchievements,
 	}, nil
+}
+
+func (s *serviceImpl) ensureSourceAccessible(ctx context.Context, userID, sourceType, sourceID string) error {
+	switch sourceType {
+	case "word_bank":
+		var bank entity.WordBank
+		if err := s.db.WithContext(ctx).First(&bank, "id = ?", sourceID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return gerror.NewCode(code.CodeNotFound, "word bank not found")
+			}
+			return gerror.NewCode(code.CodeInternalError, err.Error())
+		}
+		if bank.OwnerID != userID && bank.IsPublic == 0 {
+			return gerror.NewCode(code.CodeForbidden, "access denied")
+		}
+	case "sentence_bank":
+		var bank entity.SentenceBank
+		if err := s.db.WithContext(ctx).First(&bank, "id = ?", sourceID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return gerror.NewCode(code.CodeNotFound, "sentence bank not found")
+			}
+			return gerror.NewCode(code.CodeInternalError, err.Error())
+		}
+		if bank.OwnerID != userID && bank.IsPublic == 0 {
+			return gerror.NewCode(code.CodeForbidden, "access denied")
+		}
+	default:
+		return gerror.NewCode(code.CodeBadRequest, "invalid source_type")
+	}
+
+	return nil
 }
 
 func buildSessionItems(sessionID, contentType string, words []entity.Word, sentences []entity.Sentence, createdAt time.Time) []entity.PracticeSessionItem {
@@ -437,7 +476,7 @@ func (s *serviceImpl) loadSessionContent(ctx context.Context, sessionID, sourceT
 		}
 
 		var words []entity.Word
-		if err := s.db.WithContext(ctx).Where("id IN ?", ids).Find(&words).Error; err != nil {
+		if err := s.db.WithContext(ctx).Unscoped().Where("id IN ?", ids).Find(&words).Error; err != nil {
 			return nil, nil, err
 		}
 
@@ -451,7 +490,9 @@ func (s *serviceImpl) loadSessionContent(ctx context.Context, sessionID, sourceT
 			word, ok := wordByID[item.ContentID]
 			if ok {
 				orderedWords = append(orderedWords, word)
+				continue
 			}
+			orderedWords = append(orderedWords, entity.Word{ID: item.ContentID, Content: "[deleted word]"})
 		}
 
 		return orderedWords, nil, nil
@@ -476,7 +517,9 @@ func (s *serviceImpl) loadSessionContent(ctx context.Context, sessionID, sourceT
 			sentence, ok := sentenceByID[item.ContentID]
 			if ok {
 				orderedSentences = append(orderedSentences, sentence)
+				continue
 			}
+			orderedSentences = append(orderedSentences, entity.Sentence{ID: item.ContentID, Content: "[deleted sentence]"})
 		}
 
 		return nil, orderedSentences, nil

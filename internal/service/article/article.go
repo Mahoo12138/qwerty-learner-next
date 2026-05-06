@@ -13,6 +13,7 @@ import (
 
 	"taptype/internal/model/code"
 	"taptype/internal/model/entity"
+	"taptype/internal/service/contentaccess"
 	"taptype/utility/splitter"
 )
 
@@ -21,20 +22,20 @@ type Service interface {
 	ListBanks(ctx context.Context, userID string) ([]entity.ArticleBank, error)
 	CreateBank(ctx context.Context, userID string, req CreateBankReq) (*entity.ArticleBank, error)
 	GetBank(ctx context.Context, userID, bankID string) (*entity.ArticleBank, error)
-	UpdateBank(ctx context.Context, userID, bankID string, req UpdateBankReq) (*entity.ArticleBank, error)
-	DeleteBank(ctx context.Context, userID, bankID string) error
+	UpdateBank(ctx context.Context, userID, userRole, bankID string, req UpdateBankReq) (*entity.ArticleBank, error)
+	DeleteBank(ctx context.Context, userID, userRole, bankID string) error
 
 	// Article CRUD
 	ListArticles(ctx context.Context, userID, bankID string, page, pageSize int) (*ArticleListResult, error)
-	CreateArticle(ctx context.Context, userID, bankID string, req CreateArticleReq) (*entity.Article, error)
+	CreateArticle(ctx context.Context, userID, userRole, bankID string, req CreateArticleReq) (*entity.Article, error)
 	GetArticle(ctx context.Context, userID, articleID string) (*ArticleDetail, error)
-	UpdateArticle(ctx context.Context, userID, articleID string, req UpdateArticleReq) (*entity.Article, error)
-	DeleteArticle(ctx context.Context, userID, articleID string) error
+	UpdateArticle(ctx context.Context, userID, userRole, articleID string, req UpdateArticleReq) (*entity.Article, error)
+	DeleteArticle(ctx context.Context, userID, userRole, articleID string) error
 	ExportBank(ctx context.Context, userID, bankID string) ([]byte, error)
 
 	// Sentence translation management
 	ListArticleSentences(ctx context.Context, userID, articleID string) ([]entity.ArticleSentence, error)
-	UpdateArticleSentence(ctx context.Context, userID, sentenceID string, req UpdateArticleSentenceReq) (*entity.ArticleSentence, error)
+	UpdateArticleSentence(ctx context.Context, userID, userRole, sentenceID string, req UpdateArticleSentenceReq) (*entity.ArticleSentence, error)
 
 	// Progress & Practice
 	NextParagraph(ctx context.Context, userID, articleID string) (*ParagraphDetail, error)
@@ -188,7 +189,7 @@ func (s *serviceImpl) GetBank(ctx context.Context, userID, bankID string) (*enti
 	return &bank, nil
 }
 
-func (s *serviceImpl) UpdateBank(ctx context.Context, userID, bankID string, req UpdateBankReq) (*entity.ArticleBank, error) {
+func (s *serviceImpl) UpdateBank(ctx context.Context, userID, userRole, bankID string, req UpdateBankReq) (*entity.ArticleBank, error) {
 	var bank entity.ArticleBank
 	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -196,7 +197,7 @@ func (s *serviceImpl) UpdateBank(ctx context.Context, userID, bankID string, req
 		}
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
 	}
-	if bank.OwnerID != userID {
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return nil, gerror.NewCode(code.CodeForbidden, "access denied")
 	}
 	if req.Name != nil {
@@ -218,7 +219,7 @@ func (s *serviceImpl) UpdateBank(ctx context.Context, userID, bankID string, req
 	return &bank, nil
 }
 
-func (s *serviceImpl) DeleteBank(ctx context.Context, userID, bankID string) error {
+func (s *serviceImpl) DeleteBank(ctx context.Context, userID, userRole, bankID string) error {
 	var bank entity.ArticleBank
 	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -226,7 +227,7 @@ func (s *serviceImpl) DeleteBank(ctx context.Context, userID, bankID string) err
 		}
 		return gerror.NewCode(code.CodeInternalError, err.Error())
 	}
-	if bank.OwnerID != userID {
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return gerror.NewCode(code.CodeForbidden, "access denied")
 	}
 
@@ -277,7 +278,7 @@ func (s *serviceImpl) ListArticles(ctx context.Context, userID, bankID string, p
 	return &ArticleListResult{List: articles, Total: total, Page: page, PageSize: pageSize}, nil
 }
 
-func (s *serviceImpl) CreateArticle(ctx context.Context, userID, bankID string, req CreateArticleReq) (*entity.Article, error) {
+func (s *serviceImpl) CreateArticle(ctx context.Context, userID, userRole, bankID string, req CreateArticleReq) (*entity.Article, error) {
 	var bank entity.ArticleBank
 	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -285,7 +286,7 @@ func (s *serviceImpl) CreateArticle(ctx context.Context, userID, bankID string, 
 		}
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
 	}
-	if bank.OwnerID != userID {
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return nil, gerror.NewCode(code.CodeForbidden, "access denied")
 	}
 
@@ -365,7 +366,7 @@ func (s *serviceImpl) GetArticle(ctx context.Context, userID, articleID string) 
 	}, nil
 }
 
-func (s *serviceImpl) UpdateArticle(ctx context.Context, userID, articleID string, req UpdateArticleReq) (*entity.Article, error) {
+func (s *serviceImpl) UpdateArticle(ctx context.Context, userID, userRole, articleID string, req UpdateArticleReq) (*entity.Article, error) {
 	var article entity.Article
 	if err := s.db.WithContext(ctx).First(&article, "id = ?", articleID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -378,7 +379,7 @@ func (s *serviceImpl) UpdateArticle(ctx context.Context, userID, articleID strin
 	if err := s.db.WithContext(ctx).First(&bank, "id = ?", article.BankID).Error; err != nil {
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
 	}
-	if bank.OwnerID != userID {
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return nil, gerror.NewCode(code.CodeForbidden, "access denied")
 	}
 
@@ -412,7 +413,7 @@ func (s *serviceImpl) UpdateArticle(ctx context.Context, userID, articleID strin
 	return &article, nil
 }
 
-func (s *serviceImpl) DeleteArticle(ctx context.Context, userID, articleID string) error {
+func (s *serviceImpl) DeleteArticle(ctx context.Context, userID, userRole, articleID string) error {
 	var article entity.Article
 	if err := s.db.WithContext(ctx).First(&article, "id = ?", articleID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -425,7 +426,7 @@ func (s *serviceImpl) DeleteArticle(ctx context.Context, userID, articleID strin
 	if err := s.db.WithContext(ctx).First(&bank, "id = ?", article.BankID).Error; err != nil {
 		return gerror.NewCode(code.CodeInternalError, err.Error())
 	}
-	if bank.OwnerID != userID {
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return gerror.NewCode(code.CodeForbidden, "access denied")
 	}
 
@@ -522,7 +523,7 @@ func (s *serviceImpl) ListArticleSentences(ctx context.Context, userID, articleI
 	return sentences, nil
 }
 
-func (s *serviceImpl) UpdateArticleSentence(ctx context.Context, userID, sentenceID string, req UpdateArticleSentenceReq) (*entity.ArticleSentence, error) {
+func (s *serviceImpl) UpdateArticleSentence(ctx context.Context, userID, userRole, sentenceID string, req UpdateArticleSentenceReq) (*entity.ArticleSentence, error) {
 	var sent entity.ArticleSentence
 	if err := s.db.WithContext(ctx).First(&sent, "id = ?", sentenceID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -543,7 +544,7 @@ func (s *serviceImpl) UpdateArticleSentence(ctx context.Context, userID, sentenc
 	if err := s.db.WithContext(ctx).First(&bank, "id = ?", article.BankID).Error; err != nil {
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
 	}
-	if bank.OwnerID != userID {
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return nil, gerror.NewCode(code.CodeForbidden, "access denied")
 	}
 

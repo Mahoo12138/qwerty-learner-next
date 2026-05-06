@@ -11,6 +11,7 @@ type WordBank struct {
 	OwnerID     string         `gorm:"type:text;not null" json:"owner_id"`
 	Name        string         `gorm:"type:text;not null" json:"name"`
 	Description string         `gorm:"type:text" json:"description"`
+	Language    string         `gorm:"type:text;not null;default:en" json:"language"`
 	IsPublic    int            `gorm:"type:integer;not null;default:0" json:"is_public"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`

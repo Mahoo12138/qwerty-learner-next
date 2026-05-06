@@ -59,8 +59,9 @@ func (c *ControllerV1) GetArticleBank(ctx context.Context, req *v1.GetArticleBan
 func (c *ControllerV1) UpdateArticleBank(ctx context.Context, req *v1.UpdateArticleBankReq) (res *v1.UpdateArticleBankRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	bank, err := c.articleSvc.UpdateBank(ctx, userID, req.Id, articleService.UpdateBankReq{
+	bank, err := c.articleSvc.UpdateBank(ctx, userID, userRole, req.Id, articleService.UpdateBankReq{
 		Name:        req.Name,
 		Description: req.Description,
 		Language:    req.Language,
@@ -77,8 +78,9 @@ func (c *ControllerV1) UpdateArticleBank(ctx context.Context, req *v1.UpdateArti
 func (c *ControllerV1) DeleteArticleBank(ctx context.Context, req *v1.DeleteArticleBankReq) (res *v1.DeleteArticleBankRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	if err = c.articleSvc.DeleteBank(ctx, userID, req.Id); err != nil {
+	if err = c.articleSvc.DeleteBank(ctx, userID, userRole, req.Id); err != nil {
 		return nil, err
 	}
 
@@ -108,8 +110,9 @@ func (c *ControllerV1) ListArticles(ctx context.Context, req *v1.ListArticlesReq
 func (c *ControllerV1) CreateArticle(ctx context.Context, req *v1.CreateArticleReq) (res *v1.CreateArticleRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	article, err := c.articleSvc.CreateArticle(ctx, userID, req.Id, articleService.CreateArticleReq{
+	article, err := c.articleSvc.CreateArticle(ctx, userID, userRole, req.Id, articleService.CreateArticleReq{
 		Title:                req.Title,
 		Author:               req.Author,
 		SourceURL:            req.SourceURL,
@@ -142,8 +145,9 @@ func (c *ControllerV1) GetArticle(ctx context.Context, req *v1.GetArticleReq) (r
 func (c *ControllerV1) UpdateArticle(ctx context.Context, req *v1.UpdateArticleReq) (res *v1.UpdateArticleRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	article, err := c.articleSvc.UpdateArticle(ctx, userID, req.ArticleId, articleService.UpdateArticleReq{
+	article, err := c.articleSvc.UpdateArticle(ctx, userID, userRole, req.ArticleId, articleService.UpdateArticleReq{
 		Title:      req.Title,
 		Author:     req.Author,
 		SourceURL:  req.SourceURL,
@@ -161,8 +165,9 @@ func (c *ControllerV1) UpdateArticle(ctx context.Context, req *v1.UpdateArticleR
 func (c *ControllerV1) DeleteArticle(ctx context.Context, req *v1.DeleteArticleReq) (res *v1.DeleteArticleRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	if err = c.articleSvc.DeleteArticle(ctx, userID, req.ArticleId); err != nil {
+	if err = c.articleSvc.DeleteArticle(ctx, userID, userRole, req.ArticleId); err != nil {
 		return nil, err
 	}
 
@@ -186,8 +191,9 @@ func (c *ControllerV1) ListArticleSentences(ctx context.Context, req *v1.ListArt
 func (c *ControllerV1) UpdateArticleSentence(ctx context.Context, req *v1.UpdateArticleSentenceReq) (res *v1.UpdateArticleSentenceRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
+	userRole := r.GetCtxVar("role").String()
 
-	sentence, err := c.articleSvc.UpdateArticleSentence(ctx, userID, req.SentenceId, articleService.UpdateArticleSentenceReq{
+	sentence, err := c.articleSvc.UpdateArticleSentence(ctx, userID, userRole, req.SentenceId, articleService.UpdateArticleSentenceReq{
 		Translation:       req.Translation,
 		TranslationSource: req.TranslationSource,
 	})

@@ -15,6 +15,7 @@ import (
 
 	"taptype/internal/model/code"
 	"taptype/internal/model/entity"
+	"taptype/internal/service/contentaccess"
 )
 
 type Service interface {
@@ -22,29 +23,31 @@ type Service interface {
 	ListBanks(ctx context.Context, userID string) ([]entity.WordBank, error)
 	CreateBank(ctx context.Context, userID string, req CreateBankReq) (*entity.WordBank, error)
 	GetBank(ctx context.Context, userID, bankID string) (*entity.WordBank, error)
-	UpdateBank(ctx context.Context, userID, bankID string, req UpdateBankReq) (*entity.WordBank, error)
-	DeleteBank(ctx context.Context, userID, bankID string) error
+	UpdateBank(ctx context.Context, userID, userRole, bankID string, req UpdateBankReq) (*entity.WordBank, error)
+	DeleteBank(ctx context.Context, userID, userRole, bankID string) error
 
 	// Word CRUD
 	ListWords(ctx context.Context, userID, bankID string, page, pageSize int, search string, difficulty int) (*WordListResult, error)
-	CreateWord(ctx context.Context, userID, bankID string, req CreateWordReq) (*entity.Word, error)
-	UpdateWord(ctx context.Context, userID, wordID string, req UpdateWordReq) (*entity.Word, error)
-	DeleteWord(ctx context.Context, userID, wordID string) error
+	CreateWord(ctx context.Context, userID, userRole, bankID string, req CreateWordReq) (*entity.Word, error)
+	UpdateWord(ctx context.Context, userID, userRole, wordID string, req UpdateWordReq) (*entity.Word, error)
+	DeleteWord(ctx context.Context, userID, userRole, wordID string) error
 
 	// Import / Export
-	ImportWords(ctx context.Context, userID, bankID string, format string, data io.Reader) (int, error)
+	ImportWords(ctx context.Context, userID, userRole, bankID string, format string, data io.Reader) (int, error)
 	ExportWords(ctx context.Context, userID, bankID string, format string) ([]byte, error)
 }
 
 type CreateBankReq struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Language    string `json:"language"`
 	IsPublic    int    `json:"is_public"`
 }
 
 type UpdateBankReq struct {
 	Name        *string `json:"name"`
 	Description *string `json:"description"`
+	Language    *string `json:"language"`
 	IsPublic    *int    `json:"is_public"`
 }
 
@@ -102,11 +105,16 @@ func (s *serviceImpl) ListBanks(ctx context.Context, userID string) ([]entity.Wo
 
 func (s *serviceImpl) CreateBank(ctx context.Context, userID string, req CreateBankReq) (*entity.WordBank, error) {
 	now := time.Now()
+	language := req.Language
+	if language == "" {
+		language = "en"
+	}
 	bank := &entity.WordBank{
 		ID:          uuid.New().String(),
 		OwnerID:     userID,
 		Name:        req.Name,
 		Description: req.Description,
+		Language:    language,
 		IsPublic:    req.IsPublic,
 		CreatedAt:   now,
 		UpdatedAt:   now,
@@ -133,13 +141,16 @@ func (s *serviceImpl) GetBank(ctx context.Context, userID, bankID string) (*enti
 	return &bank, nil
 }
 
-func (s *serviceImpl) UpdateBank(ctx context.Context, userID, bankID string, req UpdateBankReq) (*entity.WordBank, error) {
+func (s *serviceImpl) UpdateBank(ctx context.Context, userID, userRole, bankID string, req UpdateBankReq) (*entity.WordBank, error) {
 	var bank entity.WordBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", bankID, userID).First(&bank).Error; err != nil {
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, gerror.NewCode(code.CodeNotFound, "word bank not found or no permission")
+			return nil, gerror.NewCode(code.CodeNotFound, "word bank not found")
 		}
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
+		return nil, gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 	updates := map[string]interface{}{"updated_at": time.Now()}
 	if req.Name != nil {
@@ -148,22 +159,49 @@ func (s *serviceImpl) UpdateBank(ctx context.Context, userID, bankID string, req
 	if req.Description != nil {
 		updates["description"] = *req.Description
 	}
+	if req.Language != nil {
+		language := *req.Language
+		if language == "" {
+			language = "en"
+		}
+		updates["language"] = language
+	}
 	if req.IsPublic != nil {
 		updates["is_public"] = *req.IsPublic
 	}
 	if err := s.db.WithContext(ctx).Model(&bank).Updates(updates).Error; err != nil {
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
 	}
+	if req.Name != nil {
+		bank.Name = *req.Name
+	}
+	if req.Description != nil {
+		bank.Description = *req.Description
+	}
+	if req.Language != nil {
+		bank.Language = updates["language"].(string)
+	}
+	if req.IsPublic != nil {
+		bank.IsPublic = *req.IsPublic
+	}
+	bank.UpdatedAt = updates["updated_at"].(time.Time)
 	return &bank, nil
 }
 
-func (s *serviceImpl) DeleteBank(ctx context.Context, userID, bankID string) error {
-	result := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", bankID, userID).Delete(&entity.WordBank{})
-	if result.Error != nil {
-		return gerror.NewCode(code.CodeInternalError, result.Error.Error())
+
+func (s *serviceImpl) DeleteBank(ctx context.Context, userID, userRole, bankID string) error {
+	var bank entity.WordBank
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return gerror.NewCode(code.CodeNotFound, "word bank not found")
+		}
+		return gerror.NewCode(code.CodeInternalError, err.Error())
 	}
-	if result.RowsAffected == 0 {
-		return gerror.NewCode(code.CodeNotFound, "word bank not found or no permission")
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
+		return gerror.NewCode(code.CodeForbidden, "no permission")
+	}
+	if err := s.db.WithContext(ctx).Delete(&bank).Error; err != nil {
+		return gerror.NewCode(code.CodeInternalError, err.Error())
 	}
 	return nil
 }
@@ -197,11 +235,16 @@ func (s *serviceImpl) ListWords(ctx context.Context, userID, bankID string, page
 	return &WordListResult{List: words, Total: total, Page: page, PageSize: pageSize}, nil
 }
 
-func (s *serviceImpl) CreateWord(ctx context.Context, userID, bankID string, req CreateWordReq) (*entity.Word, error) {
-	// Verify ownership
+func (s *serviceImpl) CreateWord(ctx context.Context, userID, userRole, bankID string, req CreateWordReq) (*entity.Word, error) {
 	var bank entity.WordBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", bankID, userID).First(&bank).Error; err != nil {
-		return nil, gerror.NewCode(code.CodeNotFound, "word bank not found or no permission")
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, gerror.NewCode(code.CodeNotFound, "word bank not found")
+		}
+		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
+		return nil, gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 	if req.Difficulty < 1 {
 		req.Difficulty = 1
@@ -228,14 +271,19 @@ func (s *serviceImpl) CreateWord(ctx context.Context, userID, bankID string, req
 	return w, nil
 }
 
-func (s *serviceImpl) UpdateWord(ctx context.Context, userID, wordID string, req UpdateWordReq) (*entity.Word, error) {
+func (s *serviceImpl) UpdateWord(ctx context.Context, userID, userRole, wordID string, req UpdateWordReq) (*entity.Word, error) {
 	var w entity.Word
 	if err := s.db.WithContext(ctx).First(&w, "id = ?", wordID).Error; err != nil {
 		return nil, gerror.NewCode(code.CodeNotFound, "word not found")
 	}
-	// Verify bank ownership
 	var bank entity.WordBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", w.BankID, userID).First(&bank).Error; err != nil {
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", w.BankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, gerror.NewCode(code.CodeNotFound, "word bank not found")
+		}
+		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return nil, gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 	updates := map[string]interface{}{"updated_at": time.Now()}
@@ -270,13 +318,19 @@ func (s *serviceImpl) UpdateWord(ctx context.Context, userID, wordID string, req
 	return &w, nil
 }
 
-func (s *serviceImpl) DeleteWord(ctx context.Context, userID, wordID string) error {
+func (s *serviceImpl) DeleteWord(ctx context.Context, userID, userRole, wordID string) error {
 	var w entity.Word
 	if err := s.db.WithContext(ctx).First(&w, "id = ?", wordID).Error; err != nil {
 		return gerror.NewCode(code.CodeNotFound, "word not found")
 	}
 	var bank entity.WordBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", w.BankID, userID).First(&bank).Error; err != nil {
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", w.BankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return gerror.NewCode(code.CodeNotFound, "word bank not found")
+		}
+		return gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 	return s.db.WithContext(ctx).Delete(&w).Error
@@ -293,11 +347,16 @@ type jsonWord struct {
 	Tags            string `json:"tags,omitempty"`
 }
 
-func (s *serviceImpl) ImportWords(ctx context.Context, userID, bankID string, format string, data io.Reader) (int, error) {
-	// Verify bank ownership
+func (s *serviceImpl) ImportWords(ctx context.Context, userID, userRole, bankID string, format string, data io.Reader) (int, error) {
 	var bank entity.WordBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", bankID, userID).First(&bank).Error; err != nil {
-		return 0, gerror.NewCode(code.CodeNotFound, "word bank not found or no permission")
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return 0, gerror.NewCode(code.CodeNotFound, "word bank not found")
+		}
+		return 0, gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
+		return 0, gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 
 	var items []jsonWord

@@ -193,7 +193,7 @@ func (s *serviceImpl) populateContent(ctx context.Context, records []entity.Erro
 
 	if len(wordIDs) > 0 {
 		var words []entity.Word
-		s.db.WithContext(ctx).Where("id IN ?", wordIDs).Find(&words)
+		s.db.WithContext(ctx).Unscoped().Where("id IN ?", wordIDs).Find(&words)
 		for _, w := range words {
 			contentMap[w.ID] = w.Content
 		}
@@ -207,7 +207,11 @@ func (s *serviceImpl) populateContent(ctx context.Context, records []entity.Erro
 	}
 
 	for i := range records {
-		records[i].Content = contentMap[records[i].ContentID]
+		if content, ok := contentMap[records[i].ContentID]; ok {
+			records[i].Content = content
+			continue
+		}
+		records[i].Content = missingContentPlaceholder(records[i].ContentType)
 	}
 }
 
@@ -226,7 +230,7 @@ func (s *serviceImpl) populateReviewItems(ctx context.Context, items []ReviewIte
 
 	if len(wordIDs) > 0 {
 		var words []entity.Word
-		s.db.WithContext(ctx).Where("id IN ?", wordIDs).Find(&words)
+		s.db.WithContext(ctx).Unscoped().Where("id IN ?", wordIDs).Find(&words)
 		for _, w := range words {
 			contentMap[w.ID] = w.Content
 		}
@@ -240,6 +244,21 @@ func (s *serviceImpl) populateReviewItems(ctx context.Context, items []ReviewIte
 	}
 
 	for i := range items {
-		items[i].Content = contentMap[items[i].ContentID]
+		if content, ok := contentMap[items[i].ContentID]; ok {
+			items[i].Content = content
+			continue
+		}
+		items[i].Content = missingContentPlaceholder(items[i].ContentType)
+	}
+}
+
+func missingContentPlaceholder(contentType string) string {
+	switch contentType {
+	case "word":
+		return "[deleted word]"
+	case "sentence":
+		return "[deleted sentence]"
+	default:
+		return "[content unavailable]"
 	}
 }

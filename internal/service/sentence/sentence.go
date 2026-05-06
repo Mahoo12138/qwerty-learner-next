@@ -15,6 +15,7 @@ import (
 
 	"taptype/internal/model/code"
 	"taptype/internal/model/entity"
+	"taptype/internal/service/contentaccess"
 )
 
 type Service interface {
@@ -22,17 +23,17 @@ type Service interface {
 	ListBanks(ctx context.Context, userID string) ([]entity.SentenceBank, error)
 	CreateBank(ctx context.Context, userID string, req CreateBankReq) (*entity.SentenceBank, error)
 	GetBank(ctx context.Context, userID, bankID string) (*entity.SentenceBank, error)
-	UpdateBank(ctx context.Context, userID, bankID string, req UpdateBankReq) (*entity.SentenceBank, error)
-	DeleteBank(ctx context.Context, userID, bankID string) error
+	UpdateBank(ctx context.Context, userID, userRole, bankID string, req UpdateBankReq) (*entity.SentenceBank, error)
+	DeleteBank(ctx context.Context, userID, userRole, bankID string) error
 
 	// Sentence CRUD
 	ListSentences(ctx context.Context, userID, bankID string, page, pageSize int, search string, difficulty int) (*SentenceListResult, error)
-	CreateSentence(ctx context.Context, userID, bankID string, req CreateSentenceReq) (*entity.Sentence, error)
-	UpdateSentence(ctx context.Context, userID, sentenceID string, req UpdateSentenceReq) (*entity.Sentence, error)
-	DeleteSentence(ctx context.Context, userID, sentenceID string) error
+	CreateSentence(ctx context.Context, userID, userRole, bankID string, req CreateSentenceReq) (*entity.Sentence, error)
+	UpdateSentence(ctx context.Context, userID, userRole, sentenceID string, req UpdateSentenceReq) (*entity.Sentence, error)
+	DeleteSentence(ctx context.Context, userID, userRole, sentenceID string) error
 
 	// Import / Export
-	ImportSentences(ctx context.Context, userID, bankID string, format string, data io.Reader) (int, error)
+	ImportSentences(ctx context.Context, userID, userRole, bankID string, format string, data io.Reader) (int, error)
 	ExportSentences(ctx context.Context, userID, bankID string, format string) ([]byte, error)
 }
 
@@ -132,13 +133,16 @@ func (s *serviceImpl) GetBank(ctx context.Context, userID, bankID string) (*enti
 	return &bank, nil
 }
 
-func (s *serviceImpl) UpdateBank(ctx context.Context, userID, bankID string, req UpdateBankReq) (*entity.SentenceBank, error) {
+func (s *serviceImpl) UpdateBank(ctx context.Context, userID, userRole, bankID string, req UpdateBankReq) (*entity.SentenceBank, error) {
 	var bank entity.SentenceBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", bankID, userID).First(&bank).Error; err != nil {
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, gerror.NewCode(code.CodeNotFound, "sentence bank not found or no permission")
+			return nil, gerror.NewCode(code.CodeNotFound, "sentence bank not found")
 		}
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
+		return nil, gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 	updates := map[string]interface{}{"updated_at": time.Now()}
 	if req.Name != nil {
@@ -156,13 +160,20 @@ func (s *serviceImpl) UpdateBank(ctx context.Context, userID, bankID string, req
 	return &bank, nil
 }
 
-func (s *serviceImpl) DeleteBank(ctx context.Context, userID, bankID string) error {
-	result := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", bankID, userID).Delete(&entity.SentenceBank{})
-	if result.Error != nil {
-		return gerror.NewCode(code.CodeInternalError, result.Error.Error())
+
+func (s *serviceImpl) DeleteBank(ctx context.Context, userID, userRole, bankID string) error {
+	var bank entity.SentenceBank
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return gerror.NewCode(code.CodeNotFound, "sentence bank not found")
+		}
+		return gerror.NewCode(code.CodeInternalError, err.Error())
 	}
-	if result.RowsAffected == 0 {
-		return gerror.NewCode(code.CodeNotFound, "sentence bank not found or no permission")
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
+		return gerror.NewCode(code.CodeForbidden, "no permission")
+	}
+	if err := s.db.WithContext(ctx).Delete(&bank).Error; err != nil {
+		return gerror.NewCode(code.CodeInternalError, err.Error())
 	}
 	return nil
 }
@@ -195,10 +206,16 @@ func (s *serviceImpl) ListSentences(ctx context.Context, userID, bankID string, 
 	return &SentenceListResult{List: sentences, Total: total, Page: page, PageSize: pageSize}, nil
 }
 
-func (s *serviceImpl) CreateSentence(ctx context.Context, userID, bankID string, req CreateSentenceReq) (*entity.Sentence, error) {
+func (s *serviceImpl) CreateSentence(ctx context.Context, userID, userRole, bankID string, req CreateSentenceReq) (*entity.Sentence, error) {
 	var bank entity.SentenceBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", bankID, userID).First(&bank).Error; err != nil {
-		return nil, gerror.NewCode(code.CodeNotFound, "sentence bank not found or no permission")
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, gerror.NewCode(code.CodeNotFound, "sentence bank not found")
+		}
+		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
+		return nil, gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 	if req.Difficulty < 1 {
 		req.Difficulty = 1
@@ -229,13 +246,19 @@ func (s *serviceImpl) CreateSentence(ctx context.Context, userID, bankID string,
 	return sent, nil
 }
 
-func (s *serviceImpl) UpdateSentence(ctx context.Context, userID, sentenceID string, req UpdateSentenceReq) (*entity.Sentence, error) {
+func (s *serviceImpl) UpdateSentence(ctx context.Context, userID, userRole, sentenceID string, req UpdateSentenceReq) (*entity.Sentence, error) {
 	var sent entity.Sentence
 	if err := s.db.WithContext(ctx).First(&sent, "id = ?", sentenceID).Error; err != nil {
 		return nil, gerror.NewCode(code.CodeNotFound, "sentence not found")
 	}
 	var bank entity.SentenceBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", sent.BankID, userID).First(&bank).Error; err != nil {
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", sent.BankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, gerror.NewCode(code.CodeNotFound, "sentence bank not found")
+		}
+		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return nil, gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 	updates := map[string]interface{}{"updated_at": time.Now()}
@@ -273,13 +296,19 @@ func (s *serviceImpl) UpdateSentence(ctx context.Context, userID, sentenceID str
 	return &sent, nil
 }
 
-func (s *serviceImpl) DeleteSentence(ctx context.Context, userID, sentenceID string) error {
+func (s *serviceImpl) DeleteSentence(ctx context.Context, userID, userRole, sentenceID string) error {
 	var sent entity.Sentence
 	if err := s.db.WithContext(ctx).First(&sent, "id = ?", sentenceID).Error; err != nil {
 		return gerror.NewCode(code.CodeNotFound, "sentence not found")
 	}
 	var bank entity.SentenceBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", sent.BankID, userID).First(&bank).Error; err != nil {
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", sent.BankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return gerror.NewCode(code.CodeNotFound, "sentence bank not found")
+		}
+		return gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
 		return gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 	return s.db.WithContext(ctx).Delete(&sent).Error
@@ -296,10 +325,16 @@ type jsonSentence struct {
 	Tags              string `json:"tags,omitempty"`
 }
 
-func (s *serviceImpl) ImportSentences(ctx context.Context, userID, bankID string, format string, data io.Reader) (int, error) {
+func (s *serviceImpl) ImportSentences(ctx context.Context, userID, userRole, bankID string, format string, data io.Reader) (int, error) {
 	var bank entity.SentenceBank
-	if err := s.db.WithContext(ctx).Where("id = ? AND owner_id = ?", bankID, userID).First(&bank).Error; err != nil {
-		return 0, gerror.NewCode(code.CodeNotFound, "sentence bank not found or no permission")
+	if err := s.db.WithContext(ctx).First(&bank, "id = ?", bankID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return 0, gerror.NewCode(code.CodeNotFound, "sentence bank not found")
+		}
+		return 0, gerror.NewCode(code.CodeInternalError, err.Error())
+	}
+	if !contentaccess.CanManageLibrary(bank.OwnerID, userID, userRole) {
+		return 0, gerror.NewCode(code.CodeForbidden, "no permission")
 	}
 
 	var items []jsonSentence

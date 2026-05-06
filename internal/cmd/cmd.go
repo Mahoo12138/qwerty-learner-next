@@ -20,6 +20,7 @@ import (
 	dailyCtrl "taptype/internal/controller/daily"
 	errrecordCtrl "taptype/internal/controller/errrecord"
 	goalCtrl "taptype/internal/controller/goal"
+	libraryCtrl "taptype/internal/controller/library"
 	mediaCtrl "taptype/internal/controller/media"
 	openapiCtrl "taptype/internal/controller/openapi"
 	practiceCtrl "taptype/internal/controller/practice"
@@ -34,6 +35,7 @@ import (
 	dailyService "taptype/internal/service/daily"
 	errorsService "taptype/internal/service/errors"
 	goalService "taptype/internal/service/goal"
+	libraryService "taptype/internal/service/library"
 	mediaService "taptype/internal/service/media"
 	openapiService "taptype/internal/service/openapi"
 	practiceService "taptype/internal/service/practice"
@@ -69,6 +71,7 @@ var (
 			dailySvc := dailyService.NewService(gormDB)
 			achievementSvc := achievementService.NewService(gormDB)
 			goalSvc := goalService.NewService(gormDB)
+			librarySvc := libraryService.NewService(gormDB)
 			practiceSvc := practiceService.NewService(gormDB, errorsSvc, dailySvc, achievementSvc, goalSvc)
 			wordSvc := wordService.NewService(gormDB)
 			sentenceSvc := sentenceService.NewService(gormDB)
@@ -128,6 +131,7 @@ var (
 						analysisCtrl.NewV1(analysisSvc),
 						errrecordCtrl.NewV1(errorsSvc),
 						goalCtrl.NewV1(goalSvc),
+						libraryCtrl.NewV1(librarySvc),
 						dailyCtrl.NewV1(dailySvc),
 						achievementCtrl.NewV1(achievementSvc),
 						mediaCtrl.NewV1(mediaSvc),
