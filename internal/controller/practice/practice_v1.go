@@ -51,6 +51,29 @@ func (c *ControllerV1) ListSessions(ctx context.Context, req *v1.ListSessionsReq
 	}, nil
 }
 
+func (c *ControllerV1) ListWordMasteries(ctx context.Context, req *v1.ListWordMasteriesReq) (res *v1.ListWordMasteriesRes, err error) {
+	r := g.RequestFromCtx(ctx)
+	userID := r.GetCtxVar("user_id").String()
+
+	result, err := c.practiceSvc.ListWordMasteries(ctx, userID, practiceService.WordMasteryListRequest{
+		Status:   req.Status,
+		Search:   req.Search,
+		Page:     req.Page,
+		PageSize: req.PageSize,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.ListWordMasteriesRes{
+		Summary:  result.Summary,
+		List:     result.List,
+		Total:    result.Total,
+		Page:     result.Page,
+		PageSize: result.PageSize,
+	}, nil
+}
+
 func (c *ControllerV1) GetSession(ctx context.Context, req *v1.GetSessionReq) (res *v1.GetSessionRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
@@ -121,4 +144,28 @@ func (c *ControllerV1) CompleteSession(ctx context.Context, req *v1.CompleteSess
 		Result:          result.Result,
 		NewAchievements: result.NewAchievements,
 	}, nil
+}
+
+func (c *ControllerV1) UpdateWordMastery(ctx context.Context, req *v1.UpdateWordMasteryReq) (res *v1.UpdateWordMasteryRes, err error) {
+	r := g.RequestFromCtx(ctx)
+	userID := r.GetCtxVar("user_id").String()
+
+	item, err := c.practiceSvc.UpdateWordMasteryState(ctx, userID, req.Id, req.State)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.UpdateWordMasteryRes{Item: item}, nil
+}
+
+func (c *ControllerV1) MarkWordMastered(ctx context.Context, req *v1.MarkWordMasteredReq) (res *v1.MarkWordMasteredRes, err error) {
+	r := g.RequestFromCtx(ctx)
+	userID := r.GetCtxVar("user_id").String()
+
+	item, err := c.practiceSvc.MarkWordMastered(ctx, userID, req.WordID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.MarkWordMasteredRes{Item: item}, nil
 }

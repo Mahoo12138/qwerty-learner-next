@@ -29,6 +29,21 @@ type ListSessionsRes struct {
 	PageSize int         `json:"page_size"`
 }
 
+type ListWordMasteriesReq struct {
+	g.Meta   `path:"/practice/word-masteries" method:"get" tags:"Practice" summary:"List tracked word masteries"`
+	Status   string `json:"status" in:"query"`
+	Search   string `json:"search" in:"query"`
+	Page     int    `json:"page" in:"query" d:"1"`
+	PageSize int    `json:"page_size" in:"query" d:"20"`
+}
+type ListWordMasteriesRes struct {
+	Summary  interface{} `json:"summary"`
+	List     interface{} `json:"list"`
+	Total    int64       `json:"total"`
+	Page     int         `json:"page"`
+	PageSize int         `json:"page_size"`
+}
+
 type GetSessionReq struct {
 	g.Meta `path:"/practice/sessions/{id}" method:"get" tags:"Practice" summary:"Get practice session detail"`
 	Id     string `json:"id" in:"path"`
@@ -64,4 +79,21 @@ type CompleteSessionReq struct {
 type CompleteSessionRes struct {
 	Result          interface{} `json:"result"`
 	NewAchievements interface{} `json:"new_achievements"`
+}
+
+type UpdateWordMasteryReq struct {
+	g.Meta `path:"/practice/word-masteries/{id}" method:"patch" tags:"Practice" summary:"Update tracked word mastery state"`
+	Id     string `json:"id" in:"path"`
+	State  string `json:"state" v:"required#state is required"`
+}
+type UpdateWordMasteryRes struct {
+	Item interface{} `json:"item"`
+}
+
+type MarkWordMasteredReq struct {
+	g.Meta `path:"/practice/word-masteries/mark-mastered" method:"post" tags:"Practice" summary:"Mark a word as mastered from practice"`
+	WordID string `json:"word_id" v:"required#word_id is required"`
+}
+type MarkWordMasteredRes struct {
+	Item interface{} `json:"item"`
 }

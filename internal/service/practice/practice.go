@@ -23,6 +23,8 @@ type Service interface {
 	CreateSession(ctx context.Context, req CreateSessionRequest) (*SessionWithContent, error)
 	// ListSessions returns paginated practice sessions for a user.
 	ListSessions(ctx context.Context, userID string, page, pageSize int) (*SessionListResult, error)
+	// ListWordMasteries returns the user's tracked vocabulary with status summary.
+	ListWordMasteries(ctx context.Context, userID string, req WordMasteryListRequest) (*WordMasteryListResult, error)
 	// GetSession returns a single session with its result and keystroke stats.
 	GetSession(ctx context.Context, userID, sessionID string) (*SessionDetail, error)
 	// DiscardSession removes an unfinished practice session and its related temporary data.
@@ -30,6 +32,10 @@ type Service interface {
 	// CompletePractice records a practice result, triggers SM-2 updates for errors,
 	// updates the daily streak record, and detects newly unlocked achievements.
 	CompletePractice(ctx context.Context, req CompleteRequest) (*CompleteResult, error)
+	// UpdateWordMasteryState manually updates an existing tracked word state.
+	UpdateWordMasteryState(ctx context.Context, userID, masteryID, state string) (*WordMasteryItem, error)
+	// MarkWordMastered marks a word from an active practice context as mastered.
+	MarkWordMastered(ctx context.Context, userID, wordID string) (*WordMasteryItem, error)
 }
 
 type CreateSessionRequest struct {
@@ -56,6 +62,40 @@ type SessionListResult struct {
 type SessionListItem struct {
 	entity.PracticeSession
 	Result *entity.PracticeResult `json:"result,omitempty"`
+}
+
+type WordMasteryListRequest struct {
+	Status   string `json:"status"`
+	Search   string `json:"search"`
+	Page     int    `json:"page"`
+	PageSize int    `json:"page_size"`
+}
+
+type WordMasterySummary struct {
+	TrackedCount     int64 `json:"tracked_count"`
+	PreMasteredCount int64 `json:"pre_mastered_count"`
+	MasteredCount    int64 `json:"mastered_count"`
+}
+
+type WordMasteryItem struct {
+	ID              string     `json:"id"`
+	Lang            string     `json:"lang"`
+	WordNorm        string     `json:"word_norm"`
+	Status          string     `json:"status"`
+	MasteryLevel    int        `json:"mastery_level"`
+	TimesSeen       int        `json:"times_seen"`
+	NextReviewAt    *time.Time `json:"next_review_at"`
+	LastPracticedAt *time.Time `json:"last_practiced_at"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
+type WordMasteryListResult struct {
+	Summary  WordMasterySummary `json:"summary"`
+	List     []WordMasteryItem  `json:"list"`
+	Total    int64              `json:"total"`
+	Page     int                `json:"page"`
+	PageSize int                `json:"page_size"`
 }
 
 type SessionDetail struct {

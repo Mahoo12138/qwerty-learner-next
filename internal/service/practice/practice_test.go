@@ -190,6 +190,116 @@ func TestCompletePracticeMergesMasteryByNormalizedWord(t *testing.T) {
 	}
 }
 
+func TestListWordMasteriesReturnsSummaryAndFilteredRows(t *testing.T) {
+	svc, db, ctx := newTestPracticeService(t)
+	now := time.Now()
+
+	seed := []entity.UserWordMastery{
+		{ID: "m-1", UserID: "user-1", Lang: "en", WordNorm: "alpha", MasteryLevel: 2, TimesSeen: 2, CreatedAt: now, UpdatedAt: now},
+		{ID: "m-2", UserID: "user-1", Lang: "en", WordNorm: "bravo", MasteryLevel: 3, TimesSeen: 4, CreatedAt: now, UpdatedAt: now},
+		{ID: "m-3", UserID: "user-1", Lang: "en", WordNorm: "charlie", MasteryLevel: 5, TimesSeen: 6, CreatedAt: now, UpdatedAt: now},
+		{ID: "m-4", UserID: "user-2", Lang: "en", WordNorm: "delta", MasteryLevel: 5, TimesSeen: 8, CreatedAt: now, UpdatedAt: now},
+	}
+	if err := db.Create(&seed).Error; err != nil {
+		t.Fatalf("seed masteries failed: %v", err)
+	}
+
+	result, err := svc.ListWordMasteries(ctx, "user-1", WordMasteryListRequest{Status: "pre_mastered", Page: 1, PageSize: 10})
+	if err != nil {
+		t.Fatalf("ListWordMasteries failed: %v", err)
+	}
+
+	if result.Summary.TrackedCount != 3 {
+		t.Fatalf("expected tracked_count 3, got %d", result.Summary.TrackedCount)
+	}
+	if result.Summary.PreMasteredCount != 1 {
+		t.Fatalf("expected pre_mastered_count 1, got %d", result.Summary.PreMasteredCount)
+	}
+	if result.Summary.MasteredCount != 1 {
+		t.Fatalf("expected mastered_count 1, got %d", result.Summary.MasteredCount)
+	}
+	if result.Total != 1 {
+		t.Fatalf("expected total 1, got %d", result.Total)
+	}
+	if len(result.List) != 1 {
+		t.Fatalf("expected 1 filtered item, got %d", len(result.List))
+	}
+	if result.List[0].WordNorm != "bravo" {
+		t.Fatalf("expected filtered word bravo, got %q", result.List[0].WordNorm)
+	}
+	if result.List[0].Status != wordMasteryStatusPreMastered {
+		t.Fatalf("expected pre_mastered status, got %q", result.List[0].Status)
+	}
+}
+
+func TestUpdateWordMasteryStatePromotesToMastered(t *testing.T) {
+	svc, db, ctx := newTestPracticeService(t)
+	now := time.Now()
+
+	mastery := entity.UserWordMastery{ID: "m-1", UserID: "user-1", Lang: "en", WordNorm: "focus", MasteryLevel: 3, TimesSeen: 4, CreatedAt: now, UpdatedAt: now}
+	if err := db.Create(&mastery).Error; err != nil {
+		t.Fatalf("seed mastery failed: %v", err)
+	}
+
+	item, err := svc.UpdateWordMasteryState(ctx, "user-1", mastery.ID, "mastered")
+	if err != nil {
+		t.Fatalf("UpdateWordMasteryState failed: %v", err)
+	}
+	if item.Status != wordMasteryStatusMastered {
+		t.Fatalf("expected mastered status, got %q", item.Status)
+	}
+	if item.MasteryLevel != masteredThreshold {
+		t.Fatalf("expected mastery level %d, got %d", masteredThreshold, item.MasteryLevel)
+	}
+
+	var saved entity.UserWordMastery
+	if err := db.First(&saved, "id = ?", mastery.ID).Error; err != nil {
+		t.Fatalf("reload mastery failed: %v", err)
+	}
+	if saved.MasteryLevel != masteredThreshold {
+		t.Fatalf("expected saved mastery level %d, got %d", masteredThreshold, saved.MasteryLevel)
+	}
+}
+
+func TestMarkWordMasteredCreatesRowForAccessibleWord(t *testing.T) {
+	svc, db, ctx := newTestPracticeService(t)
+	now := time.Now()
+
+	bank := entity.WordBank{ID: "bank-1", OwnerID: "user-1", Name: "Words", Language: "en", IsPublic: 0, CreatedAt: now, UpdatedAt: now}
+	word := entity.Word{ID: "word-1", BankID: bank.ID, Content: "  Memory  ", Difficulty: 1, CreatedAt: now, UpdatedAt: now}
+	if err := db.Create(&bank).Error; err != nil {
+		t.Fatalf("seed bank failed: %v", err)
+	}
+	if err := db.Create(&word).Error; err != nil {
+		t.Fatalf("seed word failed: %v", err)
+	}
+
+	item, err := svc.MarkWordMastered(ctx, "user-1", word.ID)
+	if err != nil {
+		t.Fatalf("MarkWordMastered failed: %v", err)
+	}
+	if item.WordNorm != "memory" {
+		t.Fatalf("expected normalized word memory, got %q", item.WordNorm)
+	}
+	if item.Status != wordMasteryStatusMastered {
+		t.Fatalf("expected mastered status, got %q", item.Status)
+	}
+	if item.MasteryLevel != masteredThreshold {
+		t.Fatalf("expected mastery level %d, got %d", masteredThreshold, item.MasteryLevel)
+	}
+
+	var saved []entity.UserWordMastery
+	if err := db.Find(&saved, "user_id = ?", "user-1").Error; err != nil {
+		t.Fatalf("load saved masteries failed: %v", err)
+	}
+	if len(saved) != 1 {
+		t.Fatalf("expected 1 mastery row, got %d", len(saved))
+	}
+	if saved[0].TimesSeen != 1 {
+		t.Fatalf("expected times_seen 1, got %d", saved[0].TimesSeen)
+	}
+}
+
 func TestGetSessionIncludesSoftDeletedWordContent(t *testing.T) {
 	svc, db, ctx := newTestPracticeService(t)
 	now := time.Now()
