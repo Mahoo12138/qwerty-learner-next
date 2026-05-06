@@ -22,6 +22,7 @@ import { useSentenceBanks } from '@/api/sentenceBanks'
 import { useSystemSoundCatalog, useUserKeySounds } from '@/api/media'
 import { useCompletePractice, useCreateSession, useDiscardSession, useSession, useSessions } from '@/api/practice'
 import { useSaveSetting, useUserSettings } from '@/api/settings'
+import { useMarkWordMastered } from '@/api/vocabulary'
 import { useWordBanks } from '@/api/wordBanks'
 import { AchievementToast } from '@/components/AchievementToast'
 import { Badge } from '@/components/core/Badge'
@@ -66,6 +67,7 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
   const [submitted, setSubmitted] = useState(false)
   const [createError, setCreateError] = useState('')
   const [submitError, setSubmitError] = useState('')
+  const [masteryMessage, setMasteryMessage] = useState('')
   const [discardingSessionId, setDiscardingSessionId] = useState<string | null>(null)
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([])
 
@@ -83,6 +85,7 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
   const createSession = useCreateSession()
   const completePractice = useCompletePractice()
   const discardSession = useDiscardSession()
+  const markWordMastered = useMarkWordMastered()
   const { data: soundCatalog } = useSystemSoundCatalog()
   const { data: userKeySounds = [] } = useUserKeySounds(user?.id)
   const saveSetting = useSaveSetting()
@@ -302,11 +305,16 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
     : null
   const availableSourceCount = sourceType === 'word_bank' ? wordBanks.length : sentenceBanks.length
 
+  useEffect(() => {
+    setMasteryMessage('')
+  }, [activeSession?.session.id, currentWordInfo?.id])
+
   const startPractice = () => {
     if (!sourceId) return
     setSubmitted(false)
     setCreateError('')
     setSubmitError('')
+    setMasteryMessage('')
 
     createSession.mutate(
       {
@@ -364,6 +372,7 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
     setSubmitted(false)
     setCreateError('')
     setSubmitError('')
+    setMasteryMessage('')
     setNewAchievements([])
     reset()
     clearResumeSearch()
@@ -406,6 +415,20 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
   const updateEnumSetting = useCallback((key: string, value: string) => {
     saveSetting.mutate({ key, value })
   }, [saveSetting])
+
+  const markCurrentWordAsMastered = useCallback(() => {
+    if (!currentWordInfo) return
+
+    setMasteryMessage('')
+    markWordMastered.mutate(currentWordInfo.id, {
+      onSuccess: () => {
+        setMasteryMessage(`已将 ${currentWordInfo.content.trim() || currentWordInfo.content} 标记为掌握。`)
+      },
+      onError: (error) => {
+        setMasteryMessage(error instanceof Error ? error.message : '标记掌握失败，请重试')
+      },
+    })
+  }, [currentWordInfo, markWordMastered])
 
   return (
     <div className={css.pageRoot}>
@@ -629,10 +652,29 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
                   />
 
                   {currentWordInfo && (
-                    <div className={css.wordInfoGrid}>
-                      <InfoBlock label="音标" value={currentWordInfo.pronunciation || '暂无'} />
-                      <InfoBlock label="释义" value={currentWordInfo.definition || '暂无'} />
-                    </div>
+                    <>
+                      <div className={css.wordInfoGrid}>
+                        <InfoBlock label="音标" value={currentWordInfo.pronunciation || '暂无'} />
+                        <InfoBlock label="释义" value={currentWordInfo.definition || '暂无'} />
+                      </div>
+                      <div className={css.wordActionRow}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={markCurrentWordAsMastered}
+                          disabled={markWordMastered.isPending}
+                        >
+                          <CheckCircle2 />
+                          {markWordMastered.isPending ? '标记中...' : '标记当前词已掌握'}
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => navigate({ to: '/vocabulary' })}>
+                          <Eye />
+                          查看词汇量
+                        </Button>
+                        {masteryMessage && <span className={css.inlineNotice}>{masteryMessage}</span>}
+                      </div>
+                    </>
                   )}
                 </section>
               )}

@@ -363,6 +363,19 @@ export const wordInfoGrid = style({
   },
 })
 
+export const wordActionRow = style({
+  marginTop: vars.space.md,
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: vars.space.sm,
+  alignItems: 'center',
+})
+
+export const inlineNotice = style({
+  fontSize: vars.fontSize.sm,
+  color: vars.color.text.secondary,
+})
+
 export const infoBlock = style({
   borderRadius: vars.radius.md,
   border: `1px solid ${vars.color.border.soft}`,

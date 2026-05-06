@@ -36,7 +36,7 @@ export function StageRail({
 }) {
   return (
     <nav className={css.stageRail} aria-label="内容来源">
-      {CONTENT_STAGES.map(({ key, label, description, icon: Icon }) => (
+      {CONTENT_STAGES.map(({ key, label, icon: Icon }) => (
         <button
           key={key}
           type="button"

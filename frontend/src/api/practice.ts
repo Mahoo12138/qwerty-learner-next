@@ -48,6 +48,7 @@ export function useCompletePractice() {
       qc.invalidateQueries({ queryKey: ['daily'] })
       qc.invalidateQueries({ queryKey: ['achievements'] })
       qc.invalidateQueries({ queryKey: ['goals'] })
+      qc.invalidateQueries({ queryKey: ['word-masteries'] })
     },
   })
 }
