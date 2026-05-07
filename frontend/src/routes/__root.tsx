@@ -17,6 +17,7 @@ import {
   History,
   Target,
   Trophy,
+  Award,
   Settings,
   Sun,
   Moon,
@@ -286,7 +287,8 @@ function DesktopSidebar({
         <NavLink to="/history" label="练习记录" icon={History} onNav={onNav} collapsed={collapsed} />
         <NavLink to="/errors" label="错题集" icon={AlertCircle} onNav={onNav} collapsed={collapsed} />
         <NavLink to="/goals" label="每日目标" icon={Target} onNav={onNav} collapsed={collapsed} />
-        <NavLink to="/achievements" label="成就" icon={Trophy} onNav={onNav} collapsed={collapsed} />
+        <NavLink to="/leaderboard" label="排行榜" icon={Trophy} onNav={onNav} collapsed={collapsed} />
+        <NavLink to="/achievements" label="成就" icon={Award} onNav={onNav} collapsed={collapsed} />
         <NavLink to="/settings" label="设置" icon={Settings} onNav={onNav} collapsed={collapsed} />
       </nav>
 
@@ -355,7 +357,8 @@ function MobileSidebar({
         <NavLink to="/analysis" label="数据分析" icon={BarChart3} onNav={onNav} />
         <NavLink to="/errors" label="错题集" icon={AlertCircle} onNav={onNav} />
         <NavLink to="/goals" label="每日目标" icon={Target} onNav={onNav} />
-        <NavLink to="/achievements" label="成就" icon={Trophy} onNav={onNav} />
+        <NavLink to="/leaderboard" label="排行榜" icon={Trophy} onNav={onNav} />
+        <NavLink to="/achievements" label="成就" icon={Award} onNav={onNav} />
         <NavLink to="/settings" label="设置" icon={Settings} onNav={onNav} />
       </nav>
       <Separator />

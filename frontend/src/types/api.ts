@@ -79,6 +79,52 @@ export interface AnalysisSummary {
   review_due_count: number
 }
 
+export type LeaderboardMetricKey =
+  | 'best_wpm'
+  | 'avg_wpm'
+  | 'total_chars'
+  | 'total_duration_ms'
+  | 'current_streak'
+  | 'longest_streak'
+  | 'mastered_words'
+  | 'wordbanks_owned'
+  | 'achievements_unlocked'
+
+export type LeaderboardPeriod = 'all' | 'month' | 'week' | 'day'
+
+export interface LeaderboardMetricDefinition {
+  key: LeaderboardMetricKey
+  label: string
+  description?: string
+  unit?: string
+  supports_period: boolean
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  user_id: string
+  nickname: string
+  avatar_media_id?: string | null
+  value: number
+  updated_at?: string | null
+}
+
+export interface LeaderboardResponse {
+  metric: LeaderboardMetricKey
+  period: LeaderboardPeriod
+  list: LeaderboardEntry[]
+  my_rank?: LeaderboardEntry | null
+  total: number
+}
+
+export interface LeaderboardMyRank {
+  metric: LeaderboardMetricKey
+  period: LeaderboardPeriod
+  rank: number | null
+  total: number
+  entry: LeaderboardEntry | null
+}
+
 export interface ErrorRecord {
   id: string
   user_id: string
@@ -257,6 +303,35 @@ export interface Achievement {
 export interface CompleteResult {
   result: PracticeResult
   new_achievements: Achievement[]
+}
+
+export type WordMasteryStatus = 'learning' | 'pre_mastered' | 'mastered'
+
+export interface WordMasterySummary {
+  tracked_count: number
+  pre_mastered_count: number
+  mastered_count: number
+}
+
+export interface WordMasteryItem {
+  id: string
+  lang: string
+  word_norm: string
+  status: WordMasteryStatus
+  mastery_level: number
+  times_seen: number
+  next_review_at: string | null
+  last_practiced_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface WordMasteryListResponse {
+  summary: WordMasterySummary
+  list: WordMasteryItem[]
+  total: number
+  page: number
+  page_size: number
 }
 
 // --- Settings types ---

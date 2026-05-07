@@ -2,8 +2,8 @@ import { style, keyframes, globalStyle } from "@vanilla-extract/css";
 import { vars } from "./theme.css";
 
 const popIn = keyframes({
-  from: { opacity: 0, scale: "0.97", translateY: "-4px" },
-  to: { opacity: 1, scale: "1", translateY: "0" },
+  from: { opacity: 0, transform: 'translateY(-4px) scale(0.97)' },
+  to: { opacity: 1, transform: 'translateY(0) scale(1)' },
 });
 
 export const selectTrigger = style({

@@ -200,6 +200,11 @@ html {
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+@keyframes key-float {
+  0%, 100% { translate: 0 0; }
+  50%       { translate: 0 -10px; }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -209,5 +214,11 @@ html {
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .animate-key-float {
+    animation: key-float 4s ease-in-out infinite;
   }
 }

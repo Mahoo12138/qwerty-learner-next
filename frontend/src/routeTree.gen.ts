@@ -9,12 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VocabularyRouteImport } from './routes/vocabulary'
 import { Route as SystemErrorRouteImport } from './routes/system-error'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RegisterAdminRouteImport } from './routes/register-admin'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PracticeRouteImport } from './routes/practice'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ErrorsRouteImport } from './routes/errors'
@@ -25,6 +27,11 @@ import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HistorySessionIdRouteImport } from './routes/history.$sessionId'
 
+const VocabularyRoute = VocabularyRouteImport.update({
+  id: '/vocabulary',
+  path: '/vocabulary',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SystemErrorRoute = SystemErrorRouteImport.update({
   id: '/system-error',
   path: '/system-error',
@@ -53,6 +60,11 @@ const PracticeRoute = PracticeRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -110,12 +122,14 @@ export interface FileRoutesByFullPath {
   '/errors': typeof ErrorsRoute
   '/goals': typeof GoalsRoute
   '/history': typeof HistoryRouteWithChildren
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/practice': typeof PracticeRoute
   '/register': typeof RegisterRoute
   '/register-admin': typeof RegisterAdminRoute
   '/settings': typeof SettingsRoute
   '/system-error': typeof SystemErrorRoute
+  '/vocabulary': typeof VocabularyRoute
   '/history/$sessionId': typeof HistorySessionIdRoute
 }
 export interface FileRoutesByTo {
@@ -127,12 +141,14 @@ export interface FileRoutesByTo {
   '/errors': typeof ErrorsRoute
   '/goals': typeof GoalsRoute
   '/history': typeof HistoryRouteWithChildren
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/practice': typeof PracticeRoute
   '/register': typeof RegisterRoute
   '/register-admin': typeof RegisterAdminRoute
   '/settings': typeof SettingsRoute
   '/system-error': typeof SystemErrorRoute
+  '/vocabulary': typeof VocabularyRoute
   '/history/$sessionId': typeof HistorySessionIdRoute
 }
 export interface FileRoutesById {
@@ -145,12 +161,14 @@ export interface FileRoutesById {
   '/errors': typeof ErrorsRoute
   '/goals': typeof GoalsRoute
   '/history': typeof HistoryRouteWithChildren
+  '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/practice': typeof PracticeRoute
   '/register': typeof RegisterRoute
   '/register-admin': typeof RegisterAdminRoute
   '/settings': typeof SettingsRoute
   '/system-error': typeof SystemErrorRoute
+  '/vocabulary': typeof VocabularyRoute
   '/history/$sessionId': typeof HistorySessionIdRoute
 }
 export interface FileRouteTypes {
@@ -164,12 +182,14 @@ export interface FileRouteTypes {
     | '/errors'
     | '/goals'
     | '/history'
+    | '/leaderboard'
     | '/login'
     | '/practice'
     | '/register'
     | '/register-admin'
     | '/settings'
     | '/system-error'
+    | '/vocabulary'
     | '/history/$sessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -181,12 +201,14 @@ export interface FileRouteTypes {
     | '/errors'
     | '/goals'
     | '/history'
+    | '/leaderboard'
     | '/login'
     | '/practice'
     | '/register'
     | '/register-admin'
     | '/settings'
     | '/system-error'
+    | '/vocabulary'
     | '/history/$sessionId'
   id:
     | '__root__'
@@ -198,12 +220,14 @@ export interface FileRouteTypes {
     | '/errors'
     | '/goals'
     | '/history'
+    | '/leaderboard'
     | '/login'
     | '/practice'
     | '/register'
     | '/register-admin'
     | '/settings'
     | '/system-error'
+    | '/vocabulary'
     | '/history/$sessionId'
   fileRoutesById: FileRoutesById
 }
@@ -216,16 +240,25 @@ export interface RootRouteChildren {
   ErrorsRoute: typeof ErrorsRoute
   GoalsRoute: typeof GoalsRoute
   HistoryRoute: typeof HistoryRouteWithChildren
+  LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   PracticeRoute: typeof PracticeRoute
   RegisterRoute: typeof RegisterRoute
   RegisterAdminRoute: typeof RegisterAdminRoute
   SettingsRoute: typeof SettingsRoute
   SystemErrorRoute: typeof SystemErrorRoute
+  VocabularyRoute: typeof VocabularyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vocabulary': {
+      id: '/vocabulary'
+      path: '/vocabulary'
+      fullPath: '/vocabulary'
+      preLoaderRoute: typeof VocabularyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/system-error': {
       id: '/system-error'
       path: '/system-error'
@@ -266,6 +299,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -354,12 +394,14 @@ const rootRouteChildren: RootRouteChildren = {
   ErrorsRoute: ErrorsRoute,
   GoalsRoute: GoalsRoute,
   HistoryRoute: HistoryRouteWithChildren,
+  LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   PracticeRoute: PracticeRoute,
   RegisterRoute: RegisterRoute,
   RegisterAdminRoute: RegisterAdminRoute,
   SettingsRoute: SettingsRoute,
   SystemErrorRoute: SystemErrorRoute,
+  VocabularyRoute: VocabularyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
