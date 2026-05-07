@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
-import { ArrowLeft, Play, RotateCcw, Trash2, TriangleAlert } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { ArrowLeft, CheckCircle2, Clock3, Flag, Play, RotateCcw, Trash2, TriangleAlert, Zap } from 'lucide-react'
 import { useDiscardSession, useSession } from '@/api/practice'
 import { Badge } from '@/components/core/Badge'
 import { Button } from '@/components/core/Button'
@@ -23,6 +23,23 @@ export function HistorySessionDetailPage({ sessionId }: HistorySessionDetailPage
   const isCompleted = Boolean(data?.result || data?.session.ended_at)
   const hasContent = (data?.words?.length ?? 0) > 0 || (data?.sentences?.length ?? 0) > 0
   const canResume = Boolean(data && !isCompleted && hasContent)
+  const sessionName = data
+    ? formatSessionName(data.session.mode, data.session.source_type, data.session.item_count)
+    : '练习记录详情'
+  const createdAtLabel = data ? new Date(data.session.created_at).toLocaleString('zh-CN') : ''
+  const primaryScoreValue = data
+    ? (isCompleted && data.result ? data.result.wpm.toFixed(1) : String(data.session.item_count))
+    : '0'
+  const primaryScoreSuffix = isCompleted ? 'WPM' : '项'
+  const primaryScoreLabel = isCompleted ? '本轮主成绩' : '待完成条目'
+  const heroBackdropLabel = isCompleted ? 'RECAP' : 'PENDING'
+  const heroCoachNote = data
+    ? (isCompleted
+        ? `这一轮已经完赛。优先回看错误更高的键位和错题复习时间，把复盘动作接在训练热度还在的时候完成。`
+        : canResume
+          ? `这条记录还可以继续。保持原来的输入节奏比重开更有效，先把这一轮完整收掉，再比较成绩变化。`
+          : '这条记录尚未完成，但原始内容不可恢复。当前更适合把它当成一次阶段快照来复盘指标。')
+    : '正在读取这轮练习的指标、内容和复盘线索。'
 
   const topKeystrokeStats = useMemo(() => {
     if (!data) return []
@@ -54,31 +71,118 @@ export function HistorySessionDetailPage({ sessionId }: HistorySessionDetailPage
 
   return (
     <div className={css.page}>
-      <div className={css.header}>
-        <div>
-          <div className={css.backWrap}>
-            <Button variant="ghost" size="sm" onClick={() => navigate({ to: '/history' })}>
-              <ArrowLeft className={css.iconSm} />
-              返回记录列表
-            </Button>
+      <header className={css.header}>
+        <div className={css.heroTexture} aria-hidden />
+        <div className={css.heroBackdrop} aria-hidden>{heroBackdropLabel}</div>
+
+        <div className={css.heroLayout}>
+          <div className={css.heroCopy}>
+            <div className={css.backWrap}>
+              <Button variant="ghost" size="sm" onClick={() => navigate({ to: '/history' })}>
+                <ArrowLeft className={css.iconSm} />
+                返回记录列表
+              </Button>
+            </div>
+
+            <div className={css.ribbonRow}>
+              <Badge variant="secondary">{isCompleted ? 'Session Recap' : 'Resume Session'}</Badge>
+              {data && <Badge variant="outline">{formatModeLabel(data.session.mode)}</Badge>}
+              {data && <Badge variant="outline">{formatSourceLabel(data.session.source_type)}</Badge>}
+            </div>
+
+            <h1 className={css.title}>练习记录详情</h1>
+            <p className={css.subtitle}>
+              {data
+                ? `${sessionName} 的内容、成绩、弱键和错题节奏都被压进同一块复盘看板里。`
+                : '查看本轮练习内容、结果指标，以及未完成记录的恢复操作。'}
+            </p>
+
+            <div className={css.coachNote}>
+              <span className={css.coachLabel}>Coach Note</span>
+              <span className={css.coachValue}>{heroCoachNote}</span>
+            </div>
+
+            <div className={css.heroActions}>
+              <Button variant="outline" onClick={() => navigate({ to: '/practice', search: { sessionId: undefined } })}>
+                <RotateCcw className={css.iconSm} />
+                新练习
+              </Button>
+              {data && !isCompleted && (
+                <Button onClick={handleResume} disabled={!canResume}>
+                  <Play className={css.iconSm} />
+                  继续练习
+                </Button>
+              )}
+              {data && !isCompleted && (
+                <Button variant="ghost" onClick={handleDiscard} disabled={discardSession.isPending}>
+                  <Trash2 className={css.iconSm} />
+                  {discardSession.isPending ? '舍弃中...' : '舍弃练习'}
+                </Button>
+              )}
+            </div>
           </div>
-          <h1 className={css.title}>练习记录详情</h1>
-          <p className={css.subtitle}>查看本轮练习内容、结果指标，以及未完成记录的恢复操作。</p>
+
+          {data && (
+            <div className={css.heroBoard}>
+              <div className={css.primaryScore}>
+                <div>
+                  <p className={css.scoreLabel}>{primaryScoreLabel}</p>
+                  <div className={css.scoreValueRow}>
+                    <span className={css.scoreValue}>{primaryScoreValue}</span>
+                    <span className={css.scoreSuffix}>{primaryScoreSuffix}</span>
+                  </div>
+                </div>
+                <p className={css.scoreCaption}>
+                  {isCompleted
+                    ? `${sessionName} 已完赛，可直接回看弱键与错题分布。`
+                    : `${sessionName} 尚未收官，原始内容与恢复入口仍在。`}
+                </p>
+                <div className={css.scoreLane} aria-hidden />
+              </div>
+
+              <div className={css.snapshotGrid}>
+                <SnapshotTile
+                  label="准确率"
+                  value={data.result ? `${(data.result.accuracy * 100).toFixed(1)}%` : '待完成'}
+                  caption="整轮稳定度"
+                  icon={<CheckCircle2 className={css.iconSm} />}
+                  tone="success"
+                />
+                <SnapshotTile
+                  label="用时"
+                  value={formatDuration(data.session.duration_ms)}
+                  caption="整轮耗时"
+                  icon={<Clock3 className={css.iconSm} />}
+                  tone="neutral"
+                />
+                <SnapshotTile
+                  label="弱键"
+                  value={String(topKeystrokeStats.length)}
+                  caption="已抓取重点键位"
+                  icon={<Zap className={css.iconSm} />}
+                  tone="warning"
+                />
+                <SnapshotTile
+                  label="错题"
+                  value={String(data.error_items.length)}
+                  caption="进入复习队列"
+                  icon={<Flag className={css.iconSm} />}
+                  tone="warning"
+                />
+              </div>
+            </div>
+          )}
         </div>
-        <Button variant="outline" onClick={() => navigate({ to: '/practice', search: { sessionId: undefined } })}>
-          <RotateCcw className={css.iconSm} />
-          新练习
-        </Button>
-      </div>
+      </header>
 
       {isLoading && (
-        <Card>
+        <Card className={css.stateCard}>
           <CardContent className={css.loadingPanel}>加载练习详情中...</CardContent>
         </Card>
       )}
 
       {!isLoading && error && (
-        <Card>
+        <Card className={css.stateCard}>
           <CardContent className={css.errorPanel}>
             {error instanceof Error ? error.message : '加载练习详情失败，请重试'}
           </CardContent>
@@ -87,36 +191,30 @@ export function HistorySessionDetailPage({ sessionId }: HistorySessionDetailPage
 
       {!isLoading && !error && data && (
         <div className={css.stack}>
-          <Card>
+          <Card className={css.summaryCard}>
             <CardHeader className={css.cardHeaderSplit}>
               <div>
+                <p className={css.panelEyebrow}>Run Metadata</p>
                 <div className={css.sessionTitleWrap}>
-                  <CardTitle>{formatSessionName(data.session.mode, data.session.source_type, data.session.item_count)}</CardTitle>
+                  <CardTitle className={css.panelTitle}>{sessionName}</CardTitle>
                   <Badge variant={isCompleted ? 'success' : 'warning'}>
                     {isCompleted ? '已完成' : '未完成'}
                   </Badge>
                 </div>
-                <CardDescription>
-                  创建于 {new Date(data.session.created_at).toLocaleString('zh-CN')} · 项目数 {data.session.item_count}
+                <CardDescription className={css.panelDescription}>
+                  创建于 {createdAtLabel} · 项目数 {data.session.item_count}
                 </CardDescription>
               </div>
-
-              {!isCompleted && (
-                <div className={css.pendingActions}>
-                  <Button onClick={handleResume} disabled={!canResume}>
-                    <Play className={css.iconSm} />
-                    继续练习
-                  </Button>
-                  <Button variant="ghost" onClick={handleDiscard} disabled={discardSession.isPending}>
-                    <Trash2 className={css.iconSm} />
-                    {discardSession.isPending ? '舍弃中...' : '舍弃练习'}
-                  </Button>
-                </div>
-              )}
+              <div className={css.summaryBadges}>
+                <Badge variant="outline">{formatModeLabel(data.session.mode)}</Badge>
+                <Badge variant="outline">{formatSourceLabel(data.session.source_type)}</Badge>
+                <Badge variant="outline">{data.session.item_count} 项</Badge>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className={css.summaryBody}>
               <div className={css.metrics}>
                 <MetricTile label="状态" value={isCompleted ? '已完成' : '未完成'} />
+                <MetricTile label="项目数" value={String(data.session.item_count)} />
                 <MetricTile label="用时" value={formatDuration(data.session.duration_ms)} />
                 <MetricTile label="WPM" value={data.result ? data.result.wpm.toFixed(1) : '-'} />
                 <MetricTile label="准确率" value={data.result ? `${(data.result.accuracy * 100).toFixed(1)}%` : '-'} />
@@ -133,10 +231,13 @@ export function HistorySessionDetailPage({ sessionId }: HistorySessionDetailPage
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>练习内容</CardTitle>
-              <CardDescription>按本轮练习的原始顺序展示。</CardDescription>
+          <Card className={css.sectionCard}>
+            <CardHeader className={css.panelHeader}>
+              <div>
+                <p className={css.panelEyebrow}>Run Content</p>
+                <CardTitle className={css.panelTitle}>练习内容</CardTitle>
+                <CardDescription className={css.panelDescription}>按本轮练习的原始顺序展示。</CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               <SessionContentList
@@ -148,10 +249,13 @@ export function HistorySessionDetailPage({ sessionId }: HistorySessionDetailPage
           </Card>
 
           <div className={css.splitGrid}>
-            <Card>
-              <CardHeader>
-                <CardTitle>键位统计</CardTitle>
-                <CardDescription>按错误数从高到低展示本轮输入中最需要关注的键位。</CardDescription>
+            <Card className={css.sectionCard}>
+              <CardHeader className={css.panelHeader}>
+                <div>
+                  <p className={css.panelEyebrow}>Weak Keys</p>
+                  <CardTitle className={css.panelTitle}>键位统计</CardTitle>
+                  <CardDescription className={css.panelDescription}>按错误数从高到低展示本轮输入中最需要关注的键位。</CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
                 {topKeystrokeStats.length === 0 ? (
@@ -181,10 +285,13 @@ export function HistorySessionDetailPage({ sessionId }: HistorySessionDetailPage
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>错题记录</CardTitle>
-                <CardDescription>显示本轮被记入复习队列的内容。</CardDescription>
+            <Card className={css.sectionCard}>
+              <CardHeader className={css.panelHeader}>
+                <div>
+                  <p className={css.panelEyebrow}>Review Queue</p>
+                  <CardTitle className={css.panelTitle}>错题记录</CardTitle>
+                  <CardDescription className={css.panelDescription}>显示本轮被记入复习队列的内容。</CardDescription>
+                </div>
               </CardHeader>
               <CardContent>
                 {data.error_items.length === 0 ? (
@@ -267,6 +374,31 @@ function MetricTile({ label, value }: { label: string; value: string }) {
     <div className={css.metricTile}>
       <p className={css.metricLabel}>{label}</p>
       <p className={css.metricValue}>{value}</p>
+    </div>
+  )
+}
+
+function SnapshotTile({
+  label,
+  value,
+  caption,
+  icon,
+  tone,
+}: {
+  label: string
+  value: string
+  caption: string
+  icon: ReactNode
+  tone: 'warning' | 'neutral' | 'success'
+}) {
+  return (
+    <div className={`${css.snapshotTile} ${css.snapshotTone[tone]}`}>
+      <div className={css.snapshotTop}>
+        <span className={css.snapshotLabel}>{label}</span>
+        <span className={css.snapshotIcon}>{icon}</span>
+      </div>
+      <span className={css.snapshotValue}>{value}</span>
+      <span className={css.snapshotCaption}>{caption}</span>
     </div>
   )
 }

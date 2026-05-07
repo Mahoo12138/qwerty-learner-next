@@ -1,7 +1,8 @@
 import { useNavigate } from '@tanstack/react-router'
 import { clsx } from 'clsx'
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react'
 import {
+  BookOpen,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -300,10 +301,37 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
   const selectedWordBank = sourceType === 'word_bank'
     ? (wordBanks.find((bank) => bank.id === sourceId) ?? null)
     : null
+  const selectedSentenceBank = sourceType === 'sentence_bank'
+    ? (sentenceBanks.find((bank) => bank.id === sourceId) ?? null)
+    : null
   const currentWordInfo = sourceType === 'word_bank' && activeSession?.words
     ? (activeSession.words[wordIndex] ?? null)
     : null
   const availableSourceCount = sourceType === 'word_bank' ? wordBanks.length : sentenceBanks.length
+  const pendingSessionCount = recentSessions?.list.filter((session) => !session.result && !session.ended_at).length ?? 0
+  const completedSessionCount = recentSessions?.list.filter((session) => session.result || session.ended_at).length ?? 0
+  const activeProgressValue = words.length > 0 ? Math.min(wordIndex + 1, words.length) : 0
+  const activeSourceLabel = activeSession
+    ? formatSourceLabel(activeSession.session.source_type)
+    : formatSourceLabel(sourceType)
+  const activeSourceName = activeSession
+    ? (activeSession.session.source_type === 'word_bank'
+        ? (wordBanks.find((bank) => bank.id === activeSession.session.source_id)?.name ?? null)
+        : (sentenceBanks.find((bank) => bank.id === activeSession.session.source_id)?.name ?? null))
+    : (selectedWordBank?.name ?? selectedSentenceBank?.name ?? null)
+  const heroPrimaryValue = activeSession ? String(activeProgressValue) : String(wordBanks.length + sentenceBanks.length)
+  const heroPrimarySuffix = activeSession ? `/ ${words.length}` : '库'
+  const heroPrimaryLabel = activeSession ? '当前进度' : '训练资源'
+  const heroPrimaryCaption = activeSession
+    ? `${activeSourceName ?? activeSourceLabel} 正在推进中，保持节奏把这一轮完整打完。`
+    : '词库与句库共同组成训练资源池，支持恢复未完成练习与连续训练。'
+  const heroCoachCopy = activeSession
+    ? `${connected ? '实时统计在线' : '离线统计中'}，这轮更适合优先盯住${showAccuracy ? '准确率' : '击键节奏'}，先稳住再提速。`
+    : pendingSessionCount > 0
+      ? `你有 ${pendingSessionCount} 条未完成练习可以直接续上，先把旧节奏接回来，再开新局。`
+      : '先选内容和模式，再把这一轮完整打完，系统会自动保留进度并累计训练指标。'
+  const heroBackdropLabel = activeSession ? 'RACE' : 'TYPE'
+  const heroRibbonLabel = activeSession ? 'Practice Arena' : 'Practice Lobby'
 
   useEffect(() => {
     setMasteryMessage('')
@@ -435,14 +463,65 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
       <AchievementToast achievements={newAchievements} onDismiss={dismissAchievements} />
 
       <header className={css.pageHeader}>
-        <h1 className={css.pageTitle}>打字练习</h1>
-        <p className={css.pageSubtitle}>
-          用更像训练课的布局，把每一轮击键拆成节奏、准确率和可恢复进度，减少分心，稳定提速。
-        </p>
-        <div className={css.actionBar}>
-          <Badge variant="secondary">{wordBanks.length} 个词库</Badge>
-          <Badge variant="secondary">{sentenceBanks.length} 个句库</Badge>
-          <Badge variant="outline">支持断点恢复</Badge>
+        <div className={css.heroTexture} aria-hidden />
+        <div className={css.heroBackdrop} aria-hidden>{heroBackdropLabel}</div>
+
+        <div className={css.heroLayout}>
+          <div className={css.heroCopy}>
+            <div className={css.ribbonRow}>
+              <Badge variant="secondary">{heroRibbonLabel}</Badge>
+              <Badge variant="outline">{activeSession ? activeSourceLabel : '支持断点恢复'}</Badge>
+            </div>
+
+            <div className={css.heroTitleStack}>
+              <p className={css.heroEyebrow}>{activeSession ? '实时训练赛道' : '训练看板'}</p>
+              <h1 className={css.pageTitle}>
+                <span>打字练习</span>
+                <span className={css.pageTitleAccent}>{activeSession ? '正在上赛道' : '准备发车'}</span>
+              </h1>
+            </div>
+
+            <p className={css.pageSubtitle}>
+              {activeSession
+                ? '把这一轮练习当成一块正在滚动的训练成绩板。速度、准确率、进度与词汇沉淀都在同一条赛道上实时推进。'
+                : '用更像训练课的布局组织每一轮练习，把内容选择、恢复入口和成绩追踪都放进同一块训练看板。'}
+            </p>
+
+            <div className={css.coachNote}>
+              <span className={css.coachLabel}>Coach Note</span>
+              <span className={css.coachValue}>{heroCoachCopy}</span>
+            </div>
+          </div>
+
+          <div className={css.heroBoard}>
+            <div className={css.scorePrimary}>
+              <div>
+                <p className={css.scoreLabel}>{heroPrimaryLabel}</p>
+                <div className={css.scoreValueRow}>
+                  <span className={css.scoreValue}>{heroPrimaryValue}</span>
+                  <span className={css.scoreSuffix}>{heroPrimarySuffix}</span>
+                </div>
+              </div>
+              <p className={css.scoreCaption}>{heroPrimaryCaption}</p>
+              <div className={css.scoreLane} aria-hidden />
+            </div>
+
+            <div className={css.scoreSecondaryGrid}>
+              {activeSession ? (
+                <>
+                  <MiniMetric label="WPM" value={String(displayStats.wpm)} caption="当前即时速度" icon={<Zap size={18} />} tone="warning" />
+                  <MiniMetric label="准确率" value={`${displayStats.accuracy}%`} caption="本轮实时准确" icon={<Flag size={18} />} tone="success" />
+                  <MiniMetric label="已完成" value={String(localStats.wordCount)} caption="已推进的词数" icon={<CheckCircle2 size={18} />} tone="neutral" />
+                </>
+              ) : (
+                <>
+                  <MiniMetric label="词库" value={String(wordBanks.length)} caption="可立即开练" icon={<BookOpen size={18} />} tone="warning" />
+                  <MiniMetric label="句库" value={String(sentenceBanks.length)} caption="延展节奏训练" icon={<Eye size={18} />} tone="neutral" />
+                  <MiniMetric label="待继续" value={String(pendingSessionCount)} caption={`最近已完成 ${completedSessionCount} 条`} icon={<Play size={18} />} tone="success" />
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </header>
 
@@ -454,7 +533,11 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
         <div className={css.lobbyGrid}>
           <section className={css.configCard}>
             <div className={css.sectionHeaderRow}>
-              <h2 className={css.configTitle}>训练准备</h2>
+              <div>
+                <p className={css.panelEyebrow}>Training Setup</p>
+                <h2 className={css.configTitle}>训练准备</h2>
+                <p className={css.panelSubtitle}>先选模式、内容和条目数量，再进入赛道。</p>
+              </div>
               <Badge variant="secondary">{availableSourceCount} 个可用内容库</Badge>
             </div>
 
@@ -552,7 +635,11 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
 
           <aside className={css.recentCard}>
             <div className={css.sectionHeaderRow}>
-              <h2 className={css.recentTitle}>最近练习</h2>
+              <div>
+                <p className={css.panelEyebrow}>Recent Runs</p>
+                <h2 className={css.recentTitle}>最近练习</h2>
+                <p className={css.panelSubtitle}>继续未完成的训练，或直接回看最近成绩。</p>
+              </div>
               <Badge variant="outline">{recentSessions?.total ?? 0} 条</Badge>
             </div>
 
@@ -610,16 +697,31 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
         <section className={css.arenaRoot}>
           <div className={css.progressStrip}>
             <div className={css.progressMeta}>
-              <span className={css.progressLabel}>
-                进度 {Math.min(wordIndex + 1, words.length)} / {words.length}
-              </span>
-              <span className={css.connectionBadge[connected ? 'online' : 'offline']}>
-                {connected ? <Wifi className={css.iconXs} /> : <WifiOff className={css.iconXs} />}
-                {connected ? '实时连接' : '已离线'}
-              </span>
+              <div>
+                <p className={css.progressEyebrow}>{activeSourceName ?? activeSourceLabel}</p>
+                <div className={css.progressValueRow}>
+                  <span className={css.progressValue}>{activeProgressValue}</span>
+                  <span className={css.progressTotal}>/ {words.length}</span>
+                </div>
+              </div>
+
+              <div className={css.progressPills}>
+                <span className={css.connectionBadge[connected ? 'online' : 'offline']}>
+                  {connected ? <Wifi className={css.iconXs} /> : <WifiOff className={css.iconXs} />}
+                  {connected ? '实时连接' : '已离线'}
+                </span>
+                <Badge variant="outline">{displayStats.wpm} WPM</Badge>
+                <Badge variant="outline">{displayStats.accuracy}% 准确率</Badge>
+              </div>
             </div>
+
             <div className={css.progressTrack}>
               <div className={css.progressFill} style={{ width: `${progress}%` }} />
+            </div>
+
+            <div className={css.progressFootRow}>
+              <span className={css.progressFootnote}>进度 {activeProgressValue} / {words.length}</span>
+              <span className={css.progressFootnote}>已完成 {localStats.wordCount} 个词，输入 {localStats.totalCorrect + localStats.totalWrong} 个字符</span>
             </div>
           </div>
 
@@ -809,6 +911,31 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
   )
 }
 
+function MiniMetric({
+  label,
+  value,
+  caption,
+  icon,
+  tone,
+}: {
+  label: string
+  value: string | number
+  caption: string
+  icon: ReactNode
+  tone: 'warning' | 'neutral' | 'success'
+}) {
+  return (
+    <div className={clsx(css.heroMiniMetric, css.heroMiniMetricTone[tone])}>
+      <div className={css.heroMiniTop}>
+        <span className={css.heroMiniLabel}>{label}</span>
+        <span className={css.heroMiniIcon}>{icon}</span>
+      </div>
+      <span className={css.heroMiniValue}>{value}</span>
+      <span className={css.heroMiniCaption}>{caption}</span>
+    </div>
+  )
+}
+
 function WordPanel({
   word,
   letterStates,
@@ -943,32 +1070,47 @@ function ResultCard({
 }) {
   return (
     <section className={css.resultCard}>
-      <h2 className={css.resultHeading}>本轮完成</h2>
-      <p className={css.resultSub}>{submitted ? '成绩已同步到历史记录。' : title}</p>
-
-      <div className={css.resultGrid}>
-        <SummaryItem label="WPM" value={String(wpm)} />
-        <SummaryItem label="准确率" value={`${accuracy}%`} />
-        <SummaryItem label="用时" value={formatDuration(duration)} />
-        <SummaryItem label="错误数" value={String(errors)} />
+      <div className={css.resultTopRow}>
+        <div>
+          <p className={css.resultEyebrow}>Session Complete</p>
+          <h2 className={css.resultHeading}>本轮完成</h2>
+        </div>
+        <Badge variant={submitted ? 'success' : 'warning'}>{submitted ? '已同步历史' : '待提交'}</Badge>
       </div>
 
-      {!submitted && (
-        <Button onClick={onSubmit} disabled={submitting}>
-          <CheckCircle2 />
-          {submitting ? '提交中...' : '提交成绩'}
-        </Button>
-      )}
-    </section>
-  )
-}
+      <div className={css.resultBoard}>
+        <div className={css.resultPrimary}>
+          <p className={css.resultSub}>{title}</p>
+          <div className={css.resultValueRow}>
+            <span className={css.resultValue}>{wpm}</span>
+            <span className={css.resultValueSuffix}>WPM</span>
+          </div>
+          <p className={css.resultCaption}>
+            {submitted
+              ? '成绩已写入历史详情，可以继续回看弱键与错题分布。'
+              : '确认提交后，这一轮训练会进入完整复盘面板与历史详情。'}
+          </p>
+        </div>
 
-function SummaryItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className={css.resultStat}>
-      <p className={css.resultStatLabel}>{label}</p>
-      <p className={css.resultStatValue}>{value}</p>
-    </div>
+        <div className={css.resultMiniGrid}>
+          <MiniMetric label="准确率" value={`${accuracy}%`} caption="本轮稳定度" icon={<CheckCircle2 size={18} />} tone="success" />
+          <MiniMetric label="用时" value={formatDuration(duration)} caption="整轮耗时" icon={<Clock3 size={18} />} tone="neutral" />
+          <MiniMetric label="错误数" value={String(errors)} caption="进入复盘的失误" icon={<Flag size={18} />} tone="warning" />
+        </div>
+      </div>
+
+      <div className={css.resultFoot}>
+        <p className={css.resultMessage}>
+          {submitted ? '可以直接开下一轮，或者去历史详情继续复盘。' : '先提交成绩，再把这一轮正式收进训练记录。'}
+        </p>
+        {!submitted && (
+          <Button onClick={onSubmit} disabled={submitting}>
+            <CheckCircle2 />
+            {submitting ? '提交中...' : '提交成绩'}
+          </Button>
+        )}
+      </div>
+    </section>
   )
 }
 

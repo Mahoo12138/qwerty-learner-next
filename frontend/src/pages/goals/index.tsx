@@ -12,8 +12,6 @@ import { Button } from "@/components/core/Button";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/core/Card";
 import { Input } from "@/components/core/Input";
 import { Progress } from "@/components/core/Progress";
