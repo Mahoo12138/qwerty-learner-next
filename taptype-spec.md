@@ -434,7 +434,7 @@ CREATE TABLE users (
     username     TEXT NOT NULL UNIQUE,
     email        TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,             -- bcrypt
-    role         TEXT NOT NULL DEFAULT 'user', -- 'user' | 'admin'
+    role         TEXT NOT NULL DEFAULT 'user', -- 'user' | 'admin' | 'owner'
     is_active    INTEGER NOT NULL DEFAULT 1,
     created_at   DATETIME NOT NULL,
     updated_at   DATETIME NOT NULL,
