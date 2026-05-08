@@ -1,11 +1,4 @@
-import {
-  startTransition,
-  useDeferredValue,
-  useEffect,
-  useMemo,
-  useState,
-  type ChangeEvent,
-} from 'react'
+import { useDeferredValue, useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { type ColumnDef } from '@tanstack/react-table'
 import {
   Dialog,
@@ -16,13 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/core/Dialog'
-import { FileUp, Plus, Save, Search, Trash2 } from 'lucide-react'
+import { FileUp, Filter, MessageSquareText, Pencil, Plus, Save, Search, Trash2 } from 'lucide-react'
 
-import {
-  useCreateLibrarySubscription,
-  useDeleteLibrarySubscription,
-  useLibrarySubscriptions,
-} from '@/api/library'
 import {
   useCreateSentence,
   useCreateSentenceBank,
@@ -47,43 +35,63 @@ import {
 import { Switch } from '@/components/core/Switch'
 import { useAuthStore } from '@/stores/authStore'
 import * as css from '@/styles/pages/contentWorkspace.css'
-import type { LibrarySubscriptionItem, Sentence } from '@/types/api'
+import type { Sentence } from '@/types/api'
 
 import { ContentDataTable } from './ContentDataTable'
-import {
-  ContentWorkbench,
-  DetailPane,
-  EmptyDetail,
-  LibraryListPane,
-  SectionCard,
-  UnavailableCard,
-} from './ContentShell'
+import { EmptyDetail } from './ContentShell'
 import {
   canManageLibrary,
   countLabel,
-  groupBanksByStage,
-  isSubscribed,
-  librarySourceLabel,
-  type LibraryCardData,
-  subscriptionByLibraryID,
-  type ContentStage,
-  unavailabilityText,
   visibilityLabel,
 } from './contentModel'
 
 const difficultyOptions = [1, 2, 3, 4, 5]
 
-const stageDescription: Record<ContentStage, string> = {
-  owned: '只显示你创建的句库，也是在这里创建新库。',
-  system: '系统默认句库单独展示。普通用户只读，管理员和站长可维护。',
-  discover: '浏览全站公开句库，挑需要的直接订阅。',
-  subscriptions: '已订阅的句库与失效订阅位都保留在这里。',
+const sentenceShowcaseTitle = '我的句库'
+const sentenceShowcaseDescription = '这里只保留你自己创建和维护的句库。系统句库、公开句库和已订阅句库将迁移到新的“发现内容”页统一处理。'
+
+interface OwnedLibraryCard {
+  id: string
+  title: string
+  caption: string
+  countText: string
+  createdText: string
+  badges: Array<{
+    label: string
+    variant: 'default' | 'secondary' | 'outline' | 'warning' | 'success' | 'destructive'
+  }>
 }
 
-export function SentencePanel() {
-  const user = useAuthStore((state) => state.user)
+function formatLibraryDate(value?: string) {
+  if (!value) {
+    return '时间待补齐'
+  }
 
-  const [stage, setStage] = useState<ContentStage>('owned')
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return '时间待补齐'
+  }
+
+  return date.toLocaleDateString('zh-CN').replace(/\//g, '-')
+}
+
+function splitSentenceTags(tags?: string) {
+  if (!tags) {
+    return []
+  }
+
+  return tags
+    .split(/[\s,，]+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+interface SentencePanelProps {
+  createRequestKey?: number
+}
+
+export function SentencePanel({ createRequestKey = 0 }: SentencePanelProps) {
+  const user = useAuthStore((state) => state.user)
   const [selectedLibraryID, setSelectedLibraryID] = useState('')
   const [search, setSearch] = useState('')
   const deferredSearch = useDeferredValue(search)
@@ -110,10 +118,7 @@ export function SentencePanel() {
   const [sentenceTags, setSentenceTags] = useState('')
   const [sentenceDifficulty, setSentenceDifficulty] = useState('3')
 
-  const { data: banks = [] } = useSentenceBanks()
-  const { data: subscriptions = [] } = useLibrarySubscriptions('sentence_bank')
-  const createSubscription = useCreateLibrarySubscription()
-  const deleteSubscription = useDeleteLibrarySubscription()
+  const { data: ownedBanks = [] } = useSentenceBanks('owned')
 
   const createBank = useCreateSentenceBank()
   const updateBank = useUpdateSentenceBank()
@@ -123,49 +128,26 @@ export function SentencePanel() {
   const deleteSentence = useDeleteSentence()
   const importSentences = useImportSentences()
 
-  const banksByStage = useMemo(() => groupBanksByStage(banks, user), [banks, user])
-  const bankMap = useMemo(() => new Map(banks.map((bank) => [bank.id, bank])), [banks])
+  const bankMap = useMemo(() => new Map(ownedBanks.map((bank) => [bank.id, bank])), [ownedBanks])
 
-  const listItems = useMemo<LibraryCardData[]>(() => {
-    if (stage === 'subscriptions') {
-      return subscriptions.map((subscription) => {
-        const bank = bankMap.get(subscription.library_id)
-        return {
-          id: subscription.library_id,
-          title: subscription.library_name,
-          caption:
-            bank?.category ||
-            (subscription.is_available === 1 ? '订阅中的公开句库。' : '订阅入口已失效。'),
-          meta: bank ? countLabel('sentence_bank', bank.sentence_count) : '不可用',
-          badges: [
-            {
-              label: subscription.is_available === 1 ? '可访问' : '不可用',
-              variant: subscription.is_available === 1 ? 'success' : 'warning',
-            },
-            { label: bank ? visibilityLabel(bank.is_public) : '状态保留', variant: 'outline' },
-            { label: bank?.category || '未分类', variant: 'secondary' },
-          ],
-        }
-      })
-    }
-
-    return banksByStage[stage].map((bank) => ({
-      id: bank.id,
-      title: bank.name,
-      caption: bank.category || `${librarySourceLabel(bank, user)}句库`,
-      meta: countLabel('sentence_bank', bank.sentence_count),
-      badges: [
-        {
-          label: visibilityLabel(bank.is_public),
-          variant: bank.is_public === 1 ? 'success' : 'outline',
-        },
-        { label: bank.category || '未分类', variant: 'secondary' },
-        ...(isSubscribed(subscriptions, bank.id)
-          ? [{ label: '已订阅', variant: 'default' as const }]
-          : []),
-      ],
-    }))
-  }, [bankMap, banksByStage, stage, subscriptions, user])
+  const listItems = useMemo<OwnedLibraryCard[]>(
+    () =>
+      ownedBanks.map((bank) => ({
+        id: bank.id,
+        title: bank.name,
+        caption: bank.category || '继续补充句子、翻译和来源。',
+        countText: countLabel('sentence_bank', bank.sentence_count),
+        createdText: formatLibraryDate(bank.created_at),
+        badges: [
+          {
+            label: visibilityLabel(bank.is_public),
+            variant: bank.is_public === 1 ? 'success' : 'outline',
+          },
+          { label: bank.category || '未分类', variant: 'secondary' },
+        ],
+      })),
+    [ownedBanks],
+  )
 
   const selectionSignature = listItems.map((item) => item.id).join('|')
 
@@ -176,20 +158,11 @@ export function SentencePanel() {
     setSelectedLibraryID(listItems[0]?.id ?? '')
   }, [listItems, selectionSignature, selectedLibraryID])
 
-  const selectedSubscription = useMemo(
-    () => subscriptionByLibraryID(subscriptions, selectedLibraryID),
-    [selectedLibraryID, subscriptions],
-  )
   const selectedBank = useMemo(
     () => bankMap.get(selectedLibraryID) ?? null,
     [bankMap, selectedLibraryID],
   )
   const canEdit = canManageLibrary(selectedBank, user)
-  const subscribed = selectedBank ? isSubscribed(subscriptions, selectedBank.id) : false
-  const subscriptionUnavailable =
-    stage === 'subscriptions' &&
-    !!selectedSubscription &&
-    (selectedSubscription.is_available !== 1 || !selectedBank)
 
   useEffect(() => {
     if (!selectedBank) {
@@ -212,14 +185,14 @@ export function SentencePanel() {
   )
   const sentences = sentencesData?.list ?? []
 
-  function handleStageChange(next: ContentStage) {
-    startTransition(() => {
-      setStage(next)
-      setSelectedLibraryID('')
-      setSearch('')
-      setDifficulty(0)
-    })
-  }
+  useEffect(() => {
+    if (createRequestKey < 1) {
+      return
+    }
+
+    setSelectedLibraryID('')
+    setCreateBankOpen(true)
+  }, [createRequestKey])
 
   function handleSelectLibrary(id: string) {
     setSelectedLibraryID(id)
@@ -237,10 +210,7 @@ export function SentencePanel() {
       },
       {
         onSuccess: (bank) => {
-          startTransition(() => {
-            setStage('owned')
-            setSelectedLibraryID(bank.id)
-          })
+          setSelectedLibraryID(bank.id)
           setCreateBankOpen(false)
           setBankName('')
           setBankCategory('')
@@ -322,27 +292,6 @@ export function SentencePanel() {
     event.target.value = ''
   }
 
-  function handleToggleSubscription() {
-    if (!selectedBank) {
-      return
-    }
-    if (subscribed) {
-      deleteSubscription.mutate({ libraryType: 'sentence_bank', libraryId: selectedBank.id })
-      return
-    }
-    createSubscription.mutate({ library_type: 'sentence_bank', library_id: selectedBank.id })
-  }
-
-  function handleRemoveSubscription(subscription?: LibrarySubscriptionItem) {
-    if (!subscription) {
-      return
-    }
-    deleteSubscription.mutate({
-      libraryType: 'sentence_bank',
-      libraryId: subscription.library_id,
-    })
-  }
-
   const sentenceColumns = useMemo<ColumnDef<Sentence>[]>(
     () => [
       {
@@ -350,8 +299,14 @@ export function SentencePanel() {
         cell: ({ row }) => (
           <div className={css.tableCellStack}>
             <span className={css.tablePrimaryText}>{row.original.content}</span>
-            <span className={css.tableSecondaryText}>{row.original.translation || '暂无翻译'}</span>
+            <span className={css.tableSecondaryText}>难度 {row.original.difficulty}</span>
           </div>
+        ),
+      },
+      {
+        header: '翻译',
+        cell: ({ row }) => (
+          <span className={css.tablePrimaryText}>{row.original.translation || '暂无翻译'}</span>
         ),
       },
       {
@@ -364,215 +319,257 @@ export function SentencePanel() {
         ),
       },
       {
-        header: '难度',
-        cell: ({ row }) => <Badge variant="outline">难度 {row.original.difficulty}</Badge>,
-      },
-      {
         header: '标签',
-        cell: ({ row }) => <span className={css.tableSecondaryText}>{row.original.tags || '无'}</span>,
+        cell: ({ row }) => {
+          const tags = splitSentenceTags(row.original.tags)
+
+          if (tags.length === 0) {
+            return <span className={css.tableSecondaryText}>无</span>
+          }
+
+          return (
+            <div className={css.tableTagList}>
+              {tags.slice(0, 3).map((tag) => (
+                <Badge key={`${row.original.id}-${tag}`} variant="secondary" className={css.tableTagBadge}>
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )
+        },
       },
       {
         header: '操作',
         cell: ({ row }) => (
-          <div className={css.tableActionGroup}>
+          <div className={css.tableActionIconGroup}>
             <Button
-              size="sm"
-              variant="outline"
+              type="button"
+              size="icon"
+              variant="ghost"
+              className={css.tableActionIconButton}
               onClick={() => {
                 setActiveSentence(row.original)
                 setSentenceDialogOpen(true)
               }}
+              aria-label={canEdit ? `编辑 ${row.original.content}` : `查看 ${row.original.content}`}
             >
-              {canEdit ? '编辑' : '查看'}
+              <Pencil size={15} />
             </Button>
+            {canEdit ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className={css.tableActionIconButton}
+                onClick={() => {
+                  if (!window.confirm(`确定删除句子吗？`)) {
+                    return
+                  }
+                  deleteSentence.mutate(row.original.id)
+                }}
+                aria-label={`删除句子 ${row.original.content}`}
+              >
+                <Trash2 size={15} />
+              </Button>
+            ) : null}
           </div>
         ),
       },
     ],
-    [canEdit],
+    [canEdit, deleteSentence],
   )
 
-  const stageCounts = {
-    owned: banksByStage.owned.length,
-    system: banksByStage.system.length,
-    discover: banksByStage.discover.length,
-    subscriptions: subscriptions.length,
-  }
+  const selectedLibraryCreatedText = formatLibraryDate(selectedBank?.created_at)
 
   return (
     <>
-    <ContentWorkbench
-      stage={stage}
-      counts={stageCounts}
-      onChange={handleStageChange}
-    >
-      <LibraryListPane
-        title="句库来源"
-        description={stageDescription[stage]}
-        items={listItems}
-        selectedID={selectedLibraryID}
-        onSelect={handleSelectLibrary}
-        empty={
-          stage === 'owned'
-            ? '还没有句库，点击右上角按钮新建一个。'
-            : '当前来源下还没有可展示的句库。'
-        }
-        extra={
-          stage === 'owned' ? (
-            <Button size="sm" onClick={() => setCreateBankOpen(true)}>
-              <Plus size={14} />
-              新建句库
-            </Button>
-          ) : undefined
-        }
-      />
-
-      {subscriptionUnavailable && selectedSubscription ? (
-        <DetailPane
-          kicker="我的订阅"
-          title={selectedSubscription.library_name}
-          description="订阅记录保留，但源库已经不可直接使用。"
-          meta={
-            <>
-              <Badge variant="warning">不可用</Badge>
-              <Badge variant="outline">句库订阅</Badge>
-            </>
-          }
-          actions={
-            <Button
-              variant="destructive"
-              onClick={() => handleRemoveSubscription(selectedSubscription)}
-              disabled={deleteSubscription.isPending}
-            >
-              取消订阅
-            </Button>
-          }
-        >
-          <UnavailableCard
-            title="订阅入口已保留"
-            body={unavailabilityText(selectedSubscription.unavailable_reason)}
-          />
-        </DetailPane>
-      ) : !selectedBank ? (
-        <DetailPane
-          kicker="句库详情"
-          title={stage === 'owned' ? '先创建一个句库' : '选择一个句库'}
-          description={stageDescription[stage]}
-        >
-          <EmptyDetail
-            title="句子管理也切成四条泳道"
-            body="系统默认句库和公开句库不再混在同一个管理列表里，订阅入口也会一直保留。"
-          />
-        </DetailPane>
-      ) : (
-        <DetailPane
-          kicker={librarySourceLabel(selectedBank, user)}
-          title={selectedBank.name}
-          description={selectedBank.category || '这套句库还没有分类描述。'}
-          meta={
-            <>
-              <Badge variant="secondary">{selectedBank.category || '未分类'}</Badge>
-              <Badge variant={selectedBank.is_public === 1 ? 'success' : 'outline'}>
-                {visibilityLabel(selectedBank.is_public)}
-              </Badge>
-              <Badge variant="outline">{countLabel('sentence_bank', selectedBank.sentence_count)}</Badge>
-              {subscribed ? <Badge variant="default">已订阅</Badge> : null}
-            </>
-          }
-          actions={
-            <>
-              {selectedBank.owner_id !== user?.id ? (
-                <Button
-                  variant={subscribed ? 'outline' : 'default'}
-                  onClick={handleToggleSubscription}
-                  disabled={createSubscription.isPending || deleteSubscription.isPending}
-                >
-                  {subscribed ? '取消订阅' : '订阅句库'}
-                </Button>
-              ) : null}
-              {canEdit ? (
-                <Button variant="outline" onClick={() => setEditBankOpen(true)}>
-                  编辑句库
-                </Button>
-              ) : null}
-              {canEdit ? (
-                <label className={css.fileInputLabel}>
-                  <FileUp size={14} />
-                  导入句子
-                  <input
-                    className={css.hiddenFileInput}
-                    type="file"
-                    accept=".json,.csv"
-                    onChange={handleImport}
-                  />
-                </label>
-              ) : null}
-            </>
-          }
-        >
-          <SectionCard
-            title="句子筛选"
-            description="搜索和难度只作用于当前选中的句库。"
-            actions={<Badge variant="outline">共 {sentencesData?.total ?? 0} 条</Badge>}
-          >
-            <div className={css.toolbar}>
-              <div className={`${css.searchField} ${css.toolbarGrow}`}>
-                <Search className={css.searchFieldIcon} size={16} />
-                <Input
-                  className={css.searchInput}
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="搜索句子、翻译、来源或标签"
-                />
-              </div>
-
-              <Select value={String(difficulty)} onValueChange={(value) => setDifficulty(Number(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">全部难度</SelectItem>
-                  {difficultyOptions.map((item) => (
-                    <SelectItem key={item} value={String(item)}>难度 {item}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <div className={css.libraryWorkspaceStack}>
+        <section className={css.libraryShowcase}>
+          <header className={css.libraryShowcaseHeader}>
+            <div className={css.libraryShowcaseIntro}>
+              <p className={css.libraryShowcaseEyebrow}>句库编排</p>
+              <h2 className={css.libraryShowcaseTitle}>{sentenceShowcaseTitle}</h2>
+              <p className={css.libraryShowcaseDescription}>{sentenceShowcaseDescription}</p>
             </div>
-          </SectionCard>
+          </header>
 
-          <SectionCard
-            title="句子清单"
-            description="列表只保留轻量预览，编辑和查看都走弹窗。"
-            actions={
-              <div className={css.rowActions}>
-                <Badge variant="outline">共 {sentencesData?.total ?? 0} 条</Badge>
-                {canEdit ? (
-                  <Button size="sm" onClick={() => setCreateSentenceOpen(true)}>
-                    <Plus size={14} />
-                    新增句子
-                  </Button>
-                ) : null}
+          {listItems.length === 0 ? (
+            <div className={css.libraryCatalogEmpty}>
+              <div>
+                <p className={css.libraryCatalogEmptyTitle}>还没有句库</p>
+                <p className={css.libraryCatalogEmptyText}>先建一个句库，再往里面补句子、翻译和来源。</p>
               </div>
-            }
-          >
-            {sentences.length === 0 ? (
-              <EmptyDetail
-                title="还没有句子"
-                body={canEdit ? '先添加几条句子，或者通过导入快速建库。' : '这个句库暂时没有可展示的句子。'}
-              />
-            ) : (
-              <ContentDataTable ariaLabel="句子清单" data={sentences} columns={sentenceColumns} />
-            )}
-          </SectionCard>
-        </DetailPane>
-      )}
-    </ContentWorkbench>
+              <Button type="button" onClick={() => setCreateBankOpen(true)}>
+                <Plus size={14} />
+                新建句库
+              </Button>
+            </div>
+          ) : (
+            <div className={css.libraryCatalogGrid}>
+              {listItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={
+                    selectedLibraryID === item.id
+                      ? css.libraryCatalogCardSelected
+                      : css.libraryCatalogCard
+                  }
+                  onClick={() => handleSelectLibrary(item.id)}
+                >
+                  <div className={css.libraryCatalogCardTop}>
+                    <div className={css.libraryCatalogCardIcon}>
+                      <MessageSquareText size={18} />
+                    </div>
+                    <span className={css.libraryCatalogCardCount}>{item.countText}</span>
+                  </div>
+
+                  <div className={css.libraryCatalogCardBody}>
+                    <h3 className={css.libraryCatalogCardTitle}>{item.title}</h3>
+                    <p className={css.libraryCatalogCardCaption}>{item.caption}</p>
+                  </div>
+
+                  <div className={css.libraryCatalogCardBadges}>
+                    {item.badges.map((badge) => (
+                      <Badge key={`${item.id}-${badge.label}`} variant={badge.variant}>
+                        {badge.label}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className={css.libraryCatalogCardDate}>创建于 {item.createdText}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className={css.libraryDetailSurface}>
+          {!selectedBank ? (
+            <EmptyDetail
+              title="先创建一个句库"
+              body="当前内容管理页只维护你自己的句库。公开发现、系统句库和已订阅句库将转移到新的“发现内容”页。"
+            />
+          ) : (
+            <>
+              <div className={css.libraryDetailHeader}>
+                <div className={css.libraryDetailHeading}>
+                  <p className={css.libraryDetailEyebrow}>我的句库</p>
+                  <div className={css.libraryDetailTitleRow}>
+                    <h2 className={css.libraryDetailTitle}>{selectedBank.name}</h2>
+                    {canEdit ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className={css.libraryTitleEditButton}
+                        onClick={() => setEditBankOpen(true)}
+                        aria-label={`编辑句库 ${selectedBank.name}`}
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                    ) : null}
+                  </div>
+                  <p className={css.libraryDetailMetaLine}>
+                    {countLabel('sentence_bank', selectedBank.sentence_count)} · 创建于 {selectedLibraryCreatedText}
+                  </p>
+                  <p className={css.libraryDetailDescription}>
+                    {selectedBank.category ? `分类：${selectedBank.category}` : '这套句库还没有设置分类。'}
+                  </p>
+                </div>
+
+                <div className={css.libraryDetailHeaderActions}>
+                  <div className={css.libraryDetailBadges}>
+                    <Badge variant="secondary">{selectedBank.category || '未分类'}</Badge>
+                    <Badge variant={selectedBank.is_public === 1 ? 'success' : 'outline'}>
+                      {visibilityLabel(selectedBank.is_public)}
+                    </Badge>
+                  </div>
+
+                  <div className={css.libraryDetailButtons}>
+                    {canEdit ? (
+                      <label className={css.fileInputLabel}>
+                        <FileUp size={14} />
+                        导入句子
+                        <input
+                          className={css.hiddenFileInput}
+                          type="file"
+                          accept=".json,.csv"
+                          onChange={handleImport}
+                        />
+                      </label>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              <div className={css.libraryTableToolbar}>
+                <div className={`${css.searchField} ${css.toolbarGrow}`}>
+                  <Search className={css.searchFieldIcon} size={16} />
+                  <Input
+                    className={css.searchInput}
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="搜索句子、翻译、来源或标签"
+                  />
+                </div>
+
+                <div className={css.libraryTableToolbarActions}>
+                  <div className={css.libraryFilterControl}>
+                    <Filter className={css.libraryFilterIcon} size={16} />
+                    <Select value={String(difficulty)} onValueChange={(value) => setDifficulty(Number(value))}>
+                      <SelectTrigger className={css.libraryFilterTrigger}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">全部难度</SelectItem>
+                        {difficultyOptions.map((item) => (
+                          <SelectItem key={item} value={String(item)}>难度 {item}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {canEdit ? (
+                    <Button
+                      type="button"
+                      size="lg"
+                      className={css.libraryAddWordButton}
+                      onClick={() => setCreateSentenceOpen(true)}
+                    >
+                      <Plus size={14} />
+                      添加句子
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className={css.libraryTableCard}>
+                {sentences.length === 0 ? (
+                  <EmptyDetail
+                    title="还没有句子"
+                    body={canEdit ? '先添加几条句子，或者通过导入快速建库。' : '这个句库暂时没有可展示的句子。'}
+                  />
+                ) : (
+                  <ContentDataTable ariaLabel="句子清单" data={sentences} columns={sentenceColumns} />
+                )}
+
+                <div className={css.libraryTableFooter}>
+                  <div className={css.libraryTableSummary}>
+                    <span>共 {sentencesData?.total ?? 0} 条句子</span>
+                    <span>当前筛选已应用到本句库</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+      </div>
 
     <Dialog open={createBankOpen} onOpenChange={setCreateBankOpen}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>新建句库</DialogTitle>
-          <DialogDescription>分类和公开状态决定它会被谁看到、怎么被发现。</DialogDescription>
+          <DialogDescription>分类和公开状态决定它未来会怎样出现在“发现内容”页里。</DialogDescription>
         </DialogHeader>
         <div className={css.dialogStack}>
           <div className={css.formGridTwo}>
@@ -589,8 +586,8 @@ export function SentencePanel() {
           </div>
           <div className={css.switchRow}>
             <div className={css.switchText}>
-              <p className={css.switchTitle}>公开到发现页</p>
-              <p className={css.switchDescription}>打开后其他用户可以在"公开发现"里看到并订阅。</p>
+              <p className={css.switchTitle}>公开到发现内容</p>
+              <p className={css.switchDescription}>打开后其他用户可以在未来的“发现内容”页里看到它。</p>
             </div>
             <Switch checked={bankIsPublic} onCheckedChange={setBankIsPublic} />
           </div>
@@ -629,7 +626,7 @@ export function SentencePanel() {
           <div className={css.switchRow}>
             <div className={css.switchText}>
               <p className={css.switchTitle}>公开句库</p>
-              <p className={css.switchDescription}>关闭后不会再出现在公开发现里，但历史订阅仍会保留占位。</p>
+              <p className={css.switchDescription}>关闭后不会出现在后续的“发现内容”页里。</p>
             </div>
             <Switch checked={editingBankIsPublic} onCheckedChange={setEditingBankIsPublic} />
           </div>

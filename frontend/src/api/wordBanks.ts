@@ -2,9 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { request } from './client'
 import type { WordBank, Word, PaginatedList } from '@/types/api'
 
+type BankListScope = 'all' | 'owned'
+
 // Word Bank CRUD
-export function useWordBanks() {
-  return useQuery({ queryKey: ['wordBanks'], queryFn: () => request<WordBank[]>('/word-banks') })
+export function useWordBanks(scope: BankListScope = 'all') {
+  return useQuery({
+    queryKey: ['wordBanks', scope],
+    queryFn: () => request<WordBank[]>(`/word-banks${scope === 'owned' ? '?scope=owned' : ''}`),
+  })
 }
 
 export function useWordBank(id: string) {

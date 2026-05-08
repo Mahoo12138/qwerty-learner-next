@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
   Dialog,
@@ -9,13 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/core/Dialog";
-import { Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { FileText, Pencil, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 
-import {
-  useCreateLibrarySubscription,
-  useDeleteLibrarySubscription,
-  useLibrarySubscriptions,
-} from "@/api/library";
 import {
   useArticleBanks,
   useArticleDetail,
@@ -46,47 +41,69 @@ import * as css from "@/styles/pages/contentWorkspace.css";
 import type {
   Article,
   ArticleSentence,
-  LibrarySubscriptionItem,
 } from "@/types/api";
 
 import { ContentDataTable } from "./ContentDataTable";
 import {
-  ContentWorkbench,
-  DetailPane,
   EmptyDetail,
-  LibraryListPane,
   SectionCard,
-  UnavailableCard,
 } from "./ContentShell";
 import {
   canManageLibrary,
   countLabel,
-  groupBanksByStage,
-  isSubscribed,
   LIBRARY_LANGUAGE_OPTIONS,
   libraryLanguageLabel,
-  librarySourceLabel,
-  type LibraryCardData,
   normalizeLibraryLanguage,
-  subscriptionByLibraryID,
-  type ContentStage,
-  unavailabilityText,
   visibilityLabel,
 } from "./contentModel";
 
 const difficultyOptions = [1, 2, 3, 4, 5];
 
-const stageDescription: Record<ContentStage, string> = {
-  owned: "只显示你创建的文章库，也是在这里创建新库。",
-  system: "系统默认文章库单独展示。普通用户只读，管理员和站长可维护。",
-  discover: "浏览全站公开文章库，挑需要的直接订阅。",
-  subscriptions: "已订阅的文章库与失效订阅位都保留在这里。",
-};
+const articleShowcaseTitle = "我的文章库";
+const articleShowcaseDescription = "这里只保留你自己创建和维护的文章库。系统文章库、公开文章库和已订阅文章库将迁移到新的“发现内容”页统一处理。";
 
-export function ArticlePanel() {
+interface OwnedLibraryCard {
+  id: string;
+  title: string;
+  caption: string;
+  countText: string;
+  createdText: string;
+  badges: Array<{
+    label: string;
+    variant: "default" | "secondary" | "outline" | "warning" | "success" | "destructive";
+  }>;
+}
+
+function formatLibraryDate(value?: string) {
+  if (!value) {
+    return "时间待补齐";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "时间待补齐";
+  }
+
+  return date.toLocaleDateString("zh-CN").replace(/\//g, "-");
+}
+
+function splitArticleTags(tags?: string) {
+  if (!tags) {
+    return [];
+  }
+
+  return tags
+    .split(/[\s,，]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+interface ArticlePanelProps {
+  createRequestKey?: number;
+}
+
+export function ArticlePanel({ createRequestKey = 0 }: ArticlePanelProps) {
   const user = useAuthStore((state) => state.user);
-
-  const [stage, setStage] = useState<ContentStage>("owned");
   const [selectedLibraryID, setSelectedLibraryID] = useState("");
   const [selectedArticleID, setSelectedArticleID] = useState("");
 
@@ -118,10 +135,7 @@ export function ArticlePanel() {
   const [editingTags, setEditingTags] = useState("");
   const [editingDifficulty, setEditingDifficulty] = useState("3");
 
-  const { data: banks = [] } = useArticleBanks();
-  const { data: subscriptions = [] } = useLibrarySubscriptions("article_bank");
-  const createSubscription = useCreateLibrarySubscription();
-  const deleteSubscription = useDeleteLibrarySubscription();
+  const { data: ownedBanks = [] } = useArticleBanks("owned");
 
   const createBank = useCreateArticleBank();
   const updateBank = useUpdateArticleBank();
@@ -132,62 +146,29 @@ export function ArticlePanel() {
   const updateSentence = useUpdateArticleSentence();
   const resetProgress = useResetProgress();
 
-  const banksByStage = useMemo(
-    () => groupBanksByStage(banks, user),
-    [banks, user],
-  );
   const bankMap = useMemo(
-    () => new Map(banks.map((bank) => [bank.id, bank])),
-    [banks],
+    () => new Map(ownedBanks.map((bank) => [bank.id, bank])),
+    [ownedBanks],
   );
 
-  const listItems = useMemo<LibraryCardData[]>(() => {
-    if (stage === "subscriptions") {
-      return subscriptions.map((subscription) => {
-        const bank = bankMap.get(subscription.library_id);
-        return {
-          id: subscription.library_id,
-          title: subscription.library_name,
-          caption:
-            bank?.description ||
-            (subscription.is_available === 1
-              ? "订阅中的公开文章库。"
-              : "订阅入口已失效。"),
-          meta: bank
-            ? countLabel("article_bank", bank.article_count)
-            : "不可用",
-          badges: [
-            {
-              label: subscription.is_available === 1 ? "可访问" : "不可用",
-              variant: subscription.is_available === 1 ? "success" : "warning",
-            },
-            {
-              label: bank ? visibilityLabel(bank.is_public) : "状态保留",
-              variant: "outline",
-            },
-            { label: libraryLanguageLabel(bank?.language), variant: "secondary" },
-          ],
-        };
-      });
-    }
-
-    return banksByStage[stage].map((bank) => ({
-      id: bank.id,
-      title: bank.name,
-      caption: bank.description || `${librarySourceLabel(bank, user)}文章库`,
-      meta: countLabel("article_bank", bank.article_count),
-      badges: [
-        {
-          label: visibilityLabel(bank.is_public),
-          variant: bank.is_public === 1 ? "success" : "outline",
-        },
-        { label: libraryLanguageLabel(bank.language), variant: "secondary" },
-        ...(isSubscribed(subscriptions, bank.id)
-          ? [{ label: "已订阅", variant: "default" as const }]
-          : []),
-      ],
-    }));
-  }, [bankMap, banksByStage, stage, subscriptions, user]);
+  const listItems = useMemo<OwnedLibraryCard[]>(
+    () =>
+      ownedBanks.map((bank) => ({
+        id: bank.id,
+        title: bank.name,
+        caption: bank.description || "继续补充文章、标签和练习说明。",
+        countText: countLabel("article_bank", bank.article_count),
+        createdText: formatLibraryDate(bank.created_at),
+        badges: [
+          {
+            label: visibilityLabel(bank.is_public),
+            variant: bank.is_public === 1 ? "success" : "outline",
+          },
+          { label: libraryLanguageLabel(bank.language), variant: "secondary" },
+        ],
+      })),
+    [ownedBanks],
+  );
 
   const selectionSignature = listItems.map((item) => item.id).join("|");
 
@@ -198,22 +179,11 @@ export function ArticlePanel() {
     setSelectedLibraryID(listItems[0]?.id ?? "");
   }, [listItems, selectionSignature, selectedLibraryID]);
 
-  const selectedSubscription = useMemo(
-    () => subscriptionByLibraryID(subscriptions, selectedLibraryID),
-    [selectedLibraryID, subscriptions],
-  );
   const selectedBank = useMemo(
     () => bankMap.get(selectedLibraryID) ?? null,
     [bankMap, selectedLibraryID],
   );
   const canEdit = canManageLibrary(selectedBank, user);
-  const subscribed = selectedBank
-    ? isSubscribed(subscriptions, selectedBank.id)
-    : false;
-  const subscriptionUnavailable =
-    stage === "subscriptions" &&
-    !!selectedSubscription &&
-    (selectedSubscription.is_available !== 1 || !selectedBank);
 
   useEffect(() => {
     if (!selectedBank) {
@@ -244,6 +214,15 @@ export function ArticlePanel() {
     useArticleSentences(selectedArticleID);
 
   useEffect(() => {
+    if (createRequestKey < 1) {
+      return;
+    }
+
+    setSelectedLibraryID("");
+    setCreateBankOpen(true);
+  }, [createRequestKey]);
+
+  useEffect(() => {
     if (!articleDetail) {
       setEditingTitle("");
       setEditingAuthor("");
@@ -258,14 +237,6 @@ export function ArticlePanel() {
     setEditingTags(articleDetail.tags || "");
     setEditingDifficulty(String(articleDetail.difficulty || 3));
   }, [articleDetail]);
-
-  function handleStageChange(next: ContentStage) {
-    startTransition(() => {
-      setStage(next);
-      setSelectedLibraryID("");
-      setSelectedArticleID("");
-    });
-  }
 
   function handleSelectLibrary(id: string) {
     setSelectedLibraryID(id);
@@ -285,10 +256,7 @@ export function ArticlePanel() {
       },
       {
         onSuccess: (bank) => {
-          startTransition(() => {
-            setStage("owned");
-            setSelectedLibraryID(bank.id);
-          });
+          setSelectedLibraryID(bank.id);
           setCreateBankOpen(false);
           setBankName("");
           setBankDescription("");
@@ -332,33 +300,6 @@ export function ArticlePanel() {
         setSelectedLibraryID("");
         setSelectedArticleID("");
       },
-    });
-  }
-
-  function handleToggleSubscription() {
-    if (!selectedBank) {
-      return;
-    }
-    if (subscribed) {
-      deleteSubscription.mutate({
-        libraryType: "article_bank",
-        libraryId: selectedBank.id,
-      });
-      return;
-    }
-    createSubscription.mutate({
-      library_type: "article_bank",
-      library_id: selectedBank.id,
-    });
-  }
-
-  function handleRemoveSubscription(subscription?: LibrarySubscriptionItem) {
-    if (!subscription) {
-      return;
-    }
-    deleteSubscription.mutate({
-      libraryType: "article_bank",
-      libraryId: subscription.library_id,
     });
   }
 
@@ -451,7 +392,23 @@ export function ArticlePanel() {
       },
       {
         header: "标签",
-        cell: ({ row }) => <span className={css.tableSecondaryText}>{row.original.tags || "无"}</span>,
+        cell: ({ row }) => {
+          const tags = splitArticleTags(row.original.tags);
+
+          if (tags.length === 0) {
+            return <span className={css.tableSecondaryText}>无</span>;
+          }
+
+          return (
+            <div className={css.tableTagList}>
+              {tags.slice(0, 3).map((tag) => (
+                <Badge key={`${row.original.id}-${tag}`} variant="secondary" className={css.tableTagBadge}>
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          );
+        },
       },
       {
         header: "操作",
@@ -459,24 +416,30 @@ export function ArticlePanel() {
           const isSelected = row.original.id === selectedArticleID;
 
           return (
-            <div className={css.tableActionGroup}>
+            <div className={css.tableActionIconGroup}>
               <Button
-                size="sm"
-                variant={isSelected ? "default" : "outline"}
+                type="button"
+                size="icon"
+                variant={isSelected ? "secondary" : "ghost"}
+                className={css.tableActionIconButton}
                 onClick={() => setSelectedArticleID(row.original.id)}
+                aria-label={`查看文章 ${row.original.title}`}
               >
-                {isSelected ? "当前查看" : "查看"}
+                <FileText size={15} />
               </Button>
               {canEdit ? (
                 <Button
-                  size="sm"
-                  variant="outline"
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className={css.tableActionIconButton}
                   onClick={() => {
                     setSelectedArticleID(row.original.id);
                     setEditArticleOpen(true);
                   }}
+                  aria-label={`编辑文章 ${row.original.title}`}
                 >
-                  编辑
+                  <Pencil size={15} />
                 </Button>
               ) : null}
             </div>
@@ -505,256 +468,264 @@ export function ArticlePanel() {
     );
   }
 
-  const stageCounts = {
-    owned: banksByStage.owned.length,
-    system: banksByStage.system.length,
-    discover: banksByStage.discover.length,
-    subscriptions: subscriptions.length,
-  };
+  const selectedLibraryCreatedText = formatLibraryDate(selectedBank?.created_at);
 
   return (
     <>
-      <ContentWorkbench
-        stage={stage}
-        counts={stageCounts}
-        onChange={handleStageChange}
-      >
-        <LibraryListPane
-          title="文章库来源"
-          description={stageDescription[stage]}
-          items={listItems}
-          selectedID={selectedLibraryID}
-          onSelect={handleSelectLibrary}
-          empty={
-            stage === "owned"
-              ? "还没有文章库，点击右上角按钮新建一个。"
-              : "当前来源下还没有可展示的文章库。"
-          }
-          extra={
-            stage === "owned" ? (
-              <Button size="sm" onClick={() => setCreateBankOpen(true)}>
+      <div className={css.libraryWorkspaceStack}>
+        <section className={css.libraryShowcase}>
+          <header className={css.libraryShowcaseHeader}>
+            <div className={css.libraryShowcaseIntro}>
+              <p className={css.libraryShowcaseEyebrow}>文章库编排</p>
+              <h2 className={css.libraryShowcaseTitle}>{articleShowcaseTitle}</h2>
+              <p className={css.libraryShowcaseDescription}>{articleShowcaseDescription}</p>
+            </div>
+          </header>
+
+          {listItems.length === 0 ? (
+            <div className={css.libraryCatalogEmpty}>
+              <div>
+                <p className={css.libraryCatalogEmptyTitle}>还没有文章库</p>
+                <p className={css.libraryCatalogEmptyText}>先建一个文章库，再录入文章、句子翻译和进度信息。</p>
+              </div>
+              <Button type="button" onClick={() => setCreateBankOpen(true)}>
                 <Plus size={14} />
                 新建文章库
               </Button>
-            ) : undefined
-          }
-        />
-
-        {subscriptionUnavailable && selectedSubscription ? (
-          <DetailPane
-            kicker="我的订阅"
-            title={selectedSubscription.library_name}
-            description="订阅记录保留，但源库已经不可直接使用。"
-            meta={
-              <>
-                <Badge variant="warning">不可用</Badge>
-                <Badge variant="outline">文章库订阅</Badge>
-              </>
-            }
-            actions={
-              <Button
-                variant="destructive"
-                onClick={() => handleRemoveSubscription(selectedSubscription)}
-                disabled={deleteSubscription.isPending}
-              >
-                取消订阅
-              </Button>
-            }
-          >
-            <UnavailableCard
-              title="订阅入口已保留"
-              body={unavailabilityText(selectedSubscription.unavailable_reason)}
-            />
-          </DetailPane>
-        ) : !selectedBank ? (
-          <DetailPane
-            kicker="文章库详情"
-            title={stage === "owned" ? "先创建一个文章库" : "选择一个文章库"}
-            description={stageDescription[stage]}
-          >
-            <EmptyDetail
-              title="文章内容也并回同一工作台"
-              body="现在不用再在银行列表、文章列表、详情面板之间来回跳。先选库，再在同页选文章并维护句子翻译。"
-            />
-          </DetailPane>
-        ) : (
-          <DetailPane
-            kicker={librarySourceLabel(selectedBank, user)}
-            title={selectedBank.name}
-            description={
-              selectedBank.description || "这套文章库还没有补充说明。"
-            }
-            meta={
-              <>
-                <Badge variant="secondary">{libraryLanguageLabel(selectedBank.language)}</Badge>
-                <Badge
-                  variant={selectedBank.is_public === 1 ? "success" : "outline"}
-                >
-                  {visibilityLabel(selectedBank.is_public)}
-                </Badge>
-                <Badge variant="outline">
-                  {countLabel("article_bank", selectedBank.article_count)}
-                </Badge>
-                {subscribed ? <Badge variant="default">已订阅</Badge> : null}
-              </>
-            }
-            actions={
-              <>
-                {selectedBank.owner_id !== user?.id ? (
-                  <Button
-                    variant={subscribed ? "outline" : "default"}
-                    onClick={handleToggleSubscription}
-                    disabled={
-                      createSubscription.isPending || deleteSubscription.isPending
-                    }
-                  >
-                    {subscribed ? "取消订阅" : "订阅文章库"}
-                  </Button>
-                ) : null}
-                {canEdit ? (
-                  <Button variant="outline" onClick={() => setEditBankOpen(true)}>
-                    编辑文章库
-                  </Button>
-                ) : null}
-              </>
-            }
-          >
-            <SectionCard
-              title="文章清单"
-              description="列表只保留轻量预览，查看和编辑都通过操作按钮完成。"
-              actions={
-                <div className={css.rowActions}>
-                  <Badge variant="outline">共 {articles.length} 篇</Badge>
-                  {canEdit ? (
-                    <Button size="sm" onClick={() => setCreateArticleOpen(true)}>
-                      <Plus size={14} />
-                      新建文章
-                    </Button>
-                  ) : null}
-                </div>
-              }
-            >
-              {articles.length === 0 ? (
-                <EmptyDetail
-                  title="文章库还是空的"
-                  body={
-                    canEdit
-                      ? "先贴入一篇文章开始拆段和翻译。"
-                      : "这个文章库暂时没有可展示的文章。"
+            </div>
+          ) : (
+            <div className={css.libraryCatalogGrid}>
+              {listItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={
+                    selectedLibraryID === item.id
+                      ? css.libraryCatalogCardSelected
+                      : css.libraryCatalogCard
                   }
+                  onClick={() => handleSelectLibrary(item.id)}
+                >
+                  <div className={css.libraryCatalogCardTop}>
+                    <div className={css.libraryCatalogCardIcon}>
+                      <FileText size={18} />
+                    </div>
+                    <span className={css.libraryCatalogCardCount}>{item.countText}</span>
+                  </div>
+
+                  <div className={css.libraryCatalogCardBody}>
+                    <h3 className={css.libraryCatalogCardTitle}>{item.title}</h3>
+                    <p className={css.libraryCatalogCardCaption}>{item.caption}</p>
+                  </div>
+
+                  <div className={css.libraryCatalogCardBadges}>
+                    {item.badges.map((badge) => (
+                      <Badge key={`${item.id}-${badge.label}`} variant={badge.variant}>
+                        {badge.label}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className={css.libraryCatalogCardDate}>创建于 {item.createdText}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className={css.libraryDetailSurface}>
+          {!selectedBank ? (
+            <EmptyDetail
+              title="先创建一个文章库"
+              body="当前内容管理页只维护你自己的文章库。公开发现、系统文章库和已订阅文章库将转移到新的“发现内容”页。"
+            />
+          ) : (
+            <>
+              <div className={css.libraryDetailHeader}>
+                <div className={css.libraryDetailHeading}>
+                  <p className={css.libraryDetailEyebrow}>我的文章库</p>
+                  <div className={css.libraryDetailTitleRow}>
+                    <h2 className={css.libraryDetailTitle}>{selectedBank.name}</h2>
+                    {canEdit ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className={css.libraryTitleEditButton}
+                        onClick={() => setEditBankOpen(true)}
+                        aria-label={`编辑文章库 ${selectedBank.name}`}
+                      >
+                        <Pencil size={16} />
+                      </Button>
+                    ) : null}
+                  </div>
+                  <p className={css.libraryDetailMetaLine}>
+                    {countLabel("article_bank", selectedBank.article_count)} · 创建于 {selectedLibraryCreatedText}
+                  </p>
+                  <p className={css.libraryDetailDescription}>
+                    {selectedBank.description || "这套文章库还没有补充说明。"}
+                  </p>
+                </div>
+
+                <div className={css.libraryDetailHeaderActions}>
+                  <div className={css.libraryDetailBadges}>
+                    <Badge variant="secondary">{libraryLanguageLabel(selectedBank.language)}</Badge>
+                    <Badge
+                      variant={selectedBank.is_public === 1 ? "success" : "outline"}
+                    >
+                      {visibilityLabel(selectedBank.is_public)}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className={css.libraryTableToolbar}>
+                <div className={css.libraryTableSummary}>
+                  <span>共 {articles.length} 篇文章</span>
+                  <span>先从这里切换当前文章，再继续维护翻译和进度</span>
+                </div>
+                {canEdit ? (
+                  <Button
+                    type="button"
+                    size="lg"
+                    className={css.libraryAddWordButton}
+                    onClick={() => setCreateArticleOpen(true)}
+                  >
+                    <Plus size={14} />
+                    新建文章
+                  </Button>
+                ) : null}
+              </div>
+
+              <div className={css.libraryTableCard}>
+                {articles.length === 0 ? (
+                  <EmptyDetail
+                    title="文章库还是空的"
+                    body={
+                      canEdit
+                        ? "先贴入一篇文章开始拆段和翻译。"
+                        : "这个文章库暂时没有可展示的文章。"
+                    }
+                  />
+                ) : (
+                  <ContentDataTable ariaLabel="文章清单" data={articles} columns={articleColumns} />
+                )}
+
+                <div className={css.libraryTableFooter}>
+                  <div className={css.libraryTableSummary}>
+                    <span>当前文章: {articleDetail?.title || "未选择"}</span>
+                    <span>查看按钮会切换下面的文章详情</span>
+                  </div>
+                </div>
+              </div>
+
+              {!articleDetail ? (
+                <EmptyDetail
+                  title="选择一篇文章"
+                  body="库已经选好了，接下来从上面的文章列表里选一篇，继续维护标题、标签、来源和句子翻译。"
                 />
               ) : (
-                <ContentDataTable ariaLabel="文章清单" data={articles} columns={articleColumns} />
-              )}
-            </SectionCard>
+                <>
+                  <SectionCard
+                    title="文章资料"
+                    description="这里展示当前文章摘要。编辑入口收进弹窗里，正文切句和翻译仍在下方维护。"
+                    actions={
+                      canEdit ? (
+                        <Button variant="outline" onClick={() => setEditArticleOpen(true)}>
+                          编辑当前文章
+                        </Button>
+                      ) : null
+                    }
+                  >
+                    {articleMeta}
+                  </SectionCard>
 
-            {!articleDetail ? (
-              <EmptyDetail
-                title="选择一篇文章"
-                body="库已经选好了，接下来从上面的文章列表里选一篇，继续维护标题、标签、来源和句子翻译。"
-              />
-            ) : (
-              <>
-                <SectionCard
-                  title="文章资料"
-                  description="这里展示当前文章摘要。编辑入口收进弹窗里，正文切句和翻译仍在下方维护。"
-                  actions={
-                    canEdit ? (
-                      <Button variant="outline" onClick={() => setEditArticleOpen(true)}>
-                        编辑当前文章
-                      </Button>
-                    ) : null
-                  }
-                >
-                  {articleMeta}
-                </SectionCard>
+                  <SectionCard
+                    title="句子翻译"
+                    description="逐句维护翻译，适合给练习视图和阅读视图共用。"
+                  >
+                    {articleSentences.length === 0 ? (
+                      <EmptyDetail
+                        title="还没有切分出的句子"
+                        body="如果文章内容为空或者切句失败，这里不会展示句子。"
+                      />
+                    ) : (
+                      <div className={css.articleSentenceList}>
+                        {articleSentences.map((sentence) => (
+                          <ArticleSentenceCard
+                            key={sentence.id}
+                            sentence={sentence}
+                            canEdit={canEdit}
+                            onSave={(payload) =>
+                              updateSentence.mutate({
+                                sentenceId: sentence.id,
+                                ...payload,
+                              })
+                            }
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </SectionCard>
 
-                <SectionCard
-                  title="句子翻译"
-                  description="逐句维护翻译，适合给练习视图和阅读视图共用。"
-                >
-                  {articleSentences.length === 0 ? (
-                    <EmptyDetail
-                      title="还没有切分出的句子"
-                      body="如果文章内容为空或者切句失败，这里不会展示句子。"
-                    />
-                  ) : (
-                    <div className={css.articleSentenceList}>
-                      {articleSentences.map((sentence) => (
-                        <ArticleSentenceCard
-                          key={sentence.id}
-                          sentence={sentence}
-                          canEdit={canEdit}
-                          onSave={(payload) =>
-                            updateSentence.mutate({
-                              sentenceId: sentence.id,
-                              ...payload,
-                            })
-                          }
-                        />
-                      ))}
-                    </div>
-                  )}
-                </SectionCard>
-
-                <SectionCard
-                  title="练习进度"
-                  description="这里展示这篇文章的当前完成状态，必要时可以重置。"
-                  actions={
-                    articleDetail.progress && canEdit ? (
-                      <Button
-                        variant="outline"
-                        onClick={() => resetProgress.mutate(articleDetail.id)}
-                        disabled={resetProgress.isPending}
-                      >
-                        <RotateCcw size={14} />
-                        重置进度
-                      </Button>
-                    ) : null
-                  }
-                >
-                  {articleDetail.progress ? (
-                    <div className={css.progressList}>
-                      <div className={css.progressRow}>
-                        <div>
-                          <p className={css.rowTitle}>{articleDetail.title}</p>
-                          <p className={css.rowText}>
-                            已完成 {articleDetail.progress.completed_paragraphs}{" "}
-                            / {articleDetail.progress.total_paragraphs} 段
-                          </p>
-                        </div>
-                        <div className={css.rowMeta}>
-                          <Badge variant="secondary">
-                            {articleDetail.progress.status}
-                          </Badge>
-                          {articleDetail.progress.last_practiced_at ? (
-                            <Badge variant="outline">
-                              最近练习{" "}
-                              {articleDetail.progress.last_practiced_at}
+                  <SectionCard
+                    title="练习进度"
+                    description="这里展示这篇文章的当前完成状态，必要时可以重置。"
+                    actions={
+                      articleDetail.progress && canEdit ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => resetProgress.mutate(articleDetail.id)}
+                          disabled={resetProgress.isPending}
+                        >
+                          <RotateCcw size={14} />
+                          重置进度
+                        </Button>
+                      ) : null
+                    }
+                  >
+                    {articleDetail.progress ? (
+                      <div className={css.progressList}>
+                        <div className={css.progressRow}>
+                          <div>
+                            <p className={css.rowTitle}>{articleDetail.title}</p>
+                            <p className={css.rowText}>
+                              已完成 {articleDetail.progress.completed_paragraphs}{" "}
+                              / {articleDetail.progress.total_paragraphs} 段
+                            </p>
+                          </div>
+                          <div className={css.rowMeta}>
+                            <Badge variant="secondary">
+                              {articleDetail.progress.status}
                             </Badge>
-                          ) : null}
+                            {articleDetail.progress.last_practiced_at ? (
+                              <Badge variant="outline">
+                                最近练习{" "}
+                                {articleDetail.progress.last_practiced_at}
+                              </Badge>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <EmptyDetail
-                      title="还没有练习进度"
-                      body="这篇文章还没有被练习过，所以暂时没有进度数据。"
-                    />
-                  )}
-                </SectionCard>
-              </>
-            )}
-          </DetailPane>
-        )}
-      </ContentWorkbench>
+                    ) : (
+                      <EmptyDetail
+                        title="还没有练习进度"
+                        body="这篇文章还没有被练习过，所以暂时没有进度数据。"
+                      />
+                    )}
+                  </SectionCard>
+                </>
+              )}
+            </>
+          )}
+        </section>
+      </div>
 
       <Dialog open={createBankOpen} onOpenChange={setCreateBankOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>新建文章库</DialogTitle>
             <DialogDescription>
-              语言和公开状态决定它会被谁看到，以及是否会出现在发现页。
+              语言和公开状态决定它未来会怎样出现在“发现内容”页里。
             </DialogDescription>
           </DialogHeader>
           <div className={css.dialogStack}>
@@ -782,9 +753,9 @@ export function ArticlePanel() {
             </div>
             <div className={css.switchRow}>
               <div className={css.switchText}>
-                <p className={css.switchTitle}>公开到发现页</p>
+                <p className={css.switchTitle}>公开到发现内容</p>
                 <p className={css.switchDescription}>
-                  打开后其他用户可以在“公开发现”里看到并订阅。
+                  打开后其他用户可以在未来的“发现内容”页里看到它。
                 </p>
               </div>
               <Switch
@@ -837,7 +808,7 @@ export function ArticlePanel() {
             <div className={css.switchRow}>
               <div className={css.switchText}>
                 <p className={css.switchTitle}>公开文章库</p>
-                <p className={css.switchDescription}>关闭后不会再出现在公开发现里，但历史订阅仍会保留占位。</p>
+                <p className={css.switchDescription}>关闭后不会出现在后续的“发现内容”页里。</p>
               </div>
               <Switch checked={editingBankIsPublic} onCheckedChange={setEditingBankIsPublic} />
             </div>

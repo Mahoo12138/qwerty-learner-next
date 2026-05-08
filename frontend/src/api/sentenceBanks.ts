@@ -2,9 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { request } from './client'
 import type { SentenceBank, Sentence, PaginatedList } from '@/types/api'
 
+type BankListScope = 'all' | 'owned'
+
 // Sentence Bank CRUD
-export function useSentenceBanks() {
-  return useQuery({ queryKey: ['sentenceBanks'], queryFn: () => request<SentenceBank[]>('/sentence-banks') })
+export function useSentenceBanks(scope: BankListScope = 'all') {
+  return useQuery({
+    queryKey: ['sentenceBanks', scope],
+    queryFn: () => request<SentenceBank[]>(`/sentence-banks${scope === 'owned' ? '?scope=owned' : ''}`),
+  })
 }
 
 export function useSentenceBank(id: string) {

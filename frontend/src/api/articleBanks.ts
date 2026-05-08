@@ -11,12 +11,14 @@ import type {
   ProgressItem,
 } from '@/types/api'
 
+type BankListScope = 'all' | 'owned'
+
 // ─── Article Bank CRUD ───────────────────────────────────
 
-export function useArticleBanks() {
+export function useArticleBanks(scope: BankListScope = 'all') {
   return useQuery({
-    queryKey: ['articleBanks'],
-    queryFn: () => request<ArticleBank[]>('/article-banks'),
+    queryKey: ['articleBanks', scope],
+    queryFn: () => request<ArticleBank[]>(`/article-banks${scope === 'owned' ? '?scope=owned' : ''}`),
   })
 }
 
