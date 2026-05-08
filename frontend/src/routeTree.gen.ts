@@ -20,6 +20,7 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as ErrorsRouteImport } from './routes/errors'
+import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as ContentRouteImport } from './routes/content'
 import { Route as ArticlesRouteImport } from './routes/articles'
 import { Route as AnalysisRouteImport } from './routes/analysis'
@@ -82,6 +83,11 @@ const ErrorsRoute = ErrorsRouteImport.update({
   path: '/errors',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContentRoute = ContentRouteImport.update({
   id: '/content',
   path: '/content',
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/analysis': typeof AnalysisRoute
   '/articles': typeof ArticlesRoute
   '/content': typeof ContentRoute
+  '/discover': typeof DiscoverRoute
   '/errors': typeof ErrorsRoute
   '/goals': typeof GoalsRoute
   '/history': typeof HistoryRouteWithChildren
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/analysis': typeof AnalysisRoute
   '/articles': typeof ArticlesRoute
   '/content': typeof ContentRoute
+  '/discover': typeof DiscoverRoute
   '/errors': typeof ErrorsRoute
   '/goals': typeof GoalsRoute
   '/history': typeof HistoryRouteWithChildren
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/analysis': typeof AnalysisRoute
   '/articles': typeof ArticlesRoute
   '/content': typeof ContentRoute
+  '/discover': typeof DiscoverRoute
   '/errors': typeof ErrorsRoute
   '/goals': typeof GoalsRoute
   '/history': typeof HistoryRouteWithChildren
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/articles'
     | '/content'
+    | '/discover'
     | '/errors'
     | '/goals'
     | '/history'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/articles'
     | '/content'
+    | '/discover'
     | '/errors'
     | '/goals'
     | '/history'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/analysis'
     | '/articles'
     | '/content'
+    | '/discover'
     | '/errors'
     | '/goals'
     | '/history'
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   AnalysisRoute: typeof AnalysisRoute
   ArticlesRoute: typeof ArticlesRoute
   ContentRoute: typeof ContentRoute
+  DiscoverRoute: typeof DiscoverRoute
   ErrorsRoute: typeof ErrorsRoute
   GoalsRoute: typeof GoalsRoute
   HistoryRoute: typeof HistoryRouteWithChildren
@@ -329,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErrorsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/content': {
       id: '/content'
       path: '/content'
@@ -391,6 +411,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalysisRoute: AnalysisRoute,
   ArticlesRoute: ArticlesRoute,
   ContentRoute: ContentRoute,
+  DiscoverRoute: DiscoverRoute,
   ErrorsRoute: ErrorsRoute,
   GoalsRoute: GoalsRoute,
   HistoryRoute: HistoryRouteWithChildren,

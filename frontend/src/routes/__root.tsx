@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Keyboard,
   BookOpen,
+  Compass,
   BarChart3,
   AlertCircle,
   History,
@@ -283,6 +284,7 @@ function DesktopSidebar({
         <NavLink to="/" label="仪表盘" icon={LayoutDashboard} onNav={onNav} collapsed={collapsed} />
         <NavLink to="/practice" label="打字练习" icon={Keyboard} onNav={onNav} collapsed={collapsed} />
         <NavLink to="/content" label="内容管理" icon={BookOpen} onNav={onNav} collapsed={collapsed} />
+        <NavLink to="/discover" label="发现内容" icon={Compass} onNav={onNav} collapsed={collapsed} />
         <NavLink to="/vocabulary" label="词汇量" icon={Brain} onNav={onNav} collapsed={collapsed} />
         <NavLink to="/history" label="练习记录" icon={History} onNav={onNav} collapsed={collapsed} />
         <NavLink to="/errors" label="错题集" icon={AlertCircle} onNav={onNav} collapsed={collapsed} />
@@ -352,6 +354,7 @@ function MobileSidebar({
         <NavLink to="/" label="仪表盘" icon={LayoutDashboard} onNav={onNav} />
         <NavLink to="/practice" label="打字练习" icon={Keyboard} onNav={onNav} />
         <NavLink to="/content" label="内容管理" icon={BookOpen} onNav={onNav} />
+        <NavLink to="/discover" label="发现内容" icon={Compass} onNav={onNav} />
         <NavLink to="/vocabulary" label="词汇量" icon={Brain} onNav={onNav} />
         <NavLink to="/history" label="练习记录" icon={History} onNav={onNav} />
         <NavLink to="/analysis" label="数据分析" icon={BarChart3} onNav={onNav} />

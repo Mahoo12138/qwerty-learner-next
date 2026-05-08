@@ -516,3 +516,32 @@ export interface LibrarySubscriptionItem {
   is_available: number
   unavailable_reason?: string
 }
+
+export interface DiscoveryLibraryItem {
+  id: string
+  library_type: ContentLibraryType
+  name: string
+  description?: string
+  language?: string
+  category?: string
+  owner_id: string
+  is_public: number
+  is_system: number
+  item_count: number
+  is_subscribed: number
+  created_at?: string
+  updated_at?: string
+}
+
+export interface DiscoverySubscriptionItem extends DiscoveryLibraryItem {
+  subscription_id: string
+  subscribed_at: string
+  is_available: number
+  unavailable_reason?: string
+}
+
+export interface LibraryDiscoveryPayload {
+  system_libraries: DiscoveryLibraryItem[]
+  community_libraries: DiscoveryLibraryItem[]
+  subscriptions: DiscoverySubscriptionItem[]
+}

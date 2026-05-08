@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { request } from './client'
-import type { ContentLibraryType, LibrarySubscriptionItem } from '@/types/api'
+import type {
+  ContentLibraryType,
+  LibraryDiscoveryPayload,
+  LibrarySubscriptionItem,
+} from '@/types/api'
 
 interface LibrarySubscriptionListResponse {
   list?: LibrarySubscriptionItem[]
@@ -35,6 +39,13 @@ export function useLibrarySubscriptions(libraryType?: ContentLibraryType) {
   })
 }
 
+export function useLibraryDiscovery() {
+  return useQuery({
+    queryKey: ['libraryDiscovery'],
+    queryFn: () => request<LibraryDiscoveryPayload>('/library-discovery'),
+  })
+}
+
 export function useCreateLibrarySubscription() {
   const qc = useQueryClient()
   return useMutation({
@@ -45,6 +56,7 @@ export function useCreateLibrarySubscription() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['librarySubscriptions'] })
+		qc.invalidateQueries({ queryKey: ['libraryDiscovery'] })
     },
   })
 }
@@ -56,6 +68,7 @@ export function useDeleteLibrarySubscription() {
       request<null>(`/library-subscriptions/${libraryType}/${libraryId}`, { method: 'DELETE' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['librarySubscriptions'] })
+		qc.invalidateQueries({ queryKey: ['libraryDiscovery'] })
     },
   })
 }
