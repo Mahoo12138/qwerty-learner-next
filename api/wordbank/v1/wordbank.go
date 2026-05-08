@@ -9,6 +9,7 @@ import (
 
 type ListWordBanksReq struct {
 	g.Meta `path:"/word-banks" method:"get" tags:"WordBank" summary:"List word banks"`
+	Scope  string `json:"scope" in:"query" d:"all"`
 }
 type ListWordBanksRes struct{}
 

@@ -17,7 +17,7 @@ func (c *ControllerV1) ListWordBanks(ctx context.Context, req *v1.ListWordBanksR
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
 
-	banks, err := c.wordSvc.ListBanks(ctx, userID)
+	banks, err := c.wordSvc.ListBanks(ctx, userID, req.Scope == "owned")
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,7 @@ func (c *ControllerV1) ListArticleBanks(ctx context.Context, req *v1.ListArticle
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()
 
-	banks, err := c.articleSvc.ListBanks(ctx, userID)
+	banks, err := c.articleSvc.ListBanks(ctx, userID, req.Scope == "owned")
 	if err != nil {
 		return nil, err
 	}

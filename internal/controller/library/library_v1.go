@@ -9,6 +9,22 @@ import (
 	libraryService "taptype/internal/service/library"
 )
 
+func (c *ControllerV1) GetLibraryDiscovery(ctx context.Context, req *v1.GetLibraryDiscoveryReq) (res *v1.GetLibraryDiscoveryRes, err error) {
+	r := g.RequestFromCtx(ctx)
+	userID := r.GetCtxVar("user_id").String()
+
+	result, err := c.librarySvc.ListDiscovery(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.GetLibraryDiscoveryRes{
+		SystemLibraries:    result.SystemLibraries,
+		CommunityLibraries: result.CommunityLibraries,
+		Subscriptions:      result.Subscriptions,
+	}, nil
+}
+
 func (c *ControllerV1) ListLibrarySubscriptions(ctx context.Context, req *v1.ListLibrarySubscriptionsReq) (res *v1.ListLibrarySubscriptionsRes, err error) {
 	r := g.RequestFromCtx(ctx)
 	userID := r.GetCtxVar("user_id").String()

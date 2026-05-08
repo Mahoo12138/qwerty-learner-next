@@ -9,6 +9,7 @@ import (
 
 type ListSentenceBanksReq struct {
 	g.Meta `path:"/sentence-banks" method:"get" tags:"SentenceBank" summary:"List sentence banks"`
+	Scope  string `json:"scope" in:"query" d:"all"`
 }
 type ListSentenceBanksRes struct{}
 

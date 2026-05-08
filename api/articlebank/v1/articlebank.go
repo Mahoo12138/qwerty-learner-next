@@ -8,6 +8,7 @@ import (
 
 type ListArticleBanksReq struct {
 	g.Meta `path:"/article-banks" method:"get" tags:"ArticleBank" summary:"List article banks"`
+	Scope  string `json:"scope" in:"query" d:"all"`
 }
 type ListArticleBanksRes struct{}
 

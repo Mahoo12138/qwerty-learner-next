@@ -20,7 +20,7 @@ import (
 
 type Service interface {
 	// Bank CRUD
-	ListBanks(ctx context.Context, userID string) ([]entity.SentenceBank, error)
+	ListBanks(ctx context.Context, userID string, ownedOnly bool) ([]entity.SentenceBank, error)
 	CreateBank(ctx context.Context, userID string, req CreateBankReq) (*entity.SentenceBank, error)
 	GetBank(ctx context.Context, userID, bankID string) (*entity.SentenceBank, error)
 	UpdateBank(ctx context.Context, userID, userRole, bankID string, req UpdateBankReq) (*entity.SentenceBank, error)
@@ -84,12 +84,16 @@ func NewService(db *gorm.DB) Service {
 
 // ─── Bank CRUD ───────────────────────────────────────────
 
-func (s *serviceImpl) ListBanks(ctx context.Context, userID string) ([]entity.SentenceBank, error) {
+func (s *serviceImpl) ListBanks(ctx context.Context, userID string, ownedOnly bool) ([]entity.SentenceBank, error) {
+	query := s.db.WithContext(ctx).Order("created_at DESC")
+	if ownedOnly {
+		query = query.Where("owner_id = ?", userID)
+	} else {
+		query = query.Where("owner_id = ? OR is_public = 1", userID)
+	}
+
 	var banks []entity.SentenceBank
-	if err := s.db.WithContext(ctx).
-		Where("owner_id = ? OR is_public = 1", userID).
-		Order("created_at DESC").
-		Find(&banks).Error; err != nil {
+	if err := query.Find(&banks).Error; err != nil {
 		return nil, gerror.NewCode(code.CodeInternalError, err.Error())
 	}
 	for i := range banks {

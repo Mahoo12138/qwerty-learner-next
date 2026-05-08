@@ -20,6 +20,7 @@ const (
 )
 
 type Service interface {
+	ListDiscovery(ctx context.Context, userID string) (*DiscoveryResult, error)
 	ListSubscriptions(ctx context.Context, userID, libraryType string) ([]SubscriptionItem, error)
 	Subscribe(ctx context.Context, userID string, req SubscribeReq) (*SubscriptionItem, error)
 	Unsubscribe(ctx context.Context, userID, libraryType, libraryID string) error
@@ -103,6 +104,9 @@ func (s *serviceImpl) Subscribe(ctx context.Context, userID string, req Subscrib
 	target, err := s.loadTarget(ctx, req.LibraryType, req.LibraryID)
 	if err != nil {
 		return nil, err
+	}
+	if target.OwnerID == userID {
+		return nil, gerror.NewCode(code.CodeForbidden, "cannot subscribe to your own library")
 	}
 	if target.OwnerID != userID && target.IsPublic == 0 {
 		return nil, gerror.NewCode(code.CodeForbidden, "library is not public")
