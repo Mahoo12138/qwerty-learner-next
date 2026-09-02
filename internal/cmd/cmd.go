@@ -13,6 +13,7 @@ import (
 
 	"taptype/internal/controller"
 	achievementCtrl "taptype/internal/controller/achievement"
+	adaptiveCtrl "taptype/internal/controller/adaptive"
 	adminCtrl "taptype/internal/controller/admin"
 	analysisCtrl "taptype/internal/controller/analysis"
 	articlebankCtrl "taptype/internal/controller/articlebank"
@@ -30,6 +31,7 @@ import (
 	wordbankCtrl "taptype/internal/controller/wordbank"
 	"taptype/internal/middleware"
 	achievementService "taptype/internal/service/achievement"
+	adaptiveService "taptype/internal/service/adaptive"
 	analysisService "taptype/internal/service/analysis"
 	articleService "taptype/internal/service/article"
 	authService "taptype/internal/service/auth"
@@ -76,6 +78,7 @@ var (
 			leaderboardSvc := leaderboardService.NewService(gormDB)
 			librarySvc := libraryService.NewService(gormDB)
 			practiceSvc := practiceService.NewService(gormDB, errorsSvc, dailySvc, achievementSvc, goalSvc)
+			adaptiveSvc := adaptiveService.NewService(gormDB)
 			wordSvc := wordService.NewService(gormDB)
 			sentenceSvc := sentenceService.NewService(gormDB)
 			articleSvc := articleService.NewService(gormDB)
@@ -128,6 +131,7 @@ var (
 					protectedGroup.Bind(
 						authCtrl.NewV1(authSvc),
 						practiceCtrl.NewV1(practiceSvc),
+						adaptiveCtrl.NewV1(adaptiveSvc),
 						wordbankCtrl.NewV1(wordSvc),
 						sentencebankCtrl.NewV1(sentenceSvc),
 						articlebankCtrl.NewV1(articleSvc),

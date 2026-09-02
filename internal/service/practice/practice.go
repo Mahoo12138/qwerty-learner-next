@@ -509,7 +509,7 @@ func (s *serviceImpl) loadSessionContent(ctx context.Context, sessionID, sourceT
 	}
 
 	switch sourceType {
-	case "word_bank":
+	case "word_bank", "adaptive":
 		ids := make([]string, 0, len(sessionItems))
 		for _, item := range sessionItems {
 			ids = append(ids, item.ContentID)
