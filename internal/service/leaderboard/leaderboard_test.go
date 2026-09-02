@@ -149,7 +149,10 @@ func setupLeaderboardTestDB(t *testing.T) *gorm.DB {
 func seedLeaderboardTestData(t *testing.T, db *gorm.DB) {
 	t.Helper()
 
-	now := time.Date(2026, 5, 7, 12, 0, 0, 0, time.UTC)
+	// Anchor on the real clock: period windows ("day"/"week"/"month") are
+	// rolling windows computed against time.Now(), so seeded sessions must stay
+	// relative to the current time instead of a fixed date.
+	now := time.Now().UTC()
 	avatarID := "avatar-1"
 	users := []entity.User{
 		{ID: "user-1", Username: "ace", Nickname: "Ace", Email: "ace@example.com", PasswordHash: "x", AvatarMediaID: &avatarID, Role: "user", IsActive: 1, CreatedAt: now, UpdatedAt: now},
