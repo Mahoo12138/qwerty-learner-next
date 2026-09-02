@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { useErrors, useReviewQueue, useCreateReviewSession } from '@/api/errors'
 import {
   AlertCircle,
@@ -42,9 +43,14 @@ export function ErrorsPage() {
   const handleReview = () => {
     createSession.mutate(20, {
       onSuccess: (data) => {
-        if (data.session) {
-          void navigate({ to: '/practice', search: { sessionId: undefined } })
+        if (data.session?.id) {
+          void navigate({ to: '/practice', search: { sessionId: data.session.id } })
+        } else {
+          toast.info('当前没有到期复习项，先去练几轮新内容吧。')
         }
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : '创建复习练习失败，请重试')
       },
     })
   }

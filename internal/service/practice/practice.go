@@ -563,6 +563,31 @@ func (s *serviceImpl) loadSessionContent(ctx context.Context, sessionID, sourceT
 		}
 
 		return nil, orderedSentences, nil
+	case "error_list":
+		// Review sessions mix words and sentences; resolve each item by its type.
+		wordIDs := make([]string, 0, len(sessionItems))
+		sentenceIDs := make([]string, 0, len(sessionItems))
+		for _, item := range sessionItems {
+			if item.ContentType == "sentence" {
+				sentenceIDs = append(sentenceIDs, item.ContentID)
+			} else {
+				wordIDs = append(wordIDs, item.ContentID)
+			}
+		}
+
+		var words []entity.Word
+		if len(wordIDs) > 0 {
+			if err := s.db.WithContext(ctx).Unscoped().Where("id IN ?", wordIDs).Find(&words).Error; err != nil {
+				return nil, nil, err
+			}
+		}
+		var sentences []entity.Sentence
+		if len(sentenceIDs) > 0 {
+			if err := s.db.WithContext(ctx).Unscoped().Where("id IN ?", sentenceIDs).Find(&sentences).Error; err != nil {
+				return nil, nil, err
+			}
+		}
+		return words, sentences, nil
 	default:
 		return nil, nil, nil
 	}

@@ -97,11 +97,14 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
 
   const textItems = useMemo(() => {
     if (!activeSession) return []
-    if (activeSession.words) return activeSession.words.map((word) => ({ id: word.id, content: word.content }))
-    if (activeSession.sentences) {
-      return activeSession.sentences.map((sentence) => ({ id: sentence.id, content: sentence.content }))
+    const items: { id: string; content: string; kind: 'word' | 'sentence' }[] = []
+    for (const word of activeSession.words ?? []) {
+      items.push({ id: word.id, content: word.content, kind: 'word' })
     }
-    return []
+    for (const sentence of activeSession.sentences ?? []) {
+      items.push({ id: sentence.id, content: sentence.content, kind: 'sentence' })
+    }
+    return items
   }, [activeSession])
 
   const words = useMemo(() => textItems.map((item) => item.content), [textItems])
@@ -308,8 +311,8 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
   const selectedSentenceBank = sourceType === 'sentence_bank'
     ? (sentenceBanks.find((bank) => bank.id === sourceId) ?? null)
     : null
-  const currentWordInfo = sourceType === 'word_bank' && activeSession?.words
-    ? (activeSession.words[wordIndex] ?? null)
+  const currentWordInfo = activeSession?.words && textItems[wordIndex]?.kind === 'word'
+    ? (activeSession.words.find((word) => word.id === textItems[wordIndex].id) ?? null)
     : null
   const availableSourceCount = sourceType === 'word_bank' ? wordBanks.length : sentenceBanks.length
   const pendingSessionCount = recentSessions?.list.filter((session) => !session.result && !session.ended_at).length ?? 0
@@ -379,7 +382,7 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
         consistency: 0.9,
         duration_ms: Math.max(1, stats.time * 1000),
         keystroke_stats: getKeystrokeStats(),
-        error_items: getErrorItems(sourceType, textItems),
+        error_items: getErrorItems(textItems),
       },
       {
         onSuccess: (data) => {
@@ -815,7 +818,7 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
 
               {isFinished && (
                 <ResultCard
-                  title={selectedWordBank?.name ?? '本轮练习'}
+                  title={activeSourceName ?? activeSourceLabel}
                   wpm={displayStats.wpm}
                   accuracy={displayStats.accuracy}
                   duration={displayStats.elapsedMs}
@@ -1203,6 +1206,8 @@ function formatModeLabel(mode: string) {
       return '默写模式'
     case 'recitation':
       return '背词模式'
+    case 'review':
+      return '错题复习'
     default:
       return '普通打字'
   }
@@ -1210,5 +1215,6 @@ function formatModeLabel(mode: string) {
 
 function formatSourceLabel(sourceType: string) {
   if (sourceType === 'adaptive') return '弱项特训'
+  if (sourceType === 'error_list') return '错题'
   return sourceType === 'sentence_bank' ? '句库练习' : '词库练习'
 }

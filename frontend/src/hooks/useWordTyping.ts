@@ -323,13 +323,13 @@ export function useWordTyping({ words, initialSnapshot, onWordComplete, onChapte
   }, [timerTime, wordIndex])
 
   const getErrorItems = useCallback(
-    (contentType: string, contentItems: { id: string; content: string }[]) => {
+    (contentItems: { id: string; content: string; kind: 'word' | 'sentence' }[]) => {
       const errors: { content_type: string; content_id: string; error_count: number; avg_time_ms: number }[] = []
       wordErrorsRef.current.forEach((errCount, idx) => {
         const item = contentItems[idx]
         if (item && errCount > 0) {
           errors.push({
-            content_type: contentType === 'word_bank' ? 'word' : 'sentence',
+            content_type: item.kind,
             content_id: item.id,
             error_count: errCount,
             avg_time_ms: 0,

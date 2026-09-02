@@ -108,6 +108,24 @@ func (s *serviceImpl) CreateReviewSession(ctx context.Context, userID string, it
 		items = append(items, item)
 	}
 
+	// Persist session items so the review session can be resumed with content.
+	sessionItems := make([]entity.PracticeSessionItem, len(items))
+	for i, item := range items {
+		sessionItems[i] = entity.PracticeSessionItem{
+			ID:          uuid.New().String(),
+			SessionID:   session.ID,
+			ItemOrder:   i,
+			ContentType: item.ContentType,
+			ContentID:   item.ContentID,
+			CreatedAt:   now,
+		}
+	}
+	if len(sessionItems) > 0 {
+		if err := s.db.WithContext(ctx).Create(&sessionItems).Error; err != nil {
+			return nil, nil, err
+		}
+	}
+
 	// Populate content
 	s.populateReviewItems(ctx, items)
 
