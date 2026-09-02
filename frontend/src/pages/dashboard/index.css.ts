@@ -452,3 +452,54 @@ export const statGroup = style({
   display: 'grid',
   gap: vars.space.xs,
 })
+
+// ─── Adaptive weak keys ───────────────────────────────────────────────────────
+
+export const weakCard = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space.xl,
+  flexWrap: 'wrap',
+  borderRadius: vars.radius.lg,
+  backgroundColor: `color-mix(in oklab, ${vars.color.brand.danger} 6%, ${vars.color.bg.panel})`,
+  border: `1px solid color-mix(in oklab, ${vars.color.brand.danger} 25%, ${vars.color.border.soft})`,
+  padding: vars.space.lg,
+  boxShadow: vars.shadow.sm,
+})
+
+export const weakInfo = style({
+  display: 'grid',
+  gap: vars.space.sm,
+  minWidth: 0,
+})
+
+export const weakKeysRow = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: vars.space.sm,
+})
+
+export const weakKeyChip = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: '34px',
+  padding: `${vars.space.xs} ${vars.space.sm}`,
+  borderRadius: vars.radius.md,
+  backgroundColor: `color-mix(in oklab, ${vars.color.brand.danger} 14%, ${vars.color.bg.panel})`,
+  border: `1px solid color-mix(in oklab, ${vars.color.brand.danger} 35%, transparent)`,
+  fontSize: vars.fontSize.lg,
+  fontWeight: '800',
+  textTransform: 'uppercase',
+  fontFamily: vars.font.mono,
+  color: vars.color.text.primary,
+})
+
+export const weakHint = style({
+  margin: 0,
+  fontSize: vars.fontSize.sm,
+  lineHeight: '1.7',
+  color: vars.color.text.muted,
+  maxWidth: '56ch',
+})

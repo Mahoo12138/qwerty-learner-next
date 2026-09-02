@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/authStore'
 import { usePublicSystemSettings } from '@/api/settings'
+import { useAdaptiveProfile, useCreateAdaptiveSession } from '@/api/adaptive'
 import { useDaily } from '@/api/daily'
 import { useSummary } from '@/api/analysis'
 import { useReviewQueue } from '@/api/errors'
@@ -37,6 +38,7 @@ export function DashboardPage() {
 
       <div className={css.contentStack}>
         <TodaySection />
+        <WeakKeysSection />
         <GoalsOverview />
         <SummarySection />
         <QuickActions />
@@ -82,6 +84,53 @@ function TodaySection() {
           </div>
           <div className={reviewCount > 0 ? css.statAccentDotWarning : css.statAccentDotSuccess} />
         </div>
+      </div>
+    </section>
+  )
+}
+
+function WeakKeysSection() {
+  const navigate = useNavigate()
+  const { data: profile, isLoading } = useAdaptiveProfile()
+  const createAdaptiveSession = useCreateAdaptiveSession()
+
+  if (isLoading || !profile?.has_data || profile.weak_keys.length === 0) return null
+
+  const topKeys = profile.weak_keys.slice(0, 5)
+  const keyLabels = topKeys.map((weakKey) => weakKey.key_char.toUpperCase()).join(' / ')
+  const avgErrorRate = topKeys.reduce((sum, weakKey) => sum + weakKey.error_rate, 0) / topKeys.length
+  const slowerKeys = topKeys.filter((weakKey) => weakKey.interval_delta > 0.05)
+
+  const startTraining = () => {
+    createAdaptiveSession.mutate({}, {
+      onSuccess: (result) => {
+        void navigate({ to: '/practice', search: { sessionId: result.session.id } })
+      },
+    })
+  }
+
+  return (
+    <section className={css.sectionNormal}>
+      <div className={css.sectionHeadCompact}>
+        <span className={css.sectionLabel}>今日弱项</span>
+      </div>
+      <div className={css.weakCard}>
+        <div className={css.weakInfo}>
+          <div className={css.weakKeysRow}>
+            {topKeys.map((weakKey) => (
+              <span key={weakKey.key_char} className={css.weakKeyChip}>{weakKey.key_char}</span>
+            ))}
+          </div>
+          <p className={css.weakHint}>
+            {keyLabels} 的整体错误率约 {(avgErrorRate * 100).toFixed(1)}%
+            {slowerKeys.length > 0 &&
+              `，其中 ${slowerKeys.map((weakKey) => weakKey.key_char.toUpperCase()).join(' / ')} 的击键间隔明显慢于你的平均水平`}
+            。针对性训练会优先选择包含这些键位的单词。
+          </p>
+        </div>
+        <Button onClick={startTraining} disabled={createAdaptiveSession.isPending}>
+          {createAdaptiveSession.isPending ? '生成中...' : '开始针对性训练'}
+        </Button>
       </div>
     </section>
   )

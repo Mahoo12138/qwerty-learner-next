@@ -1029,6 +1029,56 @@ export const resultMessage = style({
   color: vars.color.text.primary,
 })
 
+export const resultRecommend = style({
+  marginTop: vars.space.lg,
+  paddingTop: vars.space.lg,
+  borderTop: `1px dashed color-mix(in oklab, ${vars.color.brand.primary} 30%, transparent)`,
+  display: 'grid',
+  gap: vars.space.md,
+  justifyItems: 'start',
+})
+
+export const resultRecommendHead = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space.xs,
+  fontSize: vars.fontSize.xs,
+  fontWeight: '700',
+  letterSpacing: '0.09em',
+  textTransform: 'uppercase',
+  color: vars.color.text.muted,
+})
+
+export const resultWeakKeys = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: vars.space.sm,
+})
+
+export const resultWeakKeyChip = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space.sm,
+  borderRadius: vars.radius.pill,
+  border: `1px solid color-mix(in oklab, ${vars.color.brand.danger} 35%, transparent)`,
+  backgroundColor: `color-mix(in oklab, ${vars.color.brand.danger} 8%, ${vars.color.bg.panel})`,
+  padding: `${vars.space.xs} ${vars.space.md}`,
+})
+
+export const resultWeakKeyChar = style({
+  fontSize: vars.fontSize.lg,
+  fontWeight: '800',
+  lineHeight: '1',
+  color: vars.color.text.primary,
+  textTransform: 'uppercase',
+  fontFamily: vars.font.mono,
+})
+
+export const resultWeakKeyMeta = style({
+  fontSize: vars.fontSize.xs,
+  color: vars.color.text.muted,
+})
+
 export const resultGrid = style({
   display: 'grid',
   gridTemplateColumns: 'repeat(2, 1fr)',

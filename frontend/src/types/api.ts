@@ -79,6 +79,30 @@ export interface AnalysisSummary {
   review_due_count: number
 }
 
+export interface AdaptiveWeakKey {
+  key_char: string
+  weak_score: number
+  error_rate: number
+  avg_interval_ms: number
+  interval_delta: number
+  total_hits: number
+  total_errors: number
+}
+
+export interface AdaptiveProfile {
+  weak_keys: AdaptiveWeakKey[]
+  overall_avg_interval_ms: number
+  keys_analyzed: number
+  has_data: boolean
+  generated_at: string
+}
+
+export interface AdaptiveSessionResult {
+  session: PracticeSession
+  words: Word[]
+  targeted_keys: string[]
+}
+
 export type LeaderboardMetricKey =
   | 'best_wpm'
   | 'avg_wpm'

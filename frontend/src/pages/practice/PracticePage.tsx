@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Settings2,
   SkipForward,
+  Target,
   Trash2,
   Volume2,
   Wifi,
@@ -20,6 +21,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useSentenceBanks } from '@/api/sentenceBanks'
+import { useAdaptiveProfile, useCreateAdaptiveSession } from '@/api/adaptive'
 import { useSystemSoundCatalog, useUserKeySounds } from '@/api/media'
 import { useCompletePractice, useCreateSession, useDiscardSession, useSession, useSessions } from '@/api/practice'
 import { useSaveSetting, useUserSettings } from '@/api/settings'
@@ -47,7 +49,7 @@ import {
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import * as css from '@/styles/pages/practice.css'
-import type { Achievement, SessionWithContent } from '@/types/api'
+import type { Achievement, AdaptiveWeakKey, SessionWithContent } from '@/types/api'
 
 interface PracticePageProps {
   resumeSessionId?: string
@@ -87,6 +89,8 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
   const completePractice = useCompletePractice()
   const discardSession = useDiscardSession()
   const markWordMastered = useMarkWordMastered()
+  const adaptiveProfile = useAdaptiveProfile(submitted)
+  const createAdaptiveSession = useCreateAdaptiveSession()
   const { data: soundCatalog } = useSystemSoundCatalog()
   const { data: userKeySounds = [] } = useUserKeySounds(user?.id)
   const saveSetting = useSaveSetting()
@@ -211,7 +215,7 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
 
     close()
     setMode(resumeSession.session.mode)
-    setSourceType(resumeSession.session.source_type as 'word_bank' | 'sentence_bank')
+    setSourceType(resumeSession.session.source_type === 'sentence_bank' ? 'sentence_bank' : 'word_bank')
     setSourceId(resumeSession.session.source_id ?? '')
     setItemCount(resumeSession.session.item_count || 20)
     setSubmitted(false)
@@ -409,6 +413,19 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
   const openSessionDetail = useCallback((sessionId: string) => {
     void navigate({ to: '/history/$sessionId', params: { sessionId } })
   }, [navigate])
+
+  const startAdaptiveTraining = useCallback(() => {
+    setCreateError('')
+    createAdaptiveSession.mutate({}, {
+      onSuccess: (result) => {
+        resetPractice()
+        void navigate({ to: '/practice', search: { sessionId: result.session.id } })
+      },
+      onError: (error) => {
+        setCreateError(error instanceof Error ? error.message : '创建针对性训练失败，请重试')
+      },
+    })
+  }, [createAdaptiveSession, navigate, resetPractice])
 
   const continueSession = useCallback((sessionId: string) => {
     void navigate({ to: '/practice', search: { sessionId } })
@@ -806,6 +823,9 @@ export function PracticePage({ resumeSessionId }: PracticePageProps) {
                   onSubmit={submitPractice}
                   submitting={completePractice.isPending}
                   submitted={submitted}
+                  weakKeys={adaptiveProfile.data?.weak_keys ?? []}
+                  onAdaptiveTraining={startAdaptiveTraining}
+                  adaptivePending={createAdaptiveSession.isPending}
                 />
               )}
             </div>
@@ -1058,6 +1078,9 @@ function ResultCard({
   onSubmit,
   submitting,
   submitted,
+  weakKeys,
+  onAdaptiveTraining,
+  adaptivePending,
 }: {
   title: string
   wpm: number
@@ -1067,6 +1090,9 @@ function ResultCard({
   onSubmit: () => void
   submitting: boolean
   submitted: boolean
+  weakKeys: AdaptiveWeakKey[]
+  onAdaptiveTraining: () => void
+  adaptivePending: boolean
 }) {
   return (
     <section className={css.resultCard}>
@@ -1110,6 +1136,41 @@ function ResultCard({
           </Button>
         )}
       </div>
+
+      {submitted && (
+        <div className={css.resultRecommend}>
+          <div className={css.resultRecommendHead}>
+            <Target className={css.iconSm} />
+            <span>今日弱项 · 下一轮建议</span>
+          </div>
+          {weakKeys.length > 0 ? (
+            <>
+              <div className={css.resultWeakKeys}>
+                {weakKeys.slice(0, 6).map((weakKey) => (
+                  <span key={weakKey.key_char} className={css.resultWeakKeyChip}>
+                    <span className={css.resultWeakKeyChar}>{weakKey.key_char}</span>
+                    <span className={css.resultWeakKeyMeta}>
+                      错误率 {(weakKey.error_rate * 100).toFixed(1)}%
+                      {weakKey.interval_delta > 0.05 && ` · 慢 ${Math.round(weakKey.interval_delta * 100)}%`}
+                    </span>
+                  </span>
+                ))}
+              </div>
+              <p className={css.resultMessage}>
+                基于你的历史击键数据，下一轮会优先选择包含这些键位的单词。
+              </p>
+              <Button onClick={onAdaptiveTraining} disabled={adaptivePending}>
+                <Target />
+                {adaptivePending ? '生成中...' : '继续针对性训练'}
+              </Button>
+            </>
+          ) : (
+            <p className={css.resultMessage}>
+              还没有足够的击键数据来判断弱项，再练几轮后会自动生成针对性训练。
+            </p>
+          )}
+        </div>
+      )}
     </section>
   )
 }
@@ -1148,5 +1209,6 @@ function formatModeLabel(mode: string) {
 }
 
 function formatSourceLabel(sourceType: string) {
+  if (sourceType === 'adaptive') return '弱项特训'
   return sourceType === 'sentence_bank' ? '句库练习' : '词库练习'
 }
